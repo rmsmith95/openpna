@@ -16,18 +16,52 @@ const now = new Date();
 const data = [
   {
     'job': '1.1',
-    'part': '1',
-    'target part': '0',
-    location: [1,2,3],
-    'time s': 4
+    'part': 'arm1',
+    'target': 'body',
+    'machines': 'LitePlacer1',
+    'status': 'To Do',
+    'description': ''
   },
   {
-    'job': '1.1',
-    'part': '1',
-    'target part': '0',
-    location: [1,2,3],
-    'time s': 4
-  }
+    'job': '1.2',
+    'part': 'arm2',
+    'target': 'body',
+    'machines': 'LitePlacer1',
+    'status': 'To Do',
+    'description': ''
+  },
+  {
+    'job': '1.3',
+    'part': 'arm3',
+    'target': 'body',
+    'machines': 'LitePlacer1',
+    'status': 'To Do',
+    'description': ''
+  },
+  {
+    'job': '1.4',
+    'part': 'arm4',
+    'target': 'body',
+    'machines': 'LitePlacer1',
+    'status': 'To Do',
+    'description': ''
+  },
+  {
+    'job': '2.1',
+    'part': 'Electric Speed Controller',
+    'target': 'Flight Controller',
+    'machines': 'LitePlacer1',
+    'status': 'To Do',
+    'description': ''
+  },
+  {
+    'job': '3.1',
+    'part': 'Motor1',
+    'target': 'Arm1',
+    'machines': 'LitePlacer1',
+    'status': 'To Do',
+    'description': ''
+  },
 ];
 
 const useCustomers = (page, rowsPerPage) => {
@@ -50,7 +84,7 @@ const useCustomerIds = (customers) => {
 
 const Page = () => {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const customers = useCustomers(page, rowsPerPage);
   const customersIds = useCustomerIds(customers);
   const customersSelection = useSelection(customersIds);
@@ -73,7 +107,7 @@ const Page = () => {
     <>
       <Head>
         <title>
-          Customers | Devias Kit
+          Jobs
         </title>
       </Head>
       <Box

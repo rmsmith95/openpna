@@ -11,24 +11,74 @@ import { PartsTable } from 'src/sections/parts/part-table';
 import { CustomersSearch } from 'src/sections/jobs/customers-search';
 import { applyPagination } from 'src/utils/apply-pagination';
 
-const now = new Date();
-
 const data = [
   {
     'id': '1',
+    'class': 'part',
     'name': 'body',
-    'mass': '0.3'
-    // location: [1,2,3]
+    'mass': '0.3',
+    'description': '3d printed',
+    'cad': ''
   },
   {
     'id': '2',
+    'class': 'part',
     'name': 'arm',
-    'mass': '0.2'
-    // location: [1,2,3]
-  }
+    'mass': '0.2',
+    'description': '3d printed',
+    'cad': ''
+  },
+    {
+    'id': '3',
+    'class': 'part',
+    'name': 'battery',
+    'mass': '1.2',
+    'description': '1300mAh 75C',
+    'cad': ''
+  },
+    {
+    'id': '4',
+    'class': 'part',
+    'name': 'Flight Controller',
+    'mass': '0.3',
+    'description': 'SpeedyBee',
+    'cad': ''
+  },
+    {
+    'id': '5',
+    'class': 'part',
+    'name': 'Electronic Speed Control',
+    'mass': '0.3',
+    'description': 'SpeedyBee',
+    'cad': '',
+  },
+    {
+    'id': '6',
+    'class': 'part',
+    'name': 'Propellor',
+    'mass': '0.05',
+    'description': '5 inch blades',
+    'cad': ''
+  },
+    {
+    'id': '7',
+    'class': 'part',
+    'name': 'Motors',
+    'mass': '0.3',
+    'description': '',
+    'cad': '',
+  },
+    {
+    'id': '8',
+    'class': 'part',
+    'name': 'Screws',
+    'mass': '0.01',
+    'description': '',
+    'cad': '',
+  },
 ];
 
-const useCustomers = (page, rowsPerPage) => {
+const useParts = (page, rowsPerPage) => {
   return useMemo(
     () => {
       return applyPagination(data, page, rowsPerPage);
@@ -37,21 +87,21 @@ const useCustomers = (page, rowsPerPage) => {
   );
 };
 
-const useCustomerIds = (customers) => {
+const usePartIds = (parts) => {
   return useMemo(
     () => {
-      return customers.map((customer) => customer.id);
+      return parts.map((part) => part.id);
     },
-    [customers]
+    [parts]
   );
 };
 
 const Page = () => {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const customers = useCustomers(page, rowsPerPage);
-  const customersIds = useCustomerIds(customers);
-  const customersSelection = useSelection(customersIds);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const parts = useParts(page, rowsPerPage);
+  const partsIds = usePartIds(parts);
+  const customersSelection = useSelection(partsIds);
 
   const handlePageChange = useCallback(
     (event, value) => {
@@ -134,7 +184,7 @@ const Page = () => {
             </Stack>
             <PartsTable
               count={data.length}
-              items={customers}
+              items={parts}
               onDeselectAll={customersSelection.handleDeselectAll}
               onDeselectOne={customersSelection.handleDeselectOne}
               onPageChange={handlePageChange}

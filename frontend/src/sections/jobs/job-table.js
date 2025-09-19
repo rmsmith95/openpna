@@ -42,19 +42,6 @@ export const JobsTable = (props) => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selectedAll}
-                    indeterminate={selectedSome}
-                    onChange={(event) => {
-                      if (event.target.checked) {
-                        onSelectAll?.();
-                      } else {
-                        onDeselectAll?.();
-                      }
-                    }}
-                  />
-                </TableCell>
                 <TableCell>
                   Job
                 </TableCell>
@@ -65,27 +52,36 @@ export const JobsTable = (props) => {
                   Target
                 </TableCell>
                 <TableCell>
-                  Location
+                  Machines
                 </TableCell>
                 <TableCell>
-                  Time
+                  Status
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {items.map((customer) => {
-                const isSelected = selected.includes(customer.id);
+              {items.map((job) => {
+                const isSelected = selected.includes(job.id);
                 return (
                   <TableRow
                     hover
-                    key={customer.id}
+                    key={job.id}
                     selected={isSelected}
                   >
                     <TableCell>
-                      {customer.job}
+                      {job.job}
                     </TableCell>
                     <TableCell>
-                      {customer.part}
+                      {job.part}
+                    </TableCell>
+                    <TableCell>
+                      {job.target}
+                    </TableCell>
+                    <TableCell>
+                      {job.machines}
+                    </TableCell>
+                    <TableCell>
+                      {job.status}
                     </TableCell>
                   </TableRow>
                 );

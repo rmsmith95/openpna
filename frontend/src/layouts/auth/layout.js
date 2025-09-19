@@ -85,7 +85,7 @@ export const Layout = (props) => {
                 sx={{ color: '#15B79E' }}
                 target="_blank"
               >
-                OpenPnP
+                OpenPnA
               </Box>
             </Typography>
             <Typography

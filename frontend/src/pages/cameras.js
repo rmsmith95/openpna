@@ -13,8 +13,8 @@ import {
   Unstable_Grid2 as Grid
 } from '@mui/material';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
-import { CompanyCard } from 'src/sections/companies/company-card';
-import { CompaniesSearch } from 'src/sections/companies/companies-search';
+import { CompanyCard } from 'src/sections/cameras/company-card';
+import { CompaniesSearch } from 'src/sections/cameras/companies-search';
 import CameraDashboard from 'src/components/cameras';
 
 
@@ -22,7 +22,7 @@ const Page = () => (
   <>
     <Head>
       <title>
-        Companies | Devias Kit
+        Cameras
       </title>
     </Head>
     <Box
@@ -41,7 +41,7 @@ const Page = () => (
           >
             <Stack spacing={1}>
               <Typography variant="h4">
-                Companies
+                Cameras
               </Typography>
               <Stack
                 alignItems="center"

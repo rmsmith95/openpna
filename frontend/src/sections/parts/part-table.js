@@ -43,13 +43,22 @@ export const PartsTable = (props) => {
             <TableHead>
               <TableRow>
                 <TableCell>
+                  Id
+                </TableCell>
+                <TableCell>
+                  Class
+                </TableCell>
+                <TableCell>
                   Name
                 </TableCell>
                 <TableCell>
-                  Location
+                  Mass
                 </TableCell>
                 <TableCell>
-                  Mass
+                  Description
+                </TableCell>
+                <TableCell>
+                  Cad File
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -63,13 +72,22 @@ export const PartsTable = (props) => {
                     selected={isSelected}
                   >
                     <TableCell>
+                      {part.id}
+                    </TableCell>
+                    <TableCell>
+                      {part.class}
+                    </TableCell>
+                    <TableCell>
                       {part.name}
                     </TableCell>
                     <TableCell>
-                      {part.location}
+                      {part.mass}
                     </TableCell>
                     <TableCell>
-                      {part.mass}
+                      {part.description}
+                    </TableCell>
+                    <TableCell>
+                      {part.cad}
                     </TableCell>
                   </TableRow>
                 );

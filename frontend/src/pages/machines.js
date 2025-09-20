@@ -1,91 +1,69 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Head from 'next/head';
-import { subDays, subHours } from 'date-fns';
 import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
 import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
 import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
-import { Box, Button, Container, Stack, SvgIcon, Typography } from '@mui/material';
-import { useSelection } from 'src/hooks/use-selection';
+import {
+  Box,
+  Button,
+  Container,
+  Stack,
+  SvgIcon,
+  Typography,
+} from '@mui/material';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
-import { CustomersTable } from 'src/sections/jobs/job-table';
-import { CustomersSearch } from 'src/sections/jobs/customers-search';
-import { applyPagination } from 'src/utils/apply-pagination';
-// import Head from 'next/head';
-import { Unstable_Grid2 as Grid } from '@mui/material';
 import { Gantry } from 'src/sections/machines/gantry';
 import { Arm6DOF } from 'src/sections/machines/arm6dof';
-import { OverviewLatestProducts } from 'src/sections/machines/overview-latest-products';
-import { OverviewSales } from 'src/sections/machines/overview-sales';
-import { OverviewTasksProgress } from 'src/sections/machines/overview-tasks-progress';
-import { OverviewTotalCustomers } from 'src/sections/machines/overview-total-customers';
-import { OverviewTotalProfit } from 'src/sections/machines/overview-total-profit';
-import { OverviewTraffic } from 'src/sections/machines/overview-traffic';
+import CollapsibleCard from 'src/components/collapsible-card';
 
 const Page = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const handlePageChange = useCallback(
-    (event, value) => {
-      setPage(value);
-    },
-    []
-  );
+  const handlePageChange = useCallback((event, value) => {
+    setPage(value);
+  }, []);
 
-  const handleRowsPerPageChange = useCallback(
-    (event) => {
-      setRowsPerPage(event.target.value);
-    },
-    []
-  );
+  const handleRowsPerPageChange = useCallback((event) => {
+    setRowsPerPage(event.target.value);
+  }, []);
 
   return (
     <>
       <Head>
-        <title>
-          Machines
-        </title>
+        <title>Machines</title>
       </Head>
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          py: 8
+          py: 8,
         }}
       >
         <Container maxWidth="xl">
           <Stack spacing={3}>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              spacing={4}
-            >
+            {/* Page header */}
+            <Stack direction="row" justifyContent="space-between" spacing={4}>
               <Stack spacing={1}>
-                <Typography variant="h4">
-                  Machines
-                </Typography>
-                <Stack
-                  alignItems="center"
-                  direction="row"
-                  spacing={1}
-                >
+                <Typography variant="h4">Machines</Typography>
+                <Stack alignItems="center" direction="row" spacing={1}>
                   <Button
                     color="inherit"
-                    startIcon={(
+                    startIcon={
                       <SvgIcon fontSize="small">
                         <ArrowUpOnSquareIcon />
                       </SvgIcon>
-                    )}
+                    }
                   >
                     Import
                   </Button>
                   <Button
                     color="inherit"
-                    startIcon={(
+                    startIcon={
                       <SvgIcon fontSize="small">
                         <ArrowDownOnSquareIcon />
                       </SvgIcon>
-                    )}
+                    }
                   >
                     Export
                   </Button>
@@ -93,11 +71,11 @@ const Page = () => {
               </Stack>
               <div>
                 <Button
-                  startIcon={(
+                  startIcon={
                     <SvgIcon fontSize="small">
                       <PlusIcon />
                     </SvgIcon>
-                  )}
+                  }
                   variant="contained"
                 >
                   Add
@@ -105,32 +83,28 @@ const Page = () => {
               </div>
             </Stack>
 
-            <Box
-              component="main"
-              sx={{
-                flexGrow: 1,
-                py: 8
-              }}
-            >
-              <Container maxWidth="xl">
-                Micro Cell 1
-                <Stack spacing={3}>
+            {/* Micro Cell 1 collapsible */}
+            <CollapsibleCard title="Micro Factory 1" color="primary.main">
+              <Stack spacing={2}>
+                <CollapsibleCard title="LitePlacer1" color="secondary.main">
                   <Gantry
                     difference={12}
                     positive
-                    sx={{ height: "100%" }}
+                    sx={{ height: '100%' }}
                     value="LitePlacer1"
                   />
+                </CollapsibleCard>
+
+                <CollapsibleCard title="MyCobot1" color="success.main">
                   <Arm6DOF
                     difference={12}
                     positive
-                    sx={{ height: "100%" }}
+                    sx={{ height: '100%' }}
                     value="MyCobot1"
                   />
-                </Stack>
-              </Container>
-            </Box>
-
+                </CollapsibleCard>
+              </Stack>
+            </CollapsibleCard>
           </Stack>
         </Container>
       </Box>
@@ -138,10 +112,6 @@ const Page = () => {
   );
 };
 
-Page.getLayout = (page) => (
-  <DashboardLayout>
-    {page}
-  </DashboardLayout>
-);
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
 
 export default Page;

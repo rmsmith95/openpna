@@ -4,7 +4,16 @@ import { subDays, subHours } from 'date-fns';
 import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
 import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
 import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
-import { Box, Button, Container, Stack, SvgIcon, Typography } from '@mui/material';
+import { Box, 
+  Button,
+  Checkbox,
+  Container,
+  FormControlLabel,
+  Stack,
+  SvgIcon,
+  Typography
+} from '@mui/material';
+  
 import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { PartsTable } from 'src/sections/parts/part-table';
@@ -18,6 +27,22 @@ const data = [
     'name': 'body',
     'mass': '0.3',
     'description': '3d printed',
+    'cad': '/home/body.stl'
+  },
+  {
+    'id': '9',
+    'class': 'jig',
+    'name': 'body jig',
+    'mass': '0.3',
+    'description': '3d printed',
+    'cad': '/home/body_jig.stl'
+  },
+  {
+    'id': '10',
+    'class': 'assembly',
+    'name': '',
+    'mass': '0.7',
+    'description': 'Parts 1, 2, 3',
     'cad': ''
   },
   {
@@ -167,6 +192,18 @@ const Page = () => {
                   >
                     Export
                   </Button>
+                  <FormControlLabel
+                control={<Checkbox defaultChecked />}
+                label="Parts"
+              />
+              <FormControlLabel
+                control={<Checkbox defaultChecked />}
+                label="Jigs"
+              />
+              <FormControlLabel
+                control={<Checkbox defaultChecked />}
+                label="Assembly"
+              />
                 </Stack>
               </Stack>
               <div>

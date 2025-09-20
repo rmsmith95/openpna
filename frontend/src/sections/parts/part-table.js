@@ -51,9 +51,9 @@ export const PartsTable = (props) => {
                 <TableCell>
                   Name
                 </TableCell>
-                <TableCell>
+                {/* <TableCell>
                   Mass
-                </TableCell>
+                </TableCell> */}
                 <TableCell>
                   Description
                 </TableCell>
@@ -80,9 +80,9 @@ export const PartsTable = (props) => {
                     <TableCell>
                       {part.name}
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       {part.mass}
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>
                       {part.description}
                     </TableCell>

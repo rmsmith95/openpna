@@ -5,7 +5,7 @@ import CameraIcon from '@heroicons/react/24/solid/CameraIcon';
 import UserIcon from '@heroicons/react/24/solid/UserIcon';
 import UserPlusIcon from '@heroicons/react/24/solid/UserPlusIcon';
 import CircleStackIcon from '@heroicons/react/24/solid/CircleStackIcon';
-import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
+import Squares2X2Icon from '@heroicons/react/24/solid/Squares2X2Icon';
 import { SvgIcon } from '@mui/material';
 
 export const items = [
@@ -50,7 +50,7 @@ export const items = [
     path: '/machines',
     icon: (
       <SvgIcon fontSize="small">
-        <CogIcon />
+        <Squares2X2Icon />
       </SvgIcon>
     )
   },

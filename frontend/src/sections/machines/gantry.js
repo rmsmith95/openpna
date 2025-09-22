@@ -38,10 +38,10 @@ export const Gantry = (props) => {
           spacing={3}
         >
           <Stack spacing={1}>
-            <Typography color="text.secondary" variant="overline">
+            {/* <Typography color="text.secondary" variant="overline">
               Gantry
             </Typography>
-            <Typography variant="h4">{value}</Typography>
+            <Typography variant="h4">{value}</Typography> */}
           </Stack>
           {/* <Avatar
             sx={{

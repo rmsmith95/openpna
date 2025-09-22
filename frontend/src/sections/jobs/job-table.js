@@ -21,6 +21,7 @@ export const JobsTable = (props) => {
   const {
     count = 0,
     items = [],
+    currentJobId = null,
     onDeselectAll,
     onDeselectOne,
     onPageChange = () => {},
@@ -32,9 +33,6 @@ export const JobsTable = (props) => {
     selected = []
   } = props;
 
-  const selectedSome = (selected.length > 0) && (selected.length < items.length);
-  const selectedAll = (items.length > 0) && (selected.length === items.length);
-
   return (
     <Card>
       <Scrollbar>
@@ -42,47 +40,29 @@ export const JobsTable = (props) => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>
-                  Job
-                </TableCell>
-                <TableCell>
-                  Part
-                </TableCell>
-                <TableCell>
-                  Target
-                </TableCell>
-                <TableCell>
-                  Machines
-                </TableCell>
-                <TableCell>
-                  Status
-                </TableCell>
+                <TableCell>Job</TableCell>
+                <TableCell>Part</TableCell>
+                <TableCell>Target</TableCell>
+                <TableCell>Machines</TableCell>
+                <TableCell>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {items.map((job) => {
                 const isSelected = selected.includes(job.id);
+                const isCurrent = job.id === currentJobId;
                 return (
                   <TableRow
                     hover
                     key={job.id}
                     selected={isSelected}
+                    sx={isCurrent ? { backgroundColor: 'rgba(76, 175, 80, 0.2)' } : {}}
                   >
-                    <TableCell>
-                      {job.job}
-                    </TableCell>
-                    <TableCell>
-                      {job.part}
-                    </TableCell>
-                    <TableCell>
-                      {job.target}
-                    </TableCell>
-                    <TableCell>
-                      {job.machines}
-                    </TableCell>
-                    <TableCell>
-                      {job.status}
-                    </TableCell>
+                    <TableCell>{job.id}</TableCell>
+                    <TableCell>{job.part}</TableCell>
+                    <TableCell>{job.target}</TableCell>
+                    <TableCell>{job.machines}</TableCell>
+                    <TableCell>{job.status}</TableCell>
                   </TableRow>
                 );
               })}
@@ -102,6 +82,7 @@ export const JobsTable = (props) => {
     </Card>
   );
 };
+
 
 JobsTable.propTypes = {
   count: PropTypes.number,

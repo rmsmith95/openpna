@@ -51,14 +51,14 @@ export const PartsTable = (props) => {
                 <TableCell>
                   Name
                 </TableCell>
-                {/* <TableCell>
-                  Mass
-                </TableCell> */}
                 <TableCell>
                   Description
                 </TableCell>
                 <TableCell>
                   Cad File
+                </TableCell>
+                <TableCell>
+                  Assembled
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -80,14 +80,14 @@ export const PartsTable = (props) => {
                     <TableCell>
                       {part.name}
                     </TableCell>
-                    {/* <TableCell>
-                      {part.mass}
-                    </TableCell> */}
                     <TableCell>
                       {part.description}
                     </TableCell>
                     <TableCell>
                       {part.cad}
+                    </TableCell>
+                    <TableCell>
+                      {part.assembled}
                     </TableCell>
                   </TableRow>
                 );

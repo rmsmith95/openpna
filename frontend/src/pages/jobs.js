@@ -1,186 +1,89 @@
 import { useCallback, useMemo, useState } from 'react';
 import Head from 'next/head';
-import { subDays, subHours } from 'date-fns';
-import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
-import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
-import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
+import PlayIcon from '@heroicons/react/24/solid/PlayIcon';
+import ArrowPathIcon from '@heroicons/react/24/solid/ArrowPathIcon';
 import { Box, Button, Container, Stack, SvgIcon, Typography } from '@mui/material';
 import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { JobsTable } from 'src/sections/jobs/job-table';
-// import { CustomersSearch } from 'src/sections/customer/customers-search';
 import { applyPagination } from 'src/utils/apply-pagination';
+import { initialJobs, initialParts, useSimulation } from 'src/utils/simulation';
 
-const now = new Date();
-
-const data = [
-  {
-    'job': '1.1',
-    'part': 'arm1',
-    'target': 'body',
-    'machines': 'LitePlacer1',
-    'status': 'To Do',
-    'description': ''
-  },
-  {
-    'job': '1.2',
-    'part': 'arm2',
-    'target': 'body',
-    'machines': 'LitePlacer1',
-    'status': 'To Do',
-    'description': ''
-  },
-  {
-    'job': '1.3',
-    'part': 'arm3',
-    'target': 'body',
-    'machines': 'LitePlacer1',
-    'status': 'To Do',
-    'description': ''
-  },
-  {
-    'job': '1.4',
-    'part': 'arm4',
-    'target': 'body',
-    'machines': 'LitePlacer1',
-    'status': 'To Do',
-    'description': ''
-  },
-  {
-    'job': '2.1',
-    'part': 'Electric Speed Controller',
-    'target': 'Flight Controller',
-    'machines': 'LitePlacer1',
-    'status': 'To Do',
-    'description': ''
-  },
-  {
-    'job': '3.1',
-    'part': 'Motor1',
-    'target': 'Arm1',
-    'machines': 'LitePlacer1',
-    'status': 'To Do',
-    'description': ''
-  },
-];
-
-const useCustomers = (page, rowsPerPage) => {
-  return useMemo(
-    () => {
-      return applyPagination(data, page, rowsPerPage);
-    },
-    [page, rowsPerPage]
-  );
+// Pagination helper
+const usePaginated = (items, page, rowsPerPage) => {
+  return useMemo(() => applyPagination(items, page, rowsPerPage), [items, page, rowsPerPage]);
 };
 
-const useCustomerIds = (customers) => {
-  return useMemo(
-    () => {
-      return customers.map((customer) => customer.id);
-    },
-    [customers]
-  );
-};
-
-const Page = () => {
+const JobsPage = () => {
+  const [jobs, setJobs] = useState(initialJobs);
+  const [parts, setParts] = useState(initialParts);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const customers = useCustomers(page, rowsPerPage);
-  const customersIds = useCustomerIds(customers);
-  const customersSelection = useSelection(customersIds);
 
-  const handlePageChange = useCallback(
-    (event, value) => {
-      setPage(value);
-    },
-    []
-  );
+  const jobsIds = useMemo(() => jobs.map(j => j.id), [jobs]);
+  const jobsSelection = useSelection(jobsIds);
+  const paginatedJobs = usePaginated(jobs, page, rowsPerPage);
 
-  const handleRowsPerPageChange = useCallback(
-    (event) => {
-      setRowsPerPage(event.target.value);
-    },
-    []
-  );
+  // Manual step simulation hook
+  const { currentJobId, step, reset } = useSimulation({
+    jobs,
+    setJobs,
+    parts,
+    setParts,
+    intervalTime: 2000
+  });
+
+  // Handlers
+  const handleStep = () => step();
+  const handleReset = () => reset();
+  const handlePageChange = (event, newPage) => setPage(newPage);
+  const handleRowsChange = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   return (
     <>
       <Head>
-        <title>
-          Jobs
-        </title>
+        <title>Jobs</title>
       </Head>
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          py: 8
-        }}
-      >
+      <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
         <Container maxWidth="xl">
           <Stack spacing={3}>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              spacing={4}
-            >
-              <Stack spacing={1}>
-                <Typography variant="h4">
-                  Jobs
-                </Typography>
-                <Stack
-                  alignItems="center"
-                  direction="row"
-                  spacing={1}
-                >
-                  <Button
-                    color="inherit"
-                    startIcon={(
-                      <SvgIcon fontSize="small">
-                        <ArrowUpOnSquareIcon />
-                      </SvgIcon>
-                    )}
-                  >
-                    Import
-                  </Button>
-                  <Button
-                    color="inherit"
-                    startIcon={(
-                      <SvgIcon fontSize="small">
-                        <ArrowDownOnSquareIcon />
-                      </SvgIcon>
-                    )}
-                  >
-                    Export
-                  </Button>
-                </Stack>
-              </Stack>
-              <div>
-                <Button
-                  startIcon={(
-                    <SvgIcon fontSize="small">
-                      <PlusIcon />
-                    </SvgIcon>
-                  )}
-                  variant="contained"
-                >
-                  Add
-                </Button>
-              </div>
+            <Typography variant="h4">Jobs</Typography>
+
+            <Stack direction="row" spacing={2}>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<SvgIcon fontSize="small"><PlayIcon /></SvgIcon>}
+                onClick={handleStep}
+              >
+                Run 1 Job
+              </Button>
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<SvgIcon fontSize="small"><ArrowPathIcon /></SvgIcon>}
+                onClick={handleReset}
+              >
+                Reset
+              </Button>
             </Stack>
-            {/* <CustomersSearch /> */}
+
             <JobsTable
-              count={data.length}
-              items={customers}
-              onDeselectAll={customersSelection.handleDeselectAll}
-              onDeselectOne={customersSelection.handleDeselectOne}
+              count={jobs.length}
+              items={paginatedJobs}
+              currentJobId={currentJobId}
+              onDeselectAll={jobsSelection.handleDeselectAll}
+              onDeselectOne={jobsSelection.handleDeselectOne}
               onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              onSelectAll={customersSelection.handleSelectAll}
-              onSelectOne={customersSelection.handleSelectOne}
+              onRowsPerPageChange={handleRowsChange}
+              onSelectAll={jobsSelection.handleSelectAll}
+              onSelectOne={jobsSelection.handleSelectOne}
               page={page}
               rowsPerPage={rowsPerPage}
-              selected={customersSelection.selected}
+              selected={jobsSelection.selected}
             />
           </Stack>
         </Container>
@@ -189,10 +92,6 @@ const Page = () => {
   );
 };
 
-Page.getLayout = (page) => (
-  <DashboardLayout>
-    {page}
-  </DashboardLayout>
-);
+JobsPage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
 
-export default Page;
+export default JobsPage;

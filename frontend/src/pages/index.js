@@ -16,6 +16,7 @@ import {
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { JobsTable } from 'src/sections/jobs/job-table';
 import { applyPagination } from 'src/utils/apply-pagination';
+import { initialJobs, initialParts, useSimulation } from 'src/utils/simulation';
 
 // --- Example machine list ---
 const machines = [
@@ -24,19 +25,9 @@ const machines = [
   { name: 'Linear Actuator', size: '150mm', attachments: '' },
 ];
 
-// --- Example jobs data ---
-const jobs = [
-  { job: '1.1', part: 'arm1', target: 'body', machines: 'LitePlacer1', status: 'To Do', description: '' },
-  { job: '1.2', part: 'arm2', target: 'body', machines: 'LitePlacer1', status: 'To Do', description: '' },
-  { job: '1.3', part: 'arm3', target: 'body', machines: 'LitePlacer1', status: 'To Do', description: '' },
-  { job: '1.4', part: 'arm4', target: 'body', machines: 'LitePlacer1', status: 'To Do', description: '' },
-  { job: '2.1', part: 'ESC', target: 'Flight Controller', machines: 'LitePlacer1', status: 'To Do', description: '' },
-  { job: '3.1', part: 'Motor1', target: 'Arm1', machines: 'LitePlacer1', status: 'To Do', description: '' },
-];
-
 // --- Pagination helpers ---
 const useJobs = (page, rowsPerPage) =>
-  useMemo(() => applyPagination(jobs, page, rowsPerPage), [page, rowsPerPage]);
+  useMemo(() => applyPagination(initialJobs, page, rowsPerPage), [page, rowsPerPage]);
 
 const Page = () => {
   const [page, setPage] = useState(0);
@@ -50,7 +41,7 @@ const Page = () => {
   return (
     <>
       <Head>
-        <title>Microcell Dashboard</title>
+        <title>MicroFactory Dashboard</title>
       </Head>
 
       <Box component="main" sx={{ flexGrow: 1, py: 4 }}>
@@ -107,7 +98,7 @@ const Page = () => {
                   Jobs
                 </Typography>
                 <JobsTable
-                  count={jobs.length}
+                  count={initialJobs.length}
                   items={pagedJobs}
                   page={page}
                   rowsPerPage={rowsPerPage}

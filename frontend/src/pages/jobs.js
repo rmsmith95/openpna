@@ -7,7 +7,8 @@ import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { JobsTable } from 'src/sections/jobs/job-table';
 import { applyPagination } from 'src/utils/apply-pagination';
-import { initialJobs, initialParts, useSimulation } from 'src/utils/simulation';
+import { initialJobs, initialParts } from 'src/utils/jobs-set1';
+import { useSimulation } from 'src/sections/jobs/simulation';
 
 // Pagination helper
 const usePaginated = (items, page, rowsPerPage) => {
@@ -24,8 +25,7 @@ const JobsPage = () => {
   const jobsSelection = useSelection(jobsIds);
   const paginatedJobs = usePaginated(jobs, page, rowsPerPage);
 
-  // Manual step simulation hook
-  const { currentJobId, step, reset } = useSimulation({
+  const { currentJobId, step, run, stop, reset } = useSimulation({
     jobs,
     setJobs,
     parts,
@@ -55,11 +55,26 @@ const JobsPage = () => {
             <Stack direction="row" spacing={2}>
               <Button
                 variant="contained"
+                color="primary"
+                startIcon={<SvgIcon fontSize="small"><PlayIcon /></SvgIcon>}
+                onClick={() => run()}
+              >
+                Run
+              </Button>
+              <Button
+                variant="contained"
+                color="warning"
+                onClick={stop}
+              >
+                Stop
+              </Button>
+              <Button
+                variant="contained"
                 color="success"
                 startIcon={<SvgIcon fontSize="small"><PlayIcon /></SvgIcon>}
                 onClick={handleStep}
               >
-                Run 1 Job
+                Step
               </Button>
               <Button
                 variant="outlined"
@@ -85,6 +100,8 @@ const JobsPage = () => {
               rowsPerPage={rowsPerPage}
               selected={jobsSelection.selected}
             />
+
+            
           </Stack>
         </Container>
       </Box>

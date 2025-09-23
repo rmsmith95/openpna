@@ -20,14 +20,10 @@ import {
 import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { PartsTable } from 'src/sections/parts/part-table';
+import { PartSearch } from 'src/sections/parts/part-search';
 import { applyPagination } from 'src/utils/apply-pagination';
-import {
-  initialJobs,
-  initialParts,
-  startSimulation,
-  stopSimulation,
-  resetSimulation
-} from 'src/utils/simulation';
+import { initialJobs, initialParts } from 'src/utils/jobs-set1';
+import { useSimulation } from 'src/sections/jobs/simulation';
 
 const useParts = (page, rowsPerPage, visibleClasses, parts) => {
   return useMemo(() => {
@@ -43,6 +39,7 @@ const usePartIds = (parts) => {
 const PartsPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [visibleClasses, setVisibleClasses] = useState({
     part: true,
@@ -53,8 +50,22 @@ const PartsPage = () => {
   const [parts, setParts] = useState(initialParts);
   const [jobs, setJobs] = useState(initialJobs);
 
-  const partsPaginated = useParts(page, rowsPerPage, visibleClasses, parts);
-  const partsIds = usePartIds(partsPaginated);
+  const filteredParts = useMemo(() => {
+    return parts.filter((p) =>
+      visibleClasses[p.class] &&
+      (
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.id.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+  }, [parts, visibleClasses, searchQuery]);
+
+  const partsPaginated = useMemo(
+    () => applyPagination(filteredParts, page, rowsPerPage),
+    [filteredParts, page, rowsPerPage]
+  );
+
+  const partsIds = useMemo(() => partsPaginated.map((part) => part.id), [partsPaginated]);
   const selection = useSelection(partsIds);
 
   const handlePageChange = useCallback((event, value) => setPage(value), []);
@@ -80,6 +91,7 @@ const PartsPage = () => {
                 <Stack alignItems="center" direction="row" spacing={1}>
                   <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowUpOnSquareIcon /></SvgIcon>}>Import</Button>
                   <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowDownOnSquareIcon /></SvgIcon>}>Export</Button>
+                  <PartSearch value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }} />
                   <FormControlLabel control={<Checkbox checked={visibleClasses.part} onChange={() => toggleClass('part')} />} label="Parts" />
                   <FormControlLabel control={<Checkbox checked={visibleClasses.jig} onChange={() => toggleClass('jig')} />} label="Jigs" />
                   <FormControlLabel control={<Checkbox checked={visibleClasses.assembly} onChange={() => toggleClass('assembly')} />} label="Assembly" />

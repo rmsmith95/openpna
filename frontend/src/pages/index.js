@@ -16,7 +16,8 @@ import {
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { JobsTable } from 'src/sections/jobs/job-table';
 import { applyPagination } from 'src/utils/apply-pagination';
-import { initialJobs, initialParts, useSimulation } from 'src/utils/simulation';
+import { initialJobs, initialParts } from 'src/utils/jobs-set1';
+import { useSimulation } from 'src/sections/jobs/simulation';
 
 // --- Example machine list ---
 const machines = [
@@ -79,7 +80,7 @@ const Page = () => {
               <Paper
                 sx={{
                   p: 2,
-                  height: 250,
+                  height: 360,
                   backgroundColor: 'black',
                   display: 'flex',
                   alignItems: 'center',

@@ -1,21 +1,17 @@
 import PropTypes from 'prop-types';
-import { format } from 'date-fns';
 import {
-  Avatar,
   Box,
   Card,
-  Checkbox,
-  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TablePagination,
   TableRow,
-  Typography
+  Typography,
+  LinearProgress
 } from '@mui/material';
 import { Scrollbar } from 'src/components/scrollbar';
-import { getInitials } from 'src/utils/get-initials';
 
 export const JobsTable = (props) => {
   const {
@@ -32,6 +28,10 @@ export const JobsTable = (props) => {
     rowsPerPage = 0,
     selected = []
   } = props;
+
+  // Compute progress
+  const completedCount = items.filter(j => j.status === 'Done').length;
+  const progressPercent = (completedCount / count) * 100;
 
   return (
     <Card>
@@ -70,19 +70,42 @@ export const JobsTable = (props) => {
           </Table>
         </Box>
       </Scrollbar>
-      <TablePagination
-        component="div"
-        count={count}
-        onPageChange={onPageChange}
-        onRowsPerPageChange={onRowsPerPageChange}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[5, 10, 25]}
-      />
+
+      {/* Pagination with progress bar to the left and x/y jobs to the right */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 2,
+          py: 1
+        }}
+      >
+        {/* Progress bar fills remaining space */}
+        <Box sx={{ flex: 1, mr: 1 }}>
+          <LinearProgress variant="determinate" value={progressPercent} sx={{ height: 10, borderRadius: 5 }} />
+        </Box>
+
+        {/* x/y jobs text to the right of the progress bar */}
+        <Typography variant="body2" color="textSecondary" sx={{ ml: 2, mr: 2, whiteSpace: 'nowrap' }}>
+          {completedCount} / {count} jobs
+        </Typography>
+
+        {/* Pagination on the right */}
+        <TablePagination
+          component="div"
+          count={count}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[5, 10, 25]}
+          sx={{ m: 0 }}
+        />
+      </Box>
     </Card>
   );
 };
-
 
 JobsTable.propTypes = {
   count: PropTypes.number,
@@ -95,5 +118,5 @@ JobsTable.propTypes = {
   onSelectOne: PropTypes.func,
   page: PropTypes.number,
   rowsPerPage: PropTypes.number,
-  selected: PropTypes.array
+  selected: PropTypes.array,
 };

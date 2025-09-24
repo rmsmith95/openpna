@@ -13,9 +13,9 @@ import {
   Unstable_Grid2 as Grid
 } from '@mui/material';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
-import { CompanyCard } from 'src/sections/cameras/company-card';
-import { CompaniesSearch } from 'src/sections/cameras/companies-search';
-import CameraDashboard from 'src/components/cameras';
+// import { CompanyCard } from 'src/sections/cameras/company-card';
+// import { CompaniesSearch } from 'src/sections/cameras/companies-search';
+import CameraDashboard from 'src/sections/cameras/camera-layout';
 
 
 const Page = () => (

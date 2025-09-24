@@ -1,24 +1,25 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import ArrowDownIcon from '@heroicons/react/24/solid/ArrowDownIcon';
-import ArrowUpIcon from '@heroicons/react/24/solid/ArrowUpIcon';
-import CurrencyDollarIcon from '@heroicons/react/24/solid/CurrencyDollarIcon';
 import {
-  Avatar,
   Card,
   CardContent,
   Stack,
-  SvgIcon,
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableRow,
-  Typography,
+  TableHead,
   Tabs,
   Tab,
-  Box
+  Box,
+  Button,
+  SvgIcon,
+  Typography
 } from '@mui/material';
+import ArrowUpIcon from '@heroicons/react/24/solid/ArrowUpIcon';
+import ArrowDownIcon from '@heroicons/react/24/solid/ArrowDownIcon';
+import ArrowLeftIcon from '@heroicons/react/24/solid/ArrowLeftIcon';
+import ArrowRightIcon from '@heroicons/react/24/solid/ArrowRightIcon';
 
 export const Gantry = (props) => {
   const { difference, positive = false, sx, value } = props;
@@ -31,32 +32,7 @@ export const Gantry = (props) => {
   return (
     <Card sx={sx}>
       <CardContent sx={{ pt: 0 }}>
-        <Stack
-          alignItems="flex-start"
-          direction="row"
-          justifyContent="space-between"
-          spacing={3}
-        >
-          <Stack spacing={1}>
-            {/* <Typography color="text.secondary" variant="overline">
-              Gantry
-            </Typography>
-            <Typography variant="h4">{value}</Typography> */}
-          </Stack>
-          {/* <Avatar
-            sx={{
-              backgroundColor: 'error.main',
-              height: 56,
-              width: 56
-            }}
-          >
-            <SvgIcon>
-              <CurrencyDollarIcon />
-            </SvgIcon>
-          </Avatar> */}
-        </Stack>
-
-        {/* Tabs for tables */}
+        {/* Tabs */}
         <Box sx={{ mt: 3 }}>
           <Tabs
             value={tab}
@@ -73,43 +49,125 @@ export const Gantry = (props) => {
         {/* Tab Panels */}
         <Box sx={{ mt: 2 }}>
           {tab === 0 && (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Axis</TableCell>
-                  <TableCell>Min</TableCell>
-                  <TableCell>Position</TableCell>
-                  <TableCell>Max</TableCell>
-                  <TableCell>Rate</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell>X</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>54</TableCell>
-                  <TableCell>600</TableCell>
-                  <TableCell>3mm/s</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Y</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>54</TableCell>
-                  <TableCell>400</TableCell>
-                  <TableCell>3mm/s</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Z</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>280</TableCell>
-                  <TableCell>300</TableCell>
-                  <TableCell>3mm/s</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            <Stack direction="row" spacing={4} alignItems="flex-start">
+              {/* Table */}
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Axis</TableCell>
+                    <TableCell>Min</TableCell>
+                    <TableCell>Position</TableCell>
+                    <TableCell>Max</TableCell>
+                    <TableCell>Rate</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>X</TableCell>
+                    <TableCell>0</TableCell>
+                    <TableCell>54</TableCell>
+                    <TableCell>600</TableCell>
+                    <TableCell>3mm/s</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Y</TableCell>
+                    <TableCell>0</TableCell>
+                    <TableCell>54</TableCell>
+                    <TableCell>400</TableCell>
+                    <TableCell>3mm/s</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Z</TableCell>
+                    <TableCell>0</TableCell>
+                    <TableCell>280</TableCell>
+                    <TableCell>300</TableCell>
+                    <TableCell>3mm/s</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+
+              {/* Controls Panel */}
+              <Stack direction="row" spacing={2} alignItems="center">
+                {/* X/Y D-Pad */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 1
+                  }}
+                >
+                  <Button variant="contained" sx={{ width: 60, height: 60 }}>
+                    <SvgIcon component={ArrowUpIcon} />
+                  </Button>
+
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Button variant="contained" sx={{ width: 60, height: 60 }}>
+                      <SvgIcon component={ArrowLeftIcon} />
+                    </Button>
+
+                    <Box
+                      sx={{
+                        width: 60,
+                        height: 60,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid #ccc',
+                        borderRadius: 1
+                      }}
+                    >
+                      <Typography>X/Y</Typography>
+                    </Box>
+
+                    <Button variant="contained" sx={{ width: 60, height: 60 }}>
+                      <SvgIcon component={ArrowRightIcon} />
+                    </Button>
+                  </Stack>
+
+                  <Button variant="contained" sx={{ width: 60, height: 60 }}>
+                    <SvgIcon component={ArrowDownIcon} />
+                  </Button>
+                </Box>
+
+                {/* Z Controls */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                >
+                  <Button variant="contained" sx={{ width: 60, height: 60 }}>
+                    <SvgIcon component={ArrowUpIcon} />
+                  </Button>
+
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px solid #ccc',
+                      borderRadius: 1
+                    }}
+                  >
+                    <Typography>Z</Typography>
+                  </Box>
+
+                  <Button variant="contained" sx={{ width: 60, height: 60 }}>
+                    <SvgIcon component={ArrowDownIcon} />
+                  </Button>
+                </Box>
+              </Stack>
+            </Stack>
           )}
+
           {tab === 1 && (
-            <Table>
+            <Table size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>Id</TableCell>

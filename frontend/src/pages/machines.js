@@ -69,7 +69,7 @@ const Page = () => {
                   </Button>
                 </Stack>
               </Stack>
-              <div>
+              {/* <div>
                 <Button
                   startIcon={
                     <SvgIcon fontSize="small">
@@ -80,11 +80,11 @@ const Page = () => {
                 >
                   Add
                 </Button>
-              </div>
+              </div> */}
             </Stack>
 
             {/* Micro Cell 1 collapsible */}
-            <CollapsibleCard title="Micro Factory 1" color="primary.main">
+            {/* <CollapsibleCard title="Micro Factory 1" color="primary.main"> */}
               <Stack spacing={2}>
                 <CollapsibleCard title="LitePlacer1" color="secondary.main">
                   <Gantry
@@ -104,7 +104,7 @@ const Page = () => {
                   />
                 </CollapsibleCard>
               </Stack>
-            </CollapsibleCard>
+            {/* </CollapsibleCard> */}
           </Stack>
         </Container>
       </Box>

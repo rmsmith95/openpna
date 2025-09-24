@@ -97,9 +97,9 @@ const PartsPage = () => {
                   <FormControlLabel control={<Checkbox checked={visibleClasses.assembly} onChange={() => toggleClass('assembly')} />} label="Assembly" />
                 </Stack>
               </Stack>
-              <div>
+              {/* <div>
                 <Button startIcon={<SvgIcon fontSize="small"><PlusIcon /></SvgIcon>} variant="contained">Add</Button>
-              </div>
+              </div> */}
             </Stack>
 
             {/* Parts table */}

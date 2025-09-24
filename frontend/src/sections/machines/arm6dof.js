@@ -1,24 +1,23 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import ArrowDownIcon from '@heroicons/react/24/solid/ArrowDownIcon';
-import ArrowUpIcon from '@heroicons/react/24/solid/ArrowUpIcon';
-import CurrencyDollarIcon from '@heroicons/react/24/solid/CurrencyDollarIcon';
 import {
-  Avatar,
-  Box,
   Card,
   CardContent,
   Stack,
-  SvgIcon,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  Tab,
   Tabs,
+  Tab,
+  Box,
+  Button,
+  SvgIcon,
   Typography
 } from '@mui/material';
+import ArrowLeftIcon from '@heroicons/react/24/solid/ArrowLeftIcon';
+import ArrowRightIcon from '@heroicons/react/24/solid/ArrowRightIcon';
 
 export const Arm6DOF = (props) => {
   const { difference, positive = false, sx, value } = props;
@@ -28,29 +27,20 @@ export const Arm6DOF = (props) => {
     setTab(newValue);
   };
 
-  return (
-    <Card>
-      <CardContent sx={{ pt: 0 }}>
-        <Stack
-          alignItems="flex-start"
-          direction="row"
-          justifyContent="space-between"
-          spacing={3}
-        >
-          <Stack spacing={1}>
-            <Typography
-              color="text.secondary"
-              variant="overline"
-            >
-              6 DOF Arm
-            </Typography>
-            <Typography variant="h4">
-              {value}
-            </Typography>
-          </Stack>
-        </Stack>
+  // Data for axis table
+  const axisData = [
+    { joint: 'J1', min: 0, pos: 0, max: 360, rate: '3mm/s' },
+    { joint: 'J2', min: 0, pos: 150, max: 'inf', rate: '3mm/s' },
+    { joint: 'J3', min: 0, pos: 0, max: 300, rate: '3mm/s' },
+    { joint: 'J4', min: 0, pos: 0, max: 300, rate: '3mm/s' },
+    { joint: 'J5', min: 0, pos: 0, max: 300, rate: '3mm/s' },
+    { joint: 'J6', min: 0, pos: 0, max: 300, rate: '3mm/s' },
+  ];
 
-        {/* Tabs for tables */}
+  return (
+    <Card sx={sx}>
+      <CardContent sx={{ pt: 0 }}>
+        {/* Tabs */}
         <Box sx={{ mt: 3 }}>
           <Tabs
             value={tab}
@@ -67,64 +57,66 @@ export const Arm6DOF = (props) => {
         {/* Tab Panels */}
         <Box sx={{ mt: 2 }}>
           {tab === 0 && (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Joint</TableCell>
-                  <TableCell>Min</TableCell>
-                  <TableCell>Position</TableCell>
-                  <TableCell>Max</TableCell>
-                  <TableCell>Rate</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell>1</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>360</TableCell>
-                  <TableCell>3mm/s</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>2</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>150</TableCell>
-                  <TableCell>inf</TableCell>
-                  <TableCell>3mm/s</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>3</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>300</TableCell>
-                  <TableCell>3mm/s</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>4</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>300</TableCell>
-                  <TableCell>3mm/s</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>5</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>300</TableCell>
-                  <TableCell>3mm/s</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>6</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>0</TableCell>
-                  <TableCell>300</TableCell>
-                  <TableCell>3mm/s</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            <Stack direction="row" spacing={4} alignItems="flex-start">
+              {/* Table */}
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Joint</TableCell>
+                    <TableCell>Min</TableCell>
+                    <TableCell>Position</TableCell>
+                    <TableCell>Max</TableCell>
+                    <TableCell>Rate</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {axisData.map((row) => (
+                    <TableRow key={row.joint}>
+                      <TableCell>{row.joint}</TableCell>
+                      <TableCell>{row.min}</TableCell>
+                      <TableCell>{row.pos}</TableCell>
+                      <TableCell>{row.max}</TableCell>
+                      <TableCell>{row.rate}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Controls panel */}
+              <Stack spacing={1} sx={{ pl: 5, pr: 5, pt: 6 }}> {/* Added margin-top */}
+                {axisData.map((row) => (
+                  <Stack
+                    key={row.joint}
+                    direction="row"
+                    spacing={1}
+                    height={43}
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Button variant="contained" sx={{ width: 50, height: 40 }}>
+                      <SvgIcon component={ArrowLeftIcon} />
+                    </Button>
+
+                    <Box
+                      sx={{
+                        width: 40,
+                        textAlign: 'center',
+                      }}
+                    >
+                      <Typography variant="body2">{row.joint}</Typography>
+                    </Box>
+
+                    <Button variant="contained" sx={{ width: 50, height: 40 }}>
+                      <SvgIcon component={ArrowRightIcon} />
+                    </Button>
+                  </Stack>
+                ))}
+              </Stack>
+            </Stack>
           )}
+
           {tab === 1 && (
-            <Table>
+            <Table size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>Id</TableCell>
@@ -158,7 +150,7 @@ export const Arm6DOF = (props) => {
   );
 };
 
-Arm6DOF.prototypes = {
+Arm6DOF.propTypes = {
   difference: PropTypes.number,
   positive: PropTypes.bool,
   sx: PropTypes.object,

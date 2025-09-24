@@ -5,19 +5,18 @@ import {
   Container,
   Grid,
   Paper,
-  Stack,
   Typography,
   Table,
   TableHead,
   TableBody,
   TableRow,
   TableCell,
+  Divider,
 } from '@mui/material';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { JobsTable } from 'src/sections/jobs/job-table';
 import { applyPagination } from 'src/utils/apply-pagination';
-import { initialJobs, initialParts } from 'src/utils/jobs-set1';
-import { useSimulation } from 'src/sections/jobs/simulation';
+import { initialJobs } from 'src/utils/jobs-set1';
 
 // --- Example machine list ---
 const machines = [
@@ -45,29 +44,39 @@ const Page = () => {
         <title>MicroFactory Dashboard</title>
       </Head>
 
-      <Box component="main" sx={{ flexGrow: 1, py: 4 }}>
+      <Box component="main" sx={{ flexGrow: 1, mt: 2, py: 4 }}>
         <Container maxWidth="xl">
           <Grid container spacing={3}>
+            
             {/* Top Left: Machine list */}
             <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2 }}>
+              <Paper
+                elevation={3}
+                sx={{ p: 2, borderRadius: 2, display: 'flex', flexDirection: 'column', height: '100%' }}
+              >
                 <Typography variant="h6" gutterBottom>
                   Machines
                 </Typography>
+                <Divider sx={{ mb: 2 }} />
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell><strong>Name</strong></TableCell>
-                      <TableCell><strong>Size</strong></TableCell>
-                      <TableCell><strong>Attachments</strong></TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Size</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Attachments</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {machines.map((machine, idx) => (
-                      <TableRow key={idx}>
+                      <TableRow
+                        key={idx}
+                        sx={{
+                          '&:nth-of-type(odd)': { backgroundColor: 'action.hover' },
+                        }}
+                      >
                         <TableCell>{machine.name}</TableCell>
                         <TableCell>{machine.size}</TableCell>
-                        <TableCell>{machine.attachments || 'None'}</TableCell>
+                        <TableCell>{machine.attachments || '—'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -78,26 +87,36 @@ const Page = () => {
             {/* Top Right: Camera feed placeholder */}
             <Grid item xs={12} md={6}>
               <Paper
+                elevation={3}
                 sx={{
                   p: 2,
+                  borderRadius: 2,
                   height: 360,
-                  backgroundColor: 'black',
+                  backgroundColor: 'grey.900',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
+                  color: 'grey.300',
+                  fontSize: 18,
+                  fontWeight: 500,
+                  letterSpacing: 1,
+                  border: '2px grey',
                 }}
               >
-                Camera Feed
+                Camera 1
               </Paper>
             </Grid>
 
             {/* Bottom: Jobs list */}
             <Grid item xs={12}>
-              <Paper sx={{ p: 2 }}>
+              <Paper
+                elevation={3}
+                sx={{ p: 2, borderRadius: 2 }}
+              >
                 <Typography variant="h6" gutterBottom>
                   Jobs
                 </Typography>
+                <Divider sx={{ mb: 2 }} />
                 <JobsTable
                   count={initialJobs.length}
                   items={pagedJobs}
@@ -109,6 +128,7 @@ const Page = () => {
                 />
               </Paper>
             </Grid>
+
           </Grid>
         </Container>
       </Box>

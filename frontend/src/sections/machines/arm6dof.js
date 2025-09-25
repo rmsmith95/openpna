@@ -14,17 +14,40 @@ import {
   Box,
   Button,
   SvgIcon,
-  Typography
+  Typography,
+  TextField
 } from '@mui/material';
 import ArrowLeftIcon from '@heroicons/react/24/solid/ArrowLeftIcon';
 import ArrowRightIcon from '@heroicons/react/24/solid/ArrowRightIcon';
+import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
+import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 
 export const Arm6DOF = (props) => {
   const { difference, positive = false, sx, value } = props;
   const [tab, setTab] = useState(0);
 
+  // Connection state
+  const [connected, setConnected] = useState(false);
+  const [port, setPort] = useState('COM4');   // Example
+  const [baud, setBaud] = useState(115200);
+
   const handleChange = (event, newValue) => {
     setTab(newValue);
+  };
+
+  const handleConnect = async () => {
+    try {
+      // TODO: call your FastAPI backend e.g. /connect_arm
+      setConnected(true);
+    } catch (err) {
+      console.error("Failed to connect:", err);
+      setConnected(false);
+    }
+  };
+
+  const handleDisconnect = () => {
+    // TODO: call backend disconnect
+    setConnected(false);
   };
 
   // Data for axis table
@@ -51,6 +74,22 @@ export const Arm6DOF = (props) => {
           >
             <Tab label="Axis" />
             <Tab label="Attachments" />
+            <Tab
+              label={
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <span>Connection</span>
+                  {connected ? (
+                    <SvgIcon fontSize="small" color="success">
+                      <CheckCircleIcon />
+                    </SvgIcon>
+                  ) : (
+                    <SvgIcon fontSize="small" color="error">
+                      <XCircleIcon />
+                    </SvgIcon>
+                  )}
+                </Stack>
+              }
+            />
           </Tabs>
         </Box>
 
@@ -83,7 +122,7 @@ export const Arm6DOF = (props) => {
               </Table>
 
               {/* Controls panel */}
-              <Stack spacing={1} sx={{ pl: 5, pr: 5, pt: 6 }}> {/* Added margin-top */}
+              <Stack spacing={1} sx={{ pl: 5, pr: 5, pt: 6 }}>
                 {axisData.map((row) => (
                   <Stack
                     key={row.joint}
@@ -97,12 +136,7 @@ export const Arm6DOF = (props) => {
                       <SvgIcon component={ArrowLeftIcon} />
                     </Button>
 
-                    <Box
-                      sx={{
-                        width: 40,
-                        textAlign: 'center',
-                      }}
-                    >
+                    <Box sx={{ width: 40, textAlign: 'center' }}>
                       <Typography variant="body2">{row.joint}</Typography>
                     </Box>
 
@@ -143,6 +177,40 @@ export const Arm6DOF = (props) => {
                 </TableRow>
               </TableBody>
             </Table>
+          )}
+
+          {tab === 2 && (
+            <Stack spacing={2}>
+              <TextField
+                label="Port"
+                value={port}
+                onChange={(e) => setPort(e.target.value)}
+              />
+              <TextField
+                label="Baud Rate"
+                type="number"
+                value={baud}
+                onChange={(e) => setBaud(Number(e.target.value))}
+              />
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={handleConnect}
+                  disabled={connected}
+                >
+                  Connect
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleDisconnect}
+                  disabled={!connected}
+                >
+                  Disconnect
+                </Button>
+              </Stack>
+            </Stack>
           )}
         </Box>
       </CardContent>

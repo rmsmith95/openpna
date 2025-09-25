@@ -17,16 +17,6 @@ import { Arm6DOF } from 'src/sections/machines/arm6dof';
 import CollapsibleCard from 'src/components/collapsible-card';
 
 const Page = () => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  const handlePageChange = useCallback((event, value) => {
-    setPage(value);
-  }, []);
-
-  const handleRowsPerPageChange = useCallback((event) => {
-    setRowsPerPage(event.target.value);
-  }, []);
 
   return (
     <>
@@ -47,6 +37,23 @@ const Page = () => {
               <Stack spacing={1}>
                 <Typography variant="h4">Machines</Typography>
                 <Stack alignItems="center" direction="row" spacing={1}>
+                  <Button
+                    color="primary"
+                    variant="contained"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch("http://localhost:8000/run_job");
+                        const data = await res.json();
+                        console.log("Server response:", data);
+                        alert("FastAPI server responded: " + data.status);
+                      } catch (err) {
+                        console.error("Error connecting to FastAPI:", err);
+                        alert("Could not reach FastAPI server");
+                      }
+                    }}
+                  >
+                    Run Server
+                  </Button>
                   <Button
                     color="inherit"
                     startIcon={
@@ -83,28 +90,25 @@ const Page = () => {
               </div> */}
             </Stack>
 
-            {/* Micro Cell 1 collapsible */}
-            {/* <CollapsibleCard title="Micro Factory 1" color="primary.main"> */}
-              <Stack spacing={2}>
-                <CollapsibleCard title="LitePlacer1" color="secondary.main">
-                  <Gantry
-                    difference={12}
-                    positive
-                    sx={{ height: '100%' }}
-                    value="LitePlacer1"
-                  />
-                </CollapsibleCard>
+            <Stack spacing={2}>
+              <CollapsibleCard title="LitePlacer1" color="secondary.main">
+                <Gantry
+                  difference={12}
+                  positive
+                  sx={{ height: '100%' }}
+                  value="LitePlacer1"
+                />
+              </CollapsibleCard>
 
-                <CollapsibleCard title="MyCobot1" color="success.main">
-                  <Arm6DOF
-                    difference={12}
-                    positive
-                    sx={{ height: '100%' }}
-                    value="MyCobot1"
-                  />
-                </CollapsibleCard>
-              </Stack>
-            {/* </CollapsibleCard> */}
+              <CollapsibleCard title="MyCobot1" color="success.main">
+                <Arm6DOF
+                  difference={12}
+                  positive
+                  sx={{ height: '100%' }}
+                  value="MyCobot1"
+                />
+              </CollapsibleCard>
+            </Stack>
           </Stack>
         </Container>
       </Box>

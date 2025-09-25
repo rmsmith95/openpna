@@ -70,7 +70,7 @@ const Page = () => (
                 </Button>
               </Stack>
             </Stack>
-            <div>
+            {/* <div>
               <Button
                 startIcon={(
                   <SvgIcon fontSize="small">
@@ -81,7 +81,7 @@ const Page = () => (
               >
                 Add
               </Button>
-            </div>
+            </div> */}
           </Stack>
 
           <Box
@@ -91,7 +91,7 @@ const Page = () => (
             }}
           >
 
-<CameraDashboard/>
+            <CameraDashboard />
 
           </Box>
         </Stack>

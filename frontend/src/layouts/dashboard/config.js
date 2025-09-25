@@ -1,9 +1,7 @@
 import ChartBarIcon from '@heroicons/react/24/solid/ChartBarIcon';
-import CogIcon from '@heroicons/react/24/solid/CogIcon';
-import LockClosedIcon from '@heroicons/react/24/solid/LockClosedIcon';
 import CameraIcon from '@heroicons/react/24/solid/CameraIcon';
-import UserIcon from '@heroicons/react/24/solid/UserIcon';
-import UserPlusIcon from '@heroicons/react/24/solid/UserPlusIcon';
+import WrenchScrewdriverIcon from '@heroicons/react/24/solid/WrenchScrewdriverIcon';
+import PuzzlePieceIcon from '@heroicons/react/24/solid/PuzzlePieceIcon';
 import CircleStackIcon from '@heroicons/react/24/solid/CircleStackIcon';
 import Squares2X2Icon from '@heroicons/react/24/solid/Squares2X2Icon';
 import { SvgIcon } from '@mui/material';
@@ -15,6 +13,15 @@ export const items = [
     icon: (
       <SvgIcon fontSize="small">
         <ChartBarIcon />
+      </SvgIcon>
+    )
+  },
+    {
+    title: 'Machines',
+    path: '/machines',
+    icon: (
+      <SvgIcon fontSize="small">
+        <Squares2X2Icon />
       </SvgIcon>
     )
   },
@@ -32,7 +39,7 @@ export const items = [
     path: '/jobs',
     icon: (
       <SvgIcon fontSize="small">
-        <CircleStackIcon />
+        <WrenchScrewdriverIcon />
       </SvgIcon>
     )
   },
@@ -41,19 +48,11 @@ export const items = [
     path: '/parts',
     icon: (
       <SvgIcon fontSize="small">
-        <UserIcon />
+        <PuzzlePieceIcon />
       </SvgIcon>
     )
   },
-  {
-    title: 'Machines',
-    path: '/machines',
-    icon: (
-      <SvgIcon fontSize="small">
-        <Squares2X2Icon />
-      </SvgIcon>
-    )
-  },
+
   // {
   //   title: 'Settings',
   //   path: '/settings',

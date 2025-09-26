@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 import logging
-from utils import Pose, Interface
+from .utils import Pose, Interface
 
 
 logger = logging.getLogger(__name__)

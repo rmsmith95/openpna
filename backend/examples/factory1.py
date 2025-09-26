@@ -1,69 +1,92 @@
 from typing import List
+from ..sections.factory import Factory
+from ..sections.machines import Machine, LitePlacer, Cobot280
+from ..sections.part import Part
+from ..sections.jobs import Job
+from ..sections.effectors import GripperEE
+from ..sections.utils import Pose
 import logging
 
-from factory import Factory
-from machines import CartesianRobot
-from part import Part, Pose, Action, Interface
-from effectors import GripperEE
 
-
-def create_robot_set_1(factory: Factory) -> CartesianRobot:
+def get_machines() -> List[Machine]:
     """
     Create a Cartesian robot and add it to the factory.
-    Returns the main CartesianRobot instance.
+    Returns the main LitePlacer instance.
     """
-    cartesian_robot = CartesianRobot("cartesian_robot1", max_load=2.0, footprint=(80, 80))
-    factory.add_robot(cartesian_robot, pose=Pose(30, 0, 0, 0, 0, 0))
-    logging.info(f"Robot {cartesian_robot.name} added to factory at {cartesian_robot.pose}")
+    cartesian_robot = LitePlacer("LitePlacer1", max_load=2.0, footprint=(80, 80))
     return cartesian_robot
 
 
-def create_drone1_assembly_parts(factory: Factory) -> List[Part]:
+def get_parts() -> List[Part]:
     """
     Create a sample quadcopter assembly (center frame + 4 arms)
     and add them to the factory.
     Returns the list of Part instances.
     """
-    logging.info("Creating drone1 assembly parts")
+    
+#     initialParts = [
+#   { 'id': 'p1', name: 'Body', class: 'part', mass: '0.3', description: '3d printed', cad: '/home/body.stl', assembled: false },
+#   { 'id': 'p2', name: 'Body Jig', class: 'jig', mass: '0.3', description: '3d printed', cad: '/home/body_jig.stl', assembled: false },
+#   { id: 'p3', name: 'Arm1', class: 'part', mass: '0.2', description: '3d printed', cad: '/home/arm.stl', assembled: false },
+#   { id: 'p4', name: 'Arm2', class: 'part', mass: '0.2', description: '3d printed', cad: '/home/arm.stl', assembled: false },
+#   { id: 'p5', name: 'Arm3', class: 'part', mass: '0.2', description: '3d printed', cad: '/home/arm.stl', assembled: false },
+#   { id: 'p6', name: 'Arm4', class: 'part', mass: '0.2', description: '3d printed', cad: '/home/arm.stl', assembled: false },
+#   { id: 'p7', name: 'Motor1', class: 'part', mass: '0.3', description: 'EMax', cad: '/home/motor.stl', assembled: false },
+#   { id: 'p8', name: 'Electric Speed Controller', class: 'part', mass: '0.3', description: 'SpeedyBee', cad: '/home/esc.stl', assembled: false },
+#   { id: 'p9', name: 'Flight Controller', class: 'part', mass: '0.3', description: 'SpeedyBee', cad: '/home/fc.stl', assembled: false },
+# ]
+    body = Part('Body')
+    body_jig = Part('Body Jig')
+    arm1 = Part('Arm1')
+    arm2 = Part('Arm2')
+    arm3 = Part('Arm3')
+    arm4 = Part('Arm4')
+    motor1 = Part('Motor1')
+    esc = Part('Electric Speed Controller')
+    fc = Part('Flight Controller')
+    return [body, body_jig, arm1, arm2, arm3, arm4, motor1, esc, fc]
 
+
+def get_jobs() -> List[Job]:
+
+#     initialJobs = [
+#   { id: '1', part: 'Body', target: 'Body Jig', machines: 'LitePlacer1', status: 'To Do', description: '' },
+#   { id: '2', part: 'Arm1', target: 'Body', machines: 'LitePlacer1', status: 'To Do', description: '' },
+#   { id: '4', part: 'Arm2', target: 'Body', machines: 'LitePlacer1', status: 'To Do', description: '' },
+#   { id: '3', part: 'Arm3', target: 'Body', machines: 'LitePlacer1', status: 'To Do', description: '' },
+#   { id: '5', part: 'Arm4', target: 'Body', machines: 'LitePlacer1', status: 'To Do', description: '' },
+#   { id: '6', part: 'Electric Speed Controller', target: 'Body', machines: 'LitePlacer1', status: 'To Do', description: '' },
+#   { id: '7', part: 'Flight Controller', target: 'Electric Speed Controller', machines: 'LitePlacer1', status: 'To Do', description: '' },
+# ]
+
+    job = Job('Body', 'Body Jig', 'LitePlacer1')
+    return [job]
+
+
+def get_factory1() -> Factory:
+    """
+    Initialize the factory, add machines, parts, and jobs.
+    Returns the fully prepared Factory instance.
+    """
+    logging.info("Initializing factory")
+    factory = Factory()
+    
+    # Add machines
+    liteplaer = LitePlacer("LitePlacer1", footprint=(80, 80))
+    factory.load_machine(liteplaer, pose=Pose(30, 0, 0, 0, 0, 0))
+    logging.info(f"Machine {liteplaer.name} added to factory at {liteplaer.pose}")
+    
+    # Add parts
+    parts: List[Part] = []
     parts_folder = "C:/Users/RMSmi/Downloads/quadcopter"
 
-    # Helper to create arm interfaces
-    def make_arm_interface(yaw: float) -> Interface:
-        actions = [Action(Pose(0, 0, 3), Pose(5, 5, 0))]
-        return Interface("slotup", Pose(0, 0, 0, yaw=yaw), actions)
+    # Add jobs
+    try:
+        jobs = get_jobs()  # Assuming this returns a list of jobs
+        factory.load_jobs(jobs)
+        logging.info(f"{len(jobs)} jobs added to factory")
+    except Exception as e:
+        logging.warning(f"No jobs added: {e}")
 
-    # Create center frame with interfaces for 4 arms
-    arm_interfaces = [make_arm_interface(yaw) for yaw in [0, 90, 180, 270]]
-    center_frame = Part(
-        "center_frame",
-        mass=0.2,
-        size=(96, 96, 40),
-        file=f"{parts_folder}/Center_Frame.step",
-        interfaces=arm_interfaces,
-    )
-
-    # Helper to create individual arms with "slotdown" interface
-    def make_arm(name: str) -> Part:
-        actions = [Action(Pose(0, 0, -3), Pose(0, 0, 0))]
-        arm_if = Interface("slotdown", Pose(0, 0, 0), actions)
-        return Part(
-            name,
-            mass=0.2,
-            size=(115, 37, 40),
-            file=f"{parts_folder}/Quad_Arm.step",
-            interfaces=[arm_if],
-        )
-
-    arm1 = make_arm("arm1")
-    arm2 = make_arm("arm2")
-    arm3 = make_arm("arm3")
-    arm4 = make_arm("arm4")
-
-    # Add all parts to the factory at default pose
-    for part in [center_frame, arm1, arm2, arm3, arm4]:
-        factory.add_part(part, Pose(0, 0, 0, 0, 0, 0))
-        logging.info(f"Part {part.name} added to factory at {part.pose}")
-
-    logging.info("Drone1 assembly parts created successfully")
-    return [center_frame, arm1, arm2, arm3, arm4]
+    logging.info("Factory initialization complete")
+    return factory

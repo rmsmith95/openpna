@@ -1,44 +1,40 @@
 from typing import List, Dict
-from machines import CartesianRobot, Robot
-from part import Part, Pose
+from .machines import Machine
+from .part import Part, Pose
+from .jobs import Job
 import logging
-# import FreeCad or your simulator
-# from freecad import FreeCad
-
 
 class Factory:
     """
-    Represents a factory workspace with robots and parts.
-    Provides methods to add robots and parts, and query robots by group.
+    Represents a factory workspace with machines, parts and jobs.
+    Provides methods to add them to the factory
     """
 
     def __init__(self):
-        self.robots: Dict[str, Robot] = {}
+        self.machines: Dict[str, Machine] = {}
         self.parts: Dict[str, Part] = {}
-        # self.floor = None  # Optional grid for occupancy
-        # self.sim = FreeCad()  # Optional simulator
+        self.jobs: Dict[str, Job] = {}
 
-    # --- Robot management ---
-    def add_robot(self, robot: Robot, pose: Pose) -> bool:
-        logging.info(f"Adding robot {robot.name} at {pose}")
-        robot.pose = pose
-        self.robots[robot.name] = robot
+    # --- Machine management ---
+    def load_machine(self, machine: Machine, pose: Pose) -> bool:
+        logging.info(f"Adding {machine.name} at {pose}")
+        machine.pose = pose
+        self.machines[machine.name] = machine
         return True
-
-    def get_robots_in_group(self, group_id: str) -> List[Robot]:
-        """
-        Return all robots that belong to a given group.
-        """
-        return [robot for robot in self.robots.values() if hasattr(robot, "groups") and group_id in robot.groups]
 
     # --- Part management ---
-    def add_part(self, part: Part, pose: Pose) -> bool:
-        logging.info(f"Adding part {part.name} at {pose}")
-        # TODO: check if the space at pose is available before adding
-        part.pose = pose
-        self.parts[part.name] = part
+    def load_parts(self, parts: List[Part], poses: List[Pose]) -> bool:
+        if len(parts) != len(poses):
+            logging.error("Parts and poses lists must be the same length")
+            return False
+        for part, pose in zip(parts, poses):
+            logging.info(f"Adding part {part.name} at {pose}")
+            part.pose = pose
+            self.parts[part.name] = part
         return True
-
-    # Optional: floor/grid management can be added later
-    # def reset_floor(self, x: int, y: int):
-    #     self.floor = np.zeros([x, y])
+    
+    def load_jobs(self, jobs: List[Job]) -> bool:
+        for job in jobs:
+            logging.info(f"Loading job {job.name}")
+            self.jobs[job.name] = job
+        return True

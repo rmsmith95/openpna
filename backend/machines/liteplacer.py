@@ -1,32 +1,30 @@
 
-import serial
 import logging
 import json
-from fastapi import APIRouter
+from pydantic import BaseModel
+from fastapi import APIRouter, Body
+import serial
 
 router = APIRouter()
 connection = None  # type: serial.Serial | None
 
+class ConnectRequest(BaseModel):
+    port: str
+    baud: int = 115200
+
 @router.post("/connect")
-def connect(port: str, baud: int = 115200):
+def connect(request: ConnectRequest):
     global connection
     try:
-        connection = serial.Serial(port, baud, timeout=1)
+        connection = serial.Serial(request.port, request.baud, timeout=1)
+        logging.info(f"Connected to LitePlacer on {request.port} at {request.baud} baud")
         return {"status": "connected", "device": "liteplacer"}
     except Exception as e:
-        logging.error(f"LitePlacer connect failed: {e}")
+        logging.error(f"Failed to connect to LitePlacer: {e}")
         return {"status": "error", "message": str(e)}
 
-@router.post("/disconnect")
-def disconnect():
-    global connection
-    if connection and connection.is_open:
-        connection.close()
-    connection = None
-    return {"status": "disconnected", "device": "liteplacer"}
-
-@router.get("/get_positions")
-def get_positions():
+@router.get("/get_position")
+def get_position():
     if not connection or not connection.is_open:
         return {"error": "LitePlacer not connected"}
     try:
@@ -44,12 +42,17 @@ def get_positions():
         logging.error(f"LitePlacer get_positions error: {e}")
         return {"error": str(e)}
 
+class MoveXYZRequest(BaseModel):
+    x: float
+    y: float
+    z: float
+    speed: float  # now required
+
 @router.post("/move_xyz")
-def move_xyz(axis: str, delta: float):
-    """Send movement command to LitePlacer"""
-    if not connection or not connection.is_open:
-        return {"error": "LitePlacer not connected"}
-    # TinyG expects G-code moves: G0 X... Y... Z...
-    cmd = f"G91\nG0 {axis}{delta}\nG90\n".encode()
-    connection.write(cmd)
-    return {"status": "ok", "command": cmd.decode()}
+def move_xyz(req: MoveXYZRequest):
+    # Replace this with actual hardware code
+    print(f"Moving gantry to X:{req.x}, Y:{req.y}, Z:{req.z} at speed {req.speed}")
+
+    # Example: LitePlacer.move_to(x=req.x, y=req.y, z=req.z, speed=req.speed)
+
+    return {"status": "ok", "target": {"x": req.x, "y": req.y, "z": req.z, "speed": req.speed}}

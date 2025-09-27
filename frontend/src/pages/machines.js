@@ -26,20 +26,20 @@ const Page = () => {
     return () => clearInterval(interval);
   }, [checkServer]);
 
-  const startServer = async () => {
-    setServerStatus("loading");
-    try {
-      const res = await fetch("/api/start-fastapi", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "start" }),
-      });
-      await res.json();
-      setTimeout(() => checkServer(), 2000);
-    } catch {
-      setServerStatus("stopped");
-    }
-  };
+  // const startServer = async () => {
+  //   setServerStatus("loading");
+  //   try {
+  //     const res = await fetch("/api/start-fastapi", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ action: "start" }),
+  //     });
+  //     await res.json();
+  //     setTimeout(() => checkServer(), 2000);
+  //   } catch {
+  //     setServerStatus("stopped");
+  //   }
+  // };
 
   return (
     <>
@@ -57,7 +57,6 @@ const Page = () => {
                     {serverStatus === "loading" && <CircularProgress size={12} color="inherit" />}
                     {serverStatus === "connected" ? "Connected" : serverStatus === "loading" ? "Loading" : "Stopped"}
                   </Box>
-
                   <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowUpOnSquareIcon /></SvgIcon>}>Import</Button>
                   <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowDownOnSquareIcon /></SvgIcon>}>Export</Button>
                 </Stack>

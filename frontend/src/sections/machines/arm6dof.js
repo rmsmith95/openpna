@@ -12,35 +12,36 @@ import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 export const Arm6DOF = (props) => {
   const { sx, value } = props;
   const [tab, setTab] = useState(0);
-  const [connected, setConnected] = useState(false);
+  const [connectedCobot280, setConnectedCobot280] = useState(false);
+  const [connectedCobot280Gripper, setConnectedCobot280Gripper] = useState(false);
   const [port, setPort] = useState('COM4');
   const [baud, setBaud] = useState(115200);
   const [joints, setJoints] = useState([0, 0, 0, 0, 0, 0]);
   const [speed, setSpeed] = useState([50, 50, 50, 50, 50, 50]); // speed per joint
 
-  useEffect(() => {
-    let interval;
-    if (connected) {
-      getPosition();
-      interval = setInterval(getPosition, 500);
-    }
-    return () => clearInterval(interval);
-  }, [connected]);
+  // useEffect(() => {
+  //   let interval;
+  //   if (connected) {
+  //     getPosition();
+  //     interval = setInterval(getPosition, 500);
+  //   }
+  //   return () => clearInterval(interval);
+  // }, [connected]);
 
   const handleChange = (_, newValue) => setTab(newValue);
-
-  const handleConnect = async () => {
+  const handleConnectCobot280 = async () => {
     try {
-      const res = await fetch("http://localhost:8000/arm6dof/connect", {
+      const res = await fetch("/api/arm6dof/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ port, baud }),
       });
       const data = await res.json();
-      if (data.status === "connected") setConnected(true);
+      if (data.status === "connected") setConnectedCobot280(true);
+      else setConnectedCobot280(false);
     } catch (err) {
-      console.error(err);
-      setConnected(false);
+      console.error("Cobot280 connect failed:", err);
+      setConnectedCobot280(false);
     }
   };
 
@@ -85,12 +86,21 @@ export const Arm6DOF = (props) => {
       <CardContent sx={{ pt: 0 }}>
         <Box sx={{ mt: 3 }}>
           <Tabs value={tab} onChange={handleChange} textColor="primary" indicatorColor="primary" sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tab label="Cobot280" />
+            <Tab label={
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <span>Cobot280</span>
+                {connectedCobot280 ? (
+                  <SvgIcon fontSize="small" color="success"><CheckCircleIcon /></SvgIcon>
+                ) : (
+                  <SvgIcon fontSize="small" color="error"><XCircleIcon /></SvgIcon>
+                )}
+              </Stack>
+            } />
             <Tab label="Joints" />
             <Tab label={
               <Stack direction="row" alignItems="center" spacing={1}>
                 <span>Gripper</span>
-                {connected ? (
+                {connectedCobot280 ? (
                   <SvgIcon fontSize="small" color="success"><CheckCircleIcon /></SvgIcon>
                 ) : (
                   <SvgIcon fontSize="small" color="error"><XCircleIcon /></SvgIcon>
@@ -107,7 +117,7 @@ export const Arm6DOF = (props) => {
               <Stack spacing={2} direction="row" alignItems="center">
                 <TextField label="Port" value={port} onChange={(e) => setPort(e.target.value)} />
                 <TextField label="Baud Rate" type="number" value={baud} onChange={(e) => setBaud(Number(e.target.value))} />
-                <Button variant="contained" color="success" onClick={handleConnect} disabled={connected}>Connect</Button>
+                <Button variant="contained" color="success" onClick={handleConnectCobot280} disabled={connectedCobot280}>Connect</Button>
               </Stack>
               <Table size="small">
                 <TableHead>
@@ -180,7 +190,7 @@ export const Arm6DOF = (props) => {
           {tab === 2 && (
             <Stack spacing={2}>
               <Stack spacing={2} direction="row" alignItems="center">
-                <Button variant="contained" color="success" onClick={handleConnect} disabled={connected}>Connect</Button>
+                <Button variant="contained" color="success" onClick={handleConnect}>Connect</Button>
                 <TextField label="Port" value={port} onChange={(e) => setPort(e.target.value)} />
                 <TextField label="Baud Rate" type="number" value={baud} onChange={(e) => setBaud(Number(e.target.value))} />
                 <Button variant="contained" color="primary" onClick={() => console.log("Attach")}>Attach</Button>

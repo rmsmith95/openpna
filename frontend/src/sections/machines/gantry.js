@@ -34,7 +34,7 @@ export const Gantry = (props) => {
   const [port, setPort] = useState('COM10');
   const [baud, setBaud] = useState(115200);
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
-  const [speed, setSpeed] = useState({ X: 2, Y: 2, Z: 3, A: 1 });
+  const [speed, setSpeed] = useState(1);
   const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 0 }); // default step per axis
 
   const handleChange = (event, newValue) => setTab(newValue);
@@ -52,12 +52,6 @@ export const Gantry = (props) => {
       console.error("LitePlacer connect failed:", err);
       setConnectedLitePlacer(false);
     }
-  };
-
-  // stub for gripper
-  const handleConnectGripper = async () => {
-    // your gripper API call here
-    setConnectedGripper(true); // or false depending on result
   };
 
   const getPosition = async () => {
@@ -89,14 +83,12 @@ export const Gantry = (props) => {
         default: return;
       }
 
-      const axisSpeed = Number(speed[axis]); // ensure number
-
       const res = await fetch("/api/gantry/move", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x: X, y: Y, z: Z, a: A, speed: axisSpeed }),
+        body: JSON.stringify({ x: X, y: Y, z: Z, a: A, speed: Number(speed) }),
       });
-      console.log("body:", { X, Y, Z, A, axisSpeed });
+      console.log("body:", { X, Y, Z, A, speed });
       const data = await res.json();
       console.log("Move response:", data);
 
@@ -126,7 +118,7 @@ export const Gantry = (props) => {
                   <SvgIcon fontSize="small" color="error"><XCircleIcon /></SvgIcon>
                 )}
               </Stack>
-              }/>
+            } />
             <Tab label="Axis" />
             <Tab
               label={
@@ -181,48 +173,50 @@ export const Gantry = (props) => {
           {tab === 1 && (
             <Stack direction="row" spacing={4} alignItems="flex-start">
               {/* Axis Table */}
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Axis</TableCell>
-                    <TableCell>Position</TableCell>
-                    <TableCell>Max XYZ</TableCell>
-                    <TableCell>Step Size</TableCell>
-                    <TableCell>Speed</TableCell>
-                    <TableCell>Max Speed</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {['X', 'Y', 'Z', 'A'].map(axis => (
-                    <TableRow key={axis}>
-                      <TableCell >{axis.toUpperCase()}</TableCell>
-                      <TableCell>{position[axis]}</TableCell>
-                      <TableCell>
-                        {axis === 'X' ? 600 : axis === 'Y' ? 400 : axis === 'Z' ? 200 : 360}
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={step[axis]}
-                          sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
-                          onChange={(e) => setStep({ ...step, [axis]: Number(e.target.value) })}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={speed[axis]}
-                          sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
-                          onChange={(e) => setSpeed({ ...speed, [axis]: Number(e.target.value) })}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>1</TableCell>
+              <Stack spacing={2}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Axis</TableCell>
+                      <TableCell>Position</TableCell>
+                      <TableCell>Max XYZ</TableCell>
+                      <TableCell>Step Size</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHead>
+                  <TableBody>
+                    {['X', 'Y', 'Z', 'A'].map(axis => (
+                      <TableRow key={axis}>
+                        <TableCell>{axis.toUpperCase()}</TableCell>
+                        <TableCell>{position[axis]}</TableCell>
+                        <TableCell>
+                          {axis === 'X' ? 600 : axis === 'Y' ? 400 : axis === 'Z' ? 200 : 360}
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            type="number"
+                            value={step[axis]}
+                            sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
+                            onChange={(e) => setStep({ ...step, [axis]: Number(e.target.value) })}
+                            size="small"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {/* Speed control under table */}
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography variant="body2">Speed</Typography>
+                  <TextField
+                    type="number"
+                    value={speed}
+                    sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13, width: 60 } }}
+                    onChange={(e) => setSpeed(Number(e.target.value))}
+                    size="small"
+                  />
+                </Stack>
+              </Stack>
 
               {/* Controls Panel */}
               <Stack direction="row" paddingTop={1} spacing={2} alignItems="flex-start">

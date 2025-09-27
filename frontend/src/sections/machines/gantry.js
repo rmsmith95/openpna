@@ -32,18 +32,18 @@ export const Gantry = (props) => {
   const [connected, setConnected] = useState(false);
   const [port, setPort] = useState('COM10');
   const [baud, setBaud] = useState(115200);
-  const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
-  const [speed, setSpeed] = useState({ x: 2, y: 2, z: 3, a: 1 });
-  const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 0 }); // default step per axis
+  const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
+  const [speed, setSpeed] = useState({ X: 2, Y: 2, Z: 3, A: 1 });
+  const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 0 }); // default step per axis
 
-  useEffect(() => {
-    let interval;
-    if (connected) {
-      getPosition(); // initial fetch
-      interval = setInterval(getPosition, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [connected]);
+  // useEffect(() => {
+  //   let interval;
+  //   if (connected) {
+  //     getPosition(); // initial fetch
+  //     interval = setInterval(getPosition, 1000);
+  //   }
+  //   return () => clearInterval(interval);
+  // }, [connected]);
 
   const handleChange = (event, newValue) => setTab(newValue);
 
@@ -64,6 +64,7 @@ export const Gantry = (props) => {
       console.error("Failed to connect:", err);
       setConnected(false);
     }
+    console.log("connected to liteplacer")
   };
 
   const getPosition = async () => {
@@ -71,7 +72,8 @@ export const Gantry = (props) => {
     try {
       const res = await fetch("/api/gantry/get_position");
       const data = await res.json();
-      if (data.status === "ok") setPosition(data.position);
+      console.log(data)
+      if (data.status === "ok") setPosition(data.positions);
     } catch (err) {
       console.error("Error getting gantry position:", err);
     }
@@ -83,14 +85,14 @@ export const Gantry = (props) => {
     try {
       const resPos = await fetch("/api/gantry/get_position");
       const posData = await resPos.json();
-      let { x, y, z, a } = posData.position || { x: 0, y: 0, z: 0, a:0 };
+      let { X = 0, Y = 0, Z = 0, A = 0 } = posData.positions || {};
 
       const delta = Number(step[axis]); // ensure number
       switch (axis) {
-        case "x": x = Number(x) + direction * delta; break;
-        case "y": y = Number(y) + direction * delta; break;
-        case "z": z = Number(z) + direction * delta; break;
-        case "a": a = Number(a) + direction * delta; break;
+        case "X": X += direction * delta; break;
+        case "Y": Y += direction * delta; break;
+        case "Z": Z += direction * delta; break;
+        case "A": A += direction * delta; break;
         default: return;
       }
 
@@ -99,12 +101,12 @@ export const Gantry = (props) => {
       const res = await fetch("/api/gantry/move", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x, y, z, a, speed: axisSpeed }),
+        body: JSON.stringify({ x: X, y: Y, z: Z, a: A, speed: axisSpeed }),
       });
 
       const data = await res.json();
       console.log("Move response:", data);
-      await getPosition();
+
     } catch (err) {
       console.error("Error moving gantry:", err);
     }
@@ -113,6 +115,12 @@ export const Gantry = (props) => {
   return (
     <Card sx={sx}>
       <CardContent sx={{ pt: 0 }}>
+        <button
+          onClick={getPosition}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Get Position
+        </button>
         {/* Tabs */}
         <Box sx={{ mt: 3 }}>
           <Tabs
@@ -189,31 +197,31 @@ export const Gantry = (props) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {['x', 'y', 'z', 'a'].map(axis => (
+                  {['X', 'Y', 'Z', 'A'].map(axis => (
                     <TableRow key={axis}>
                       <TableCell >{axis.toUpperCase()}</TableCell>
                       <TableCell>{position[axis]}</TableCell>
                       <TableCell>
-                        {axis === 'x' ? 600 : axis === 'y' ? 400 : axis ==='z' ? 200 : 360}
+                        {axis === 'X' ? 600 : axis === 'Y' ? 400 : axis === 'Z' ? 200 : 360}
                       </TableCell>
                       <TableCell>
                         <TextField
-                        type="number"
-                        value={step[axis]}
-                        sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
-                        onChange={(e) => setStep({ ...step, [axis]: Number(e.target.value) })}
-                        size="small"
+                          type="number"
+                          value={step[axis]}
+                          sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
+                          onChange={(e) => setStep({ ...step, [axis]: Number(e.target.value) })}
+                          size="small"
                         />
                       </TableCell>
                       <TableCell>
                         <TextField
-                        type="number"
-                        value={speed[axis]}
-                        sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
-                        onChange={(e) => setSpeed({ ...speed, [axis]: Number(e.target.value) })}
-                        size="small"
+                          type="number"
+                          value={speed[axis]}
+                          sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
+                          onChange={(e) => setSpeed({ ...speed, [axis]: Number(e.target.value) })}
+                          size="small"
                         />
-                        </TableCell>
+                      </TableCell>
                       <TableCell>1</TableCell>
                     </TableRow>
                   ))}
@@ -224,30 +232,30 @@ export const Gantry = (props) => {
               <Stack direction="row" paddingTop={1} spacing={2} alignItems="flex-start">
                 {/* X/Y Controls */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                  <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("y", +1)}>
+                  <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("Y", +1)}>
                     +Y
                   </Button>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("x", -1)}>
+                    <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("X", -1)}>
                       -X
                     </Button>
                     <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
                       <Typography>X/Y</Typography>
                     </Box>
-                    <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("x", +1)}>
+                    <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("X", +1)}>
                       +X
                     </Button>
                   </Stack>
-                  <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("y", -1)}>
+                  <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("Y", -1)}>
                     -Y
                   </Button>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("x", -1)}>
+                    <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("A", -1)}>
                       -R
                     </Button>
                     <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
                     </Box>
-                    <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("x", +1)}>
+                    <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("A", +1)}>
                       +R
                     </Button>
                   </Stack>
@@ -255,13 +263,13 @@ export const Gantry = (props) => {
 
                 {/* Z Controls */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, marginTop: 0 }}>
-                  <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("z", +1)}>
+                  <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("Z", +1)}>
                     +Z
                   </Button>
                   <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
                     <Typography>Z</Typography>
                   </Box>
-                  <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("z", -1)}>
+                  <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("Z", -1)}>
                     -Z
                   </Button>
                 </Box>

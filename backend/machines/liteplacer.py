@@ -18,11 +18,22 @@ class ConnectRequest(BaseModel):
 def connect(request: ConnectRequest):
     global connection
     try:
+        # Close existing connection if it's open
+        if connection and connection.is_open:
+            try:
+                connection.close()
+                logging.info("Closed previous LitePlacer connection")
+            except Exception as e:
+                logging.warning(f"Failed to close previous connection: {e}")
+
+        # Open new connection
         connection = serial.Serial(request.port, request.baud, timeout=1)
         logging.info(f"Connected to LitePlacer on {request.port} at {request.baud} baud")
         return {"status": "connected", "device": "liteplacer"}
+
     except Exception as e:
         logging.error(f"Failed to connect: {e}")
+        connection = None  # clear the connection so next attempt works
         return {"status": "error", "message": str(e)}
 
 # --- Get position (plain-text parsing) ---

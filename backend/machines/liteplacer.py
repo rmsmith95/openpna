@@ -1,14 +1,15 @@
-
+# machine/liteplacer.py
 import logging
-import json
 from pydantic import BaseModel
-from fastapi import APIRouter, Body
-from sections.machines import LitePlacer
+from fastapi import APIRouter
 import serial
+import time
+import re
 
 router = APIRouter()
-connection = None  # type: serial.Serial | None
+connection: serial.Serial | None = None
 
+# --- Connect ---
 class ConnectRequest(BaseModel):
     port: str
     baud: int = 115200
@@ -21,58 +22,70 @@ def connect(request: ConnectRequest):
         logging.info(f"Connected to LitePlacer on {request.port} at {request.baud} baud")
         return {"status": "connected", "device": "liteplacer"}
     except Exception as e:
-        logging.error(f"Failed to connect to LitePlacer: {e}")
+        logging.error(f"Failed to connect: {e}")
         return {"status": "error", "message": str(e)}
 
+# --- Get position (plain-text parsing) ---
 @router.get("/get_position")
 def get_position():
     if not connection or not connection.is_open:
         return {"error": "LitePlacer not connected"}
 
     try:
-        # Send status request
+        connection.reset_input_buffer()
         connection.write(b"?\n")
-        
-        # Wait a short time for TinyG to respond
-        import time
-        time.sleep(0.05)
-        
-        # Read line
-        line = connection.readline().decode().strip()
-        if not line:
+        time.sleep(0.05)  # wait for TinyG to respond
+
+        # Read all available lines
+        lines = []
+        while connection.in_waiting:
+            line = connection.readline().decode(errors="ignore").strip()
+            if line:
+                lines.append(line)
+
+        if not lines:
             return {"error": "No response from TinyG"}
-        
-        logging.info(f"TinyG raw response: {line}")
 
-        # Parse JSON safely
-        try:
-            data = json.loads(line)
-        except json.JSONDecodeError:
-            return {"error": "Invalid JSON from TinyG", "raw": line}
+        logging.info("TinyG raw response:\n" + "\n".join(lines))
 
-        pos = data.get("sr", {})
-        positions = {
-            "X": pos.get("posx", 0),
-            "Y": pos.get("posy", 0),
-            "Z": pos.get("posz", 0)
-        }
+        # Parse X/Y/Z positions
+        positions = {"X": 0.0, "Y": 0.0, "Z": 0.0}
+        for line in lines:
+            m = re.search(r"X position:\s*([-0-9.]+)", line)
+            if m: positions["X"] = float(m.group(1))
+            m = re.search(r"Y position:\s*([-0-9.]+)", line)
+            if m: positions["Y"] = float(m.group(1))
+            m = re.search(r"Z position:\s*([-0-9.]+)", line)
+            if m: positions["Z"] = float(m.group(1))
+
         return {"positions": positions}
 
     except Exception as e:
         logging.error(f"LitePlacer get_positions error: {e}")
         return {"error": str(e)}
 
+# --- Move gantry ---
 class MoveXYZRequest(BaseModel):
     x: float
     y: float
     z: float
-    speed: float  # now required
+    speed: float  # mm/min
 
 @router.post("/move_xyz")
 def move_xyz(req: MoveXYZRequest):
-    # Replace this with actual hardware code
-    print(f"Moving gantry to X:{req.x}, Y:{req.y}, Z:{req.z} at speed {req.speed}")
+    if not connection or not connection.is_open:
+        return {"error": "LitePlacer not connected"}
 
-    # Example: LitePlacer.move_to(x=req.x, y=req.y, z=req.z, speed=req.speed)
+    try:
+        # Form G-code command (G0 = rapid move)
+        gcode = f"G0 X{req.x} Y{req.y} Z{req.z} F{req.speed}\n"
+        connection.write(gcode.encode())
+        logging.info(f"Sent G-code: {gcode.strip()}")
 
-    return {"status": "ok", "target": {"x": req.x, "y": req.y, "z": req.z, "speed": req.speed}}
+        return {
+            "status": "ok",
+            "target": {"x": req.x, "y": req.y, "z": req.z, "speed": req.speed}
+        }
+    except Exception as e:
+        logging.error(f"LitePlacer move_xyz error: {e}")
+        return {"error": str(e)}

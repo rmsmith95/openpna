@@ -30,22 +30,22 @@ export const Gantry = (props) => {
 
   // Connection state
   const [connected, setConnected] = useState(false);
-  const [port, setPort] = useState('COM3');   // Windows example
+  const [port, setPort] = useState('COM10');
   const [baud, setBaud] = useState(115200);
-  const [position, setPosition] = useState({ x: 0, y: 0, z: 0 });
+  const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
+  const [speed, setSpeed] = useState({ x: 2, y: 2, z: 3, a: 1 });
+  const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 0 }); // default step per axis
 
   useEffect(() => {
     let interval;
     if (connected) {
       getPosition(); // initial fetch
-      interval = setInterval(getPosition, 500); // update every 0.5s
+      interval = setInterval(getPosition, 1000);
     }
     return () => clearInterval(interval);
   }, [connected]);
 
-  const handleChange = (event, newValue) => {
-    setTab(newValue);
-  };
+  const handleChange = (event, newValue) => setTab(newValue);
 
   const handleConnect = async () => {
     try {
@@ -55,9 +55,8 @@ export const Gantry = (props) => {
         body: JSON.stringify({ port, baud }),
       });
       const data = await res.json();
-      if (data.status === "connected") {
-        setConnected(true);
-      } else {
+      if (data.status === "connected") setConnected(true);
+      else {
         console.error("Connect failed:", data.message);
         setConnected(false);
       }
@@ -69,56 +68,42 @@ export const Gantry = (props) => {
 
   const getPosition = async () => {
     if (!connected) return;
-
     try {
       const res = await fetch("/api/gantry/get_position");
       const data = await res.json();
-      if (data.status === "ok") {
-        setPosition(data.position);
-      }
+      if (data.status === "ok") setPosition(data.position);
     } catch (err) {
       console.error("Error getting gantry position:", err);
     }
   };
 
-  const moveGantry = async (axis, direction, step = 1, speed = 150) => {
-    if (!connected) {
-      console.warn("Gantry not connected!");
-      return;
-    }
+  const moveGantry = async (axis, direction) => {
+    if (!connected) return;
 
-    // Get current position (optional: could track in state)
-    const resPos = await fetch("/api/gantry/get_position");
-    const posData = await resPos.json();
-    let { x, y, z } = posData.position || { x: 0, y: 0, z: 0 };
-
-    // Update axis by direction
-    switch (axis) {
-      case "x":
-        x += direction * step;
-        break;
-      case "y":
-        y += direction * step;
-        break;
-      case "z":
-        z += direction * step;
-        break;
-      default:
-        console.error("Invalid axis:", axis);
-        return;
-    }
-
-    // Send move command
     try {
+      const resPos = await fetch("/api/gantry/get_position");
+      const posData = await resPos.json();
+      let { x, y, z, a } = posData.position || { x: 0, y: 0, z: 0, a:0 };
+
+      const delta = Number(step[axis]); // ensure number
+      switch (axis) {
+        case "x": x = Number(x) + direction * delta; break;
+        case "y": y = Number(y) + direction * delta; break;
+        case "z": z = Number(z) + direction * delta; break;
+        case "a": a = Number(a) + direction * delta; break;
+        default: return;
+      }
+
+      const axisSpeed = Number(speed[axis]); // ensure number
+
       const res = await fetch("/api/gantry/move", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x, y, z, speed }),
+        body: JSON.stringify({ x, y, z, a, speed: axisSpeed }),
       });
 
       const data = await res.json();
       console.log("Move response:", data);
-      // Update position after move
       await getPosition();
     } catch (err) {
       console.error("Error moving gantry:", err);
@@ -161,118 +146,128 @@ export const Gantry = (props) => {
         {/* Tab Panels */}
         <Box sx={{ mt: 2 }}>
           {tab === 0 && (
-            <Box sx={{ mt: 2 }}>
-              {tab === 0 && (
-                // LitePlacer1
-                <Stack spacing={2} alignItems="flex-start">
-                  {/* Connection controls */}
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <TextField label="Port" value={port} onChange={(e) => setPort(e.target.value)} />
-                    <TextField label="Baud Rate" type="number" value={baud} onChange={(e) => setBaud(Number(e.target.value))} />
-                    <Button variant="contained" color="success" onClick={handleConnect} disabled={connected}>Connect</Button>
-                  </Stack>
+            <Stack spacing={2} alignItems="flex-start">
+              {/* Connection controls */}
+              <Stack direction="row" spacing={2} alignItems="center">
+                <TextField label="Port" value={port} onChange={(e) => setPort(e.target.value)} />
+                <TextField label="Baud Rate" type="number" value={baud} onChange={(e) => setBaud(Number(e.target.value))} />
+                <Button variant="contained" color="success" onClick={handleConnect} disabled={connected}>Connect</Button>
+              </Stack>
 
-                  {/* Table below connection */}
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Dimensions (mm)</TableCell>
-                        <TableCell>Max Load</TableCell>
-                        <TableCell>Cad File</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell>700x500x300</TableCell>
-                        <TableCell>3kg</TableCell>
-                        <TableCell>liteplacer.stl</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </Stack>
-              )}
-            </Box>
-
-          )}
-
-          {tab === 1 && (
-            <Stack direction="row" spacing={4} alignItems="flex-start">
-              {/* Table */}
+              {/* Machine table */}
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Axis</TableCell>
-                    <TableCell>Min</TableCell>
-                    <TableCell>Position</TableCell>
-                    <TableCell>Max</TableCell>
-                    <TableCell>Rate</TableCell>
+                    <TableCell>Dimensions (mm)</TableCell>
+                    <TableCell>Max Load</TableCell>
+                    <TableCell>Cad File</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   <TableRow>
-                    <TableCell>X</TableCell>
-                    <TableCell>0</TableCell>
-                    <TableCell>{position.x}</TableCell>
-                    <TableCell>600</TableCell>
-                    <TableCell>3mm/s</TableCell>
+                    <TableCell>700x500x300</TableCell>
+                    <TableCell>3kg</TableCell>
+                    <TableCell>liteplacer.stl</TableCell>
                   </TableRow>
+                </TableBody>
+              </Table>
+            </Stack>
+          )}
+
+          {tab === 1 && (
+            <Stack direction="row" spacing={4} alignItems="flex-start">
+              {/* Axis Table */}
+              <Table size="small">
+                <TableHead>
                   <TableRow>
-                    <TableCell>Y</TableCell>
-                    <TableCell>0</TableCell>
-                    <TableCell>{position.y}</TableCell>
-                    <TableCell>400</TableCell>
-                    <TableCell>3mm/s</TableCell>
+                    <TableCell>Axis</TableCell>
+                    <TableCell>Position</TableCell>
+                    <TableCell>Max XYZ</TableCell>
+                    <TableCell>Step Size</TableCell>
+                    <TableCell>Speed</TableCell>
+                    <TableCell>Max Speed</TableCell>
                   </TableRow>
-                  <TableRow>
-                    <TableCell>Z</TableCell>
-                    <TableCell>0</TableCell>
-                    <TableCell>{position.z}</TableCell>
-                    <TableCell>300</TableCell>
-                    <TableCell>3mm/s</TableCell>
-                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {['x', 'y', 'z', 'a'].map(axis => (
+                    <TableRow key={axis}>
+                      <TableCell >{axis.toUpperCase()}</TableCell>
+                      <TableCell>{position[axis]}</TableCell>
+                      <TableCell>
+                        {axis === 'x' ? 600 : axis === 'y' ? 400 : axis ==='z' ? 200 : 360}
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                        type="number"
+                        value={step[axis]}
+                        sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
+                        onChange={(e) => setStep({ ...step, [axis]: Number(e.target.value) })}
+                        size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                        type="number"
+                        value={speed[axis]}
+                        sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
+                        onChange={(e) => setSpeed({ ...speed, [axis]: Number(e.target.value) })}
+                        size="small"
+                        />
+                        </TableCell>
+                      <TableCell>1</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
 
               {/* Controls Panel */}
-              <Stack direction="row" spacing={2} alignItems="center">
-                {/* X/Y D-Pad */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <Stack direction="row" paddingTop={1} spacing={2} alignItems="flex-start">
+                {/* X/Y Controls */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                   <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("y", +1)}>
-                    <SvgIcon component={ArrowUpIcon} />
+                    +Y
                   </Button>
-
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("x", -1)}>
-                      <SvgIcon component={ArrowLeftIcon} />
+                      -X
                     </Button>
                     <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
                       <Typography>X/Y</Typography>
                     </Box>
                     <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("x", +1)}>
-                      <SvgIcon component={ArrowRightIcon} />
+                      +X
                     </Button>
                   </Stack>
                   <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("y", -1)}>
-                    <SvgIcon component={ArrowDownIcon} />
+                    -Y
                   </Button>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("x", -1)}>
+                      -R
+                    </Button>
+                    <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
+                    </Box>
+                    <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("x", +1)}>
+                      +R
+                    </Button>
+                  </Stack>
                 </Box>
 
                 {/* Z Controls */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, marginTop: 0 }}>
                   <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("z", +1)}>
-                    <SvgIcon component={ArrowUpIcon} />
+                    +Z
                   </Button>
                   <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
                     <Typography>Z</Typography>
                   </Box>
                   <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("z", -1)}>
-                    <SvgIcon component={ArrowDownIcon} />
+                    -Z
                   </Button>
                 </Box>
               </Stack>
             </Stack>
           )}
-
 
           {tab === 2 && (
             <Stack spacing={2}>
@@ -283,9 +278,6 @@ export const Gantry = (props) => {
                 <Button variant="contained" color="primary" onClick={() => console.log("Attach")}>Attach</Button>
                 <Button variant="outlined" color="secondary" onClick={() => console.log("Detach")}>Detach</Button>
               </Stack>
-              <Stack direction="row" spacing={2}>
-              </Stack>
-              {/* Gripper Width Table */}
               <Table size="small" sx={{ minWidth: 250 }}>
                 <TableHead>
                   <TableRow>
@@ -302,18 +294,10 @@ export const Gantry = (props) => {
                     <TableCell>60</TableCell>
                     <TableCell>
                       <Stack direction="row" spacing={1}>
-                        <Button
-                          variant="contained"
-                          sx={{ width: 40, height: 35 }}
-                          onClick={() => console.log("Decrease width")}
-                        >
+                        <Button variant="contained" sx={{ width: 40, height: 35 }} onClick={() => console.log("Decrease width")}>
                           <SvgIcon component={ArrowLeftIcon} />
                         </Button>
-                        <Button
-                          variant="contained"
-                          sx={{ width: 40, height: 35 }}
-                          onClick={() => console.log("Increase width")}
-                        >
+                        <Button variant="contained" sx={{ width: 40, height: 35 }} onClick={() => console.log("Increase width")}>
                           <SvgIcon component={ArrowRightIcon} />
                         </Button>
                       </Stack>

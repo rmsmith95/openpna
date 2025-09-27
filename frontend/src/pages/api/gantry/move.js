@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     });
   }
 
+  console.log("body:", { x, y, z, a, speed });
   try {
     const response = await fetch("http://127.0.0.1:8000/liteplacer/move_xyz", {
       method: "POST",

@@ -53,15 +53,10 @@ const Page = () => {
               <Stack spacing={1}>
                 <Typography variant="h4">Machines</Typography>
                 <Stack alignItems="center" direction="row" spacing={1}>
-                  <Button
-                    variant="contained"
-                    onClick={startServer}
-                    disabled={serverStatus === "loading" || serverStatus === "connected"}
-                    startIcon={serverStatus === "loading" ? <CircularProgress size={16} color="inherit" /> : undefined}
-                    sx={{ backgroundColor: "green" }}
-                  >
-                    {serverStatus === "connected" ? "Connected" : "Start Server"}
-                  </Button>
+                  <Box sx={{ px: 1.5, py: 0.5, borderRadius: 1, fontSize: "0.75rem", fontWeight: "bold", color: "white", display: "flex", alignItems: "center", gap: 0.5, bgcolor: serverStatus === "connected" ? "green" : serverStatus === "loading" ? "orange" : "red" }}>
+                    {serverStatus === "loading" && <CircularProgress size={12} color="inherit" />}
+                    {serverStatus === "connected" ? "Connected" : serverStatus === "loading" ? "Loading" : "Stopped"}
+                  </Box>
 
                   <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowUpOnSquareIcon /></SvgIcon>}>Import</Button>
                   <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowDownOnSquareIcon /></SvgIcon>}>Export</Button>

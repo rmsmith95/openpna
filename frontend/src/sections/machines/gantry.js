@@ -29,25 +29,16 @@ export const Gantry = (props) => {
   const [tab, setTab] = useState(0);
 
   // Connection state
-  const [connected, setConnected] = useState(false);
+  const [connectedLitePlacer, setConnectedLitePlacer] = useState(false);
+  const [connectedLitePlacerGripper, setConnectedLitePlacerGripper] = useState(false);
   const [port, setPort] = useState('COM10');
   const [baud, setBaud] = useState(115200);
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
   const [speed, setSpeed] = useState({ X: 2, Y: 2, Z: 3, A: 1 });
   const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 0 }); // default step per axis
 
-  // useEffect(() => {
-  //   let interval;
-  //   if (connected) {
-  //     getPosition(); // initial fetch
-  //     interval = setInterval(getPosition, 1000);
-  //   }
-  //   return () => clearInterval(interval);
-  // }, [connected]);
-
   const handleChange = (event, newValue) => setTab(newValue);
-
-  const handleConnect = async () => {
+  const handleConnectLitePlacer = async () => {
     try {
       const res = await fetch("/api/gantry/connect", {
         method: "POST",
@@ -55,16 +46,18 @@ export const Gantry = (props) => {
         body: JSON.stringify({ port, baud }),
       });
       const data = await res.json();
-      if (data.status === "connected") setConnected(true);
-      else {
-        console.error("Connect failed:", data.message);
-        setConnected(false);
-      }
+      if (data.status === "connected") setConnectedLitePlacer(true);
+      else setConnectedLitePlacer(false);
     } catch (err) {
-      console.error("Failed to connect:", err);
-      setConnected(false);
+      console.error("LitePlacer connect failed:", err);
+      setConnectedLitePlacer(false);
     }
-    console.log("connected to liteplacer")
+  };
+
+  // stub for gripper
+  const handleConnectGripper = async () => {
+    // your gripper API call here
+    setConnectedGripper(true); // or false depending on result
   };
 
   const getPosition = async () => {
@@ -101,9 +94,9 @@ export const Gantry = (props) => {
       const res = await fetch("/api/gantry/move", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x: X, y: Y, z: Z, a: A, speed: 1 }),
+        body: JSON.stringify({ x: X, y: Y, z: Z, a: A, speed: axisSpeed }),
       });
-
+      console.log("body:", { X, Y, Z, A, axisSpeed });
       const data = await res.json();
       console.log("Move response:", data);
 
@@ -115,12 +108,6 @@ export const Gantry = (props) => {
   return (
     <Card sx={sx}>
       <CardContent sx={{ pt: 0 }}>
-        <button
-          onClick={getPosition}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Get Position
-        </button>
         {/* Tabs */}
         <Box sx={{ mt: 3 }}>
           <Tabs
@@ -130,13 +117,22 @@ export const Gantry = (props) => {
             indicatorColor="primary"
             sx={{ borderBottom: 1, borderColor: 'divider' }}
           >
-            <Tab label="LitePlacer1" />
+            <Tab label={
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <span>LitePlacer1</span>
+                {connectedLitePlacer ? (
+                  <SvgIcon fontSize="small" color="success"><CheckCircleIcon /></SvgIcon>
+                ) : (
+                  <SvgIcon fontSize="small" color="error"><XCircleIcon /></SvgIcon>
+                )}
+              </Stack>
+              }/>
             <Tab label="Axis" />
             <Tab
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <span>Gripper</span>
-                  {connected ? (
+                  {connectedLitePlacerGripper ? (
                     <SvgIcon fontSize="small" color="success">
                       <CheckCircleIcon />
                     </SvgIcon>
@@ -159,7 +155,7 @@ export const Gantry = (props) => {
               <Stack direction="row" spacing={2} alignItems="center">
                 <TextField label="Port" value={port} onChange={(e) => setPort(e.target.value)} />
                 <TextField label="Baud Rate" type="number" value={baud} onChange={(e) => setBaud(Number(e.target.value))} />
-                <Button variant="contained" color="success" onClick={handleConnect} disabled={connected}>Connect</Button>
+                <Button variant="contained" color="success" onClick={handleConnectLitePlacer} disabled={connectedLitePlacer}>Connect</Button>
               </Stack>
 
               {/* Machine table */}
@@ -240,7 +236,12 @@ export const Gantry = (props) => {
                       -X
                     </Button>
                     <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
-                      <Typography>X/Y</Typography>
+                      <Button variant="contained" sx={{ width: 60, height: 60 }}
+                        onClick={getPosition}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        P
+                      </Button>
                     </Box>
                     <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("X", +1)}>
                       +X
@@ -267,7 +268,6 @@ export const Gantry = (props) => {
                     +Z
                   </Button>
                   <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
-                    <Typography>Z</Typography>
                   </Box>
                   <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("Z", -1)}>
                     -Z

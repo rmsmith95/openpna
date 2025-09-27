@@ -101,7 +101,7 @@ export const Gantry = (props) => {
       const res = await fetch("/api/gantry/move", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x: X, y: Y, z: Z, a: A, speed: axisSpeed }),
+        body: JSON.stringify({ x: X, y: Y, z: Z, a: A, speed: 1 }),
       });
 
       const data = await res.json();

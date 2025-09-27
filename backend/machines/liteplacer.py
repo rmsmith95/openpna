@@ -60,7 +60,7 @@ def get_position():
         logging.info("TinyG raw response:\n" + "\n".join(lines))
 
         # Parse X/Y/Z positions
-        positions = {"X": 0.0, "Y": 0.0, "Z": 0.0}
+        positions = {"X": 0.0, "Y": 0.0, "Z": 0.0, "A": 0.0}
         for line in lines:
             m = re.search(r"X position:\s*([-0-9.]+)", line)
             if m: positions["X"] = float(m.group(1))
@@ -68,6 +68,8 @@ def get_position():
             if m: positions["Y"] = float(m.group(1))
             m = re.search(r"Z position:\s*([-0-9.]+)", line)
             if m: positions["Z"] = float(m.group(1))
+            m = re.search(r"A position:\s*([-0-9.]+)", line)
+            if m: positions["A"] = float(m.group(1))
 
         return {"positions": positions}
 
@@ -80,6 +82,7 @@ class MoveXYZRequest(BaseModel):
     x: float
     y: float
     z: float
+    a: float
     speed: float  # mm/min
 
 @router.post("/move_xyz")
@@ -89,13 +92,13 @@ def move_xyz(req: MoveXYZRequest):
 
     try:
         # Form G-code command (G0 = rapid move)
-        gcode = f"G0 X{req.x} Y{req.y} Z{req.z} F{req.speed}\n"
+        gcode = f"G0 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
         connection.write(gcode.encode())
         logging.info(f"Sent G-code: {gcode.strip()}")
 
         return {
             "status": "ok",
-            "target": {"x": req.x, "y": req.y, "z": req.z, "speed": req.speed}
+            "target": {"x": req.x, "y": req.y, "z": req.z, "a": req.a, "speed": req.speed}
         }
     except Exception as e:
         logging.error(f"LitePlacer move_xyz error: {e}")

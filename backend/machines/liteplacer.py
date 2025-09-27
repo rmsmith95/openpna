@@ -3,6 +3,7 @@ import logging
 import json
 from pydantic import BaseModel
 from fastapi import APIRouter, Body
+from sections.machines import LitePlacer
 import serial
 
 router = APIRouter()
@@ -27,10 +28,28 @@ def connect(request: ConnectRequest):
 def get_position():
     if not connection or not connection.is_open:
         return {"error": "LitePlacer not connected"}
+
     try:
+        # Send status request
         connection.write(b"?\n")
+        
+        # Wait a short time for TinyG to respond
+        import time
+        time.sleep(0.05)
+        
+        # Read line
         line = connection.readline().decode().strip()
-        data = json.loads(line)  # TinyG JSON
+        if not line:
+            return {"error": "No response from TinyG"}
+        
+        logging.info(f"TinyG raw response: {line}")
+
+        # Parse JSON safely
+        try:
+            data = json.loads(line)
+        except json.JSONDecodeError:
+            return {"error": "Invalid JSON from TinyG", "raw": line}
+
         pos = data.get("sr", {})
         positions = {
             "X": pos.get("posx", 0),
@@ -38,6 +57,7 @@ def get_position():
             "Z": pos.get("posz", 0)
         }
         return {"positions": positions}
+
     except Exception as e:
         logging.error(f"LitePlacer get_positions error: {e}")
         return {"error": str(e)}

@@ -4,12 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import threading
-from .machines.liteplacer import router as liteplacer_router
-from .machines.cobot280 import router as cobot280_router
+from machines.liteplacer import router as liteplacer_router
+from machines.cobot280 import router as cobot280_router
 # from parse_xml import parse_xml_file
-from .sections.utils import Pose
-from .sections.factory import Factory
-from .examples.factory1 import get_factory1
+from sections.utils import Pose
+from sections.factory import Factory
+from examples.factory1 import get_factory1
 
 logging.basicConfig(level=logging.INFO)
 

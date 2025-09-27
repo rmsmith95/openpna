@@ -1,10 +1,10 @@
 from typing import List
-from ..sections.factory import Factory
-from ..sections.machines import Machine, LitePlacer, Cobot280
-from ..sections.part import Part
-from ..sections.jobs import Job
-from ..sections.effectors import GripperEE
-from ..sections.utils import Pose
+from sections.factory import Factory
+from sections.machines import Machine, LitePlacer, Cobot280
+from sections.part import Part
+from sections.jobs import Job
+from sections.effectors import GripperEE
+from sections.utils import Pose
 import logging
 
 

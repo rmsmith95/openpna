@@ -35,7 +35,7 @@ export const Gantry = (props) => {
   const [baud, setBaud] = useState(115200);
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
   const [speed, setSpeed] = useState(1);
-  const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 0 }); // default step per axis
+  const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 5 }); // default step per axis
 
   const handleChange = (event, newValue) => setTab(newValue);
   const handleConnectLitePlacer = async () => {
@@ -55,7 +55,7 @@ export const Gantry = (props) => {
   };
 
   const getPosition = async () => {
-    if (!connected) return;
+    if (!connectedLitePlacer) return;
     try {
       const res = await fetch("/api/gantry/get_position");
       const data = await res.json();
@@ -66,36 +66,52 @@ export const Gantry = (props) => {
     }
   };
 
-  const moveGantry = async (axis, direction) => {
-    if (!connected) return;
+const reset = async () => {
+  console.log("resetting...");
+  const res = await fetch("/api/gantry/reset", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  const data = await res.json();
+  console.log("Reset response:", data);
+};
 
-    try {
-      const resPos = await fetch("/api/gantry/get_position");
-      const posData = await resPos.json();
-      let { X = 0, Y = 0, Z = 0, A = 0 } = posData.positions || {};
+const moveGantry = async (axis, direction) => {
+  if (!connectedLitePlacer) return;
 
-      const delta = Number(step[axis]); // ensure number
-      switch (axis) {
-        case "X": X += direction * delta; break;
-        case "Y": Y += direction * delta; break;
-        case "Z": Z += direction * delta; break;
-        case "A": A += direction * delta; break;
-        default: return;
-      }
+  try {
+    const delta = Number(step[axis]); // step size
+    const moveValue = direction * delta;
 
-      const res = await fetch("/api/gantry/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x: X, y: Y, z: Z, a: A, speed: Number(speed) }),
-      });
-      console.log("body:", { X, Y, Z, A, speed });
-      const data = await res.json();
-      console.log("Move response:", data);
-
-    } catch (err) {
-      console.error("Error moving gantry:", err);
+    // Build a move object with only the axis to move, others 0
+    const move = { X: 0, Y: 0, Z: 0, A: 0 };
+    if (["X", "Y", "Z", "A"].includes(axis)) {
+      move[axis] = moveValue;
+    } else {
+      return;
     }
-  };
+
+  const res = await fetch("/api/gantry/move", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+      x: move.X, 
+      y: move.Y, 
+      z: move.Z,
+      a: move.A, 
+      speed: Number(speed) 
+    }),
+  });
+
+    console.log("Move:", { ...move, speed });
+    const data = await res.json();
+    console.log("Move response:", data);
+
+  } catch (err) {
+    console.error("Error moving gantry:", err);
+  }
+};
 
   return (
     <Card sx={sx}>
@@ -215,6 +231,17 @@ export const Gantry = (props) => {
                     onChange={(e) => setSpeed(Number(e.target.value))}
                     size="small"
                   />
+                  <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => reset()}>
+                    Reset
+                  </Button>
+                  {/* <Typography variant="body2">Unlock</Typography>
+                  <TextField
+                    type="number"
+                    value={speed}
+                    sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13, width: 60 } }}
+                    onChange={(e) => setSpeed(Number(e.target.value))}
+                    size="small"
+                  /> */}
                 </Stack>
               </Stack>
 
@@ -274,7 +301,7 @@ export const Gantry = (props) => {
           {tab === 2 && (
             <Stack spacing={2}>
               <Stack spacing={2} direction="row" alignItems="center">
-                <Button variant="contained" color="success" onClick={handleConnect} disabled={connected}>Connect</Button>
+                <Button variant="contained" color="success" disabled={connectedLitePlacerGripper}>Connect</Button>
                 <TextField label="Port" value={port} onChange={(e) => setPort(e.target.value)} />
                 <TextField label="Baud Rate" type="number" value={baud} onChange={(e) => setBaud(Number(e.target.value))} />
                 <Button variant="contained" color="primary" onClick={() => console.log("Attach")}>Attach</Button>

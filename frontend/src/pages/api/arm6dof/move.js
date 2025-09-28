@@ -6,18 +6,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ status: "method not allowed" });
   }
 
-  const { x, y, z, speed } = req.body;
+  const { x, y, z, a, speed } = req.body;
 
   // Validate inputs
   if (
     typeof x !== "number" ||
     typeof y !== "number" ||
     typeof z !== "number" ||
+    typeof a !== "number" ||
     typeof speed !== "number"
   ) {
     return res.status(400).json({
       status: "error",
-      message: "x, y, z, and speed must all be numbers",
+      message: "x, y, z, a, and speed must all be numbers",
     });
   }
 
@@ -25,7 +26,7 @@ export default async function handler(req, res) {
     const response = await fetch("http://127.0.0.1:8000/liteplacer/move_xyz", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ x, y, z, speed }),
+      body: JSON.stringify({ x, y, z, a, speed }),
     });
 
     console.log("FastAPI response status:", response.status);

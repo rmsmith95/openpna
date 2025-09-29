@@ -34,8 +34,9 @@ export const Gantry = (props) => {
   const [port, setPort] = useState('COM10');
   const [baud, setBaud] = useState(115200);
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
-  const [speed, setSpeed] = useState(1);
-  const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 5 }); // default step per axis
+  const [speed, setSpeed] = useState(0.5);
+  const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 45 }); // default step per axis
+  const [moveMode, setMoveMode] = useState("unknown");
 
   const handleChange = (event, newValue) => setTab(newValue);
   const handleConnectLitePlacer = async () => {
@@ -54,17 +55,72 @@ export const Gantry = (props) => {
     }
   };
 
-  const getPosition = async () => {
-    if (!connectedLitePlacer) return;
-    try {
-      const res = await fetch("/api/gantry/get_position");
-      const data = await res.json();
-      console.log(data)
-      if (data.status === "ok") setPosition(data.positions);
-    } catch (err) {
-      console.error("Error getting gantry position:", err);
+const makeRelative = async (makeRelative) => {
+  try {
+    // Send command only if needed
+    if (makeRelative && moveMode != "G91") {
+      console.log("Switching to relative mode (G91)...");
+      await fetch("/api/gantry/tinyg_send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: "G91" }),
+      });
+      setMoveMode("G91")
+    } else if (!makeRelative && moveMode != "G90") {
+      console.log("Switching to absolute mode (G90)...");
+      await fetch("/api/gantry/tinyg_send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: "G90" }),
+      });
+      setMoveMode("G90")
+    } else {
+      console.log("Error setting movement mode:");
     }
-  };
+  } catch (err) {
+    console.error("Error setting movement mode:", err);
+  }
+}
+
+const getInfo = async () => {
+  if (!connectedLitePlacer) return;
+
+  try {
+    const res = await fetch("/api/gantry/get_info");
+    const data = await res.json();
+    console.log("Raw TinyG response:", data);
+
+    if (data.status === "ok" && Array.isArray(data.response)) {
+      const lines = data.response;
+
+      // Parse X/Y/Z/A positions
+      const positions = { X: 0, Y: 0, Z: 0, A: 0 };
+      let relative = false;
+
+      lines.forEach(line => {
+        let m;
+        if ((m = line.match(/X position:\s*([-0-9.]+)/))) positions.X = parseFloat(m[1]);
+        if ((m = line.match(/Y position:\s*([-0-9.]+)/))) positions.Y = parseFloat(m[1]);
+        if ((m = line.match(/Z position:\s*([-0-9.]+)/))) positions.Z = parseFloat(m[1]);
+        if ((m = line.match(/A position:\s*([-0-9.]+)/))) positions.A = parseFloat(m[1]);
+
+        let relative = false;
+        if (line.includes("Distance mode:")) {
+            relative = line.includes("G91");
+        }
+        setMoveMode(relative ? "G91" : "G90");
+      });
+
+      setPosition(positions);
+      setMoveMode(moveMode);
+
+      console.log("Parsed positions:", positions, "Relative mode:", relative);
+    }
+
+  } catch (err) {
+    console.error("Error getting gantry position:", err);
+  }
+};
 
 const reset = async () => {
   console.log("resetting...");
@@ -75,6 +131,20 @@ const reset = async () => {
   });
   const data = await res.json();
   console.log("Reset response:", data);
+};
+
+const tinyg_send = async (command) => {
+  console.log("sending TinyG command:", command);
+
+  const res = await fetch("/api/gantry/tinyg_send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ command }),
+  });
+
+  const data = await res.json();
+  console.log("TinyG response:", data);
+  return data;
 };
 
 const moveGantry = async (axis, direction) => {
@@ -163,7 +233,11 @@ const moveGantry = async (axis, direction) => {
               <Stack direction="row" spacing={2} alignItems="center">
                 <TextField label="Port" value={port} onChange={(e) => setPort(e.target.value)} />
                 <TextField label="Baud Rate" type="number" value={baud} onChange={(e) => setBaud(Number(e.target.value))} />
-                <Button variant="contained" color="success" onClick={handleConnectLitePlacer} disabled={connectedLitePlacer}>Connect</Button>
+                <Button variant="contained" color="success" 
+                  onClick={handleConnectLitePlacer} 
+                  // disabled={connectedLitePlacer}
+                  >Connect
+                </Button>
               </Stack>
 
               {/* Machine table */}
@@ -223,16 +297,18 @@ const moveGantry = async (axis, direction) => {
 
                 {/* Speed control under table */}
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography variant="body2">Speed</Typography>
-                  <TextField
-                    type="number"
-                    value={speed}
-                    sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13, width: 60 } }}
-                    onChange={(e) => setSpeed(Number(e.target.value))}
-                    size="small"
+                  <TextField 
+                    type="number" 
+                    inputProps={{ step: 0.01 }} 
+                    value={speed} 
+                    onChange={(e) => setSpeed(parseFloat(e.target.value))} 
+                    size="small" 
                   />
-                  <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => reset()}>
+                  <Button variant="contained" sx={{ width: 50, height: 50 }} onClick={() => reset()}>
                     Reset
+                  </Button>
+                  <Button variant="contained" sx={{ width: 50, height: 50 }} onClick={() => tinyg_send("?")}>
+                    ?
                   </Button>
                   {/* <Typography variant="body2">Unlock</Typography>
                   <TextField
@@ -258,7 +334,7 @@ const moveGantry = async (axis, direction) => {
                     </Button>
                     <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
                       <Button variant="contained" sx={{ width: 60, height: 60 }}
-                        onClick={getPosition}
+                        onClick={getInfo}
                         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                       >
                         P

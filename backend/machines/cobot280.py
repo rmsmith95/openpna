@@ -1,44 +1,83 @@
-
 import logging
-import json
 from pydantic import BaseModel
-from fastapi import APIRouter, Body
+from fastapi import APIRouter
 from sections.machines import Cobot280
 import serial
+import socket
 
 router = APIRouter()
-connection = None  # type: serial.Serial | None
+connection: serial.Serial | None = None
+current_joints: list[float] = [0, 0, 0, 0, 0, 0]  # track joint angles
 
-class ConnectRequest(BaseModel):
+# --- Models ---
+class SerialConnectRequest(BaseModel):
     port: str
     baud: int = 115200
 
-@router.post("/connect")
-def connect(request: ConnectRequest):
+class NetworkConnectRequest(BaseModel):
+    ip: str
+    port: int = 115200  # optional, default same as serial baud rate if you need
+
+class MoveJointRequest(BaseModel):
+    joint: int       # 0–5
+    direction: str   # "left" or "right"
+    delta: float = 5
+    speed: int = 50
+
+# --- Serial connect ---
+@router.post("/connect_serial")
+def connect_serial(req: SerialConnectRequest):
     global connection
     try:
-        connection = serial.Serial(request.port, request.baud, timeout=1)
-        logging.info(f"Connected to LitePlacer on {request.port} at {request.baud} baud")
-        return {"status": "connected", "device": "liteplacer"}
+        connection = serial.Serial(req.port, req.baud, timeout=1)
+        logging.info(f"Connected to Cobot280 on {req.port} at {req.baud} baud")
+        return {"status": "connected", "method": "serial"}
     except Exception as e:
-        logging.error(f"Failed to connect to LitePlacer: {e}")
+        logging.error(f"Serial connect failed: {e}")
         return {"status": "error", "message": str(e)}
 
-@router.post("/move")
-def move_joints(joints: list[float], speed: int = 50):
-    """
-    Move the cobot to the specified joint angles.
+# --- Network connect ---
+@router.post("/connect_network")
+def connect_network(req: NetworkConnectRequest):
+    global connection
+    try:
+        # test TCP connection to given IP
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2)
+        sock.connect((req.ip, 8000))  # port 8000 for cobot Python service
+        sock.close()
+        logging.info(f"Network connect success to {req.ip}")
+        return {"status": "connected", "method": "network", "ip": req.ip}
+    except Exception as e:
+        logging.error(f"Network connect failed: {e}")
+        return {"status": "error", "message": str(e)}
 
-    Args:
-        joints: [j1, j2, j3, j4, j5, j6] (degrees)
-        speed: movement speed (1–100)
-    """
+# --- Move specific joint ---
+@router.post("/move_joint")
+def move_joint(req: MoveJointRequest):
+    global current_joints
     if not Cobot280:
         return {"error": "Cobot 280 not connected"}
-    if len(joints) != 6:
-        return {"error": "Must provide 6 joint angles"}
+
+    if req.joint < 0 or req.joint >= len(current_joints):
+        return {"error": "Invalid joint index"}
+
+    if req.direction == "left":
+        current_joints[req.joint] -= req.delta
+    elif req.direction == "right":
+        current_joints[req.joint] += req.delta
+    else:
+        return {"error": "Invalid direction, must be 'left' or 'right'"}
+
     try:
-        Cobot280.send_angles(joints, speed)
-        return {"status": "ok", "joints": joints, "speed": speed}
+        Cobot280.send_angles(current_joints, req.speed)
+        return {
+            "status": "ok",
+            "joints": current_joints,
+            "moved_joint": req.joint,
+            "direction": req.direction,
+            "speed": req.speed,
+        }
     except Exception as e:
+        logging.error(f"Move failed: {e}")
         return {"error": str(e)}

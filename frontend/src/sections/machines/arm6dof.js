@@ -23,7 +23,7 @@ export const Arm6DOF = (props) => {
   const [ipAddress, setIpAddress] = useState("10.194.92.60");
 
   const [joints, setJoints] = useState([0, 0, 0, 0, 0, 0]);
-  const [speed, setSpeed] = useState([50, 50, 50, 50, 50, 50]); // per joint
+  const [delta, setDelta] = useState([5, 5, 5, 5, 5, 5]); // per joint movement step
 
   const handleChange = (_, newValue) => setTab(newValue);
 
@@ -61,23 +61,23 @@ export const Arm6DOF = (props) => {
     }
   };
 
-  const moveJoint = async (jointIndex, direction, delta = 5) => {
+  const moveJoint = async (jointIndex, direction) => {
     if (!connectedCobot280) return;
     const newJoints = [...joints];
-    newJoints[jointIndex] += direction === "left" ? -delta : delta;
+    newJoints[jointIndex] += direction === "left" ? -delta[jointIndex] : delta[jointIndex];
 
     try {
-      const res = await fetch("/api/arm6dof/move", {
+      const res = await fetch("/api/arm6dof/move_joint", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           joints: newJoints,
-          speed: speed[jointIndex],
+          speed: delta[jointIndex], // send as speed to backend if needed
         }),
       });
 
       if (!res.ok) throw new Error(`Move failed HTTP ${res.status}`);
-      setJoints(newJoints); // ✅ update local UI state only on success
+      setJoints(newJoints);
     } catch (err) {
       console.error("Joint move failed:", err);
     }
@@ -221,7 +221,7 @@ export const Arm6DOF = (props) => {
                     <TableCell>Joint</TableCell>
                     <TableCell>Position</TableCell>
                     <TableCell>Max</TableCell>
-                    <TableCell>Speed</TableCell>
+                    <TableCell>Delta</TableCell>
                     <TableCell>Controls</TableCell>
                   </TableRow>
                 </TableHead>
@@ -234,12 +234,12 @@ export const Arm6DOF = (props) => {
                       <TableCell>
                         <TextField
                           type="number"
-                          value={speed[index]}
+                          value={delta[index]}
                           size="small"
                           onChange={(e) => {
-                            const newSpeed = [...speed];
-                            newSpeed[index] = Number(e.target.value);
-                            setSpeed(newSpeed);
+                            const newDelta = [...delta];
+                            newDelta[index] = Number(e.target.value);
+                            setDelta(newDelta);
                           }}
                         />
                       </TableCell>
@@ -264,6 +264,7 @@ export const Arm6DOF = (props) => {
                     </TableRow>
                   ))}
                 </TableBody>
+
               </Table>
             </Stack>
           )}

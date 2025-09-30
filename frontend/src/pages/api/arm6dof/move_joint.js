@@ -1,32 +1,31 @@
-// pages/api/gantry/move.js
+// pages/api/arm6dof/move_joint.js
 export default async function handler(req, res) {
-  console.log("Received request to /api/gantry/move", req.body);
+  console.log("Received request to /api/arm6dof/move_joint", req.body);
 
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
   }
 
-  const { x, y, z, a, speed } = req.body;
+  const { joint, direction, delta, speed } = req.body;
 
   // Validate inputs
   if (
-    typeof x !== "number" ||
-    typeof y !== "number" ||
-    typeof z !== "number" ||
-    typeof a !== "number" ||
+    typeof joint !== "number" ||
+    !["left", "right"].includes(direction) ||
+    typeof delta !== "number" ||
     typeof speed !== "number"
   ) {
     return res.status(400).json({
       status: "error",
-      message: "x, y, z, a, and speed must all be numbers",
+      message: "Invalid input: joint must be number, direction 'left'|'right', delta and speed numbers",
     });
   }
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/liteplacer/move_xyz", {
+    const response = await fetch("http://127.0.0.1:8000/cobot280/move_joint", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ x, y, z, a, speed }),
+      body: JSON.stringify({ joint, direction, delta, speed }),
     });
 
     console.log("FastAPI response status:", response.status);

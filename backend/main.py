@@ -50,3 +50,18 @@ def startup():
 def factory_status():
     global factory
     return {"factory_initialized": factory is not None}
+
+@app.get("/get_parts")
+def get_parts():
+    parts = {}
+    return parts
+
+@app.get("/get_jobs")
+def get_jobs():
+    jobs = {}
+    return jobs
+
+@app.get("/get_machines")
+def get_machines():
+    machines = {}
+    return machines

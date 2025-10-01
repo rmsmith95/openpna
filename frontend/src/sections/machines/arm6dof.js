@@ -23,7 +23,7 @@ export const Arm6DOF = (props) => {
   const [ipAddress, setIpAddress] = useState("10.194.92.60");
 
   const [joints, setJoints] = useState([0, 0, 0, 0, 0, 0]);
-  const [delta, setDelta] = useState([5, 5, 5, 5, 5, 5]); // per joint movement step
+  const [step, setStep] = useState([5, 5, 5, 5, 5, 5]); // per joint movement step
 
   const handleChange = (_, newValue) => setTab(newValue);
 
@@ -64,7 +64,7 @@ export const Arm6DOF = (props) => {
   const moveJoint = async (jointIndex, direction) => {
     if (!connectedCobot280) return;
     const newJoints = [...joints];
-    newJoints[jointIndex] += direction === "left" ? -delta[jointIndex] : delta[jointIndex];
+    newJoints[jointIndex] += direction === "left" ? -step[jointIndex] : step[jointIndex];
 
     try {
       const res = await fetch("/api/arm6dof/move_joint", {
@@ -72,7 +72,7 @@ export const Arm6DOF = (props) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           joints: newJoints,
-          speed: delta[jointIndex], // send as speed to backend if needed
+          speed: step[jointIndex], // send as speed to backend if needed
         }),
       });
 
@@ -219,9 +219,9 @@ export const Arm6DOF = (props) => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Joint</TableCell>
-                    <TableCell>Position</TableCell>
-                    <TableCell>Max</TableCell>
-                    <TableCell>Delta</TableCell>
+                    <TableCell>Angle (deg)</TableCell>
+                    <TableCell>Max (deg)</TableCell>
+                    <TableCell>Step (deg)</TableCell>
                     <TableCell>Controls</TableCell>
                   </TableRow>
                 </TableHead>
@@ -233,15 +233,11 @@ export const Arm6DOF = (props) => {
                       <TableCell>{row.max}</TableCell>
                       <TableCell>
                         <TextField
-                          type="number"
-                          value={delta[index]}
+                          value={step[index]}
                           size="small"
-                          onChange={(e) => {
-                            const newDelta = [...delta];
-                            newDelta[index] = Number(e.target.value);
-                            setDelta(newDelta);
-                          }}
-                        />
+                          onChange={(e) => {const val = e.target.value; if (/^-?\d*\.?\d*$/.test(val)) {
+                              const newStep = [...step]; newStep[index] = val; setStep(newStep)}}}
+                          sx={{width: 80,'& .MuiInputBase-input': {padding: '4px 8px', fontSize: 13,},}}/>
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={1}>

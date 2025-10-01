@@ -7,17 +7,19 @@ import {
   TableCell,
   TableRow,
   TableHead,
+  Typography,
   Box,
   Button,
   TextField,
 } from "@mui/material";
 import { useState } from "react";
+import { NumericFormat } from 'react-number-format';
 
 const GantryControls = ({ connectedLitePlacer }) => {
   const [moveMode, setMoveMode] = useState("G91"); // default relative
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
   const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 45 }); // default step per axis
-  const [speed, setSpeed] = useState(500);
+  const [speed, setSpeed] = useState(1);
 
   const makeRelative = async (makeRelative) => {
     try {
@@ -157,45 +159,61 @@ const GantryControls = ({ connectedLitePlacer }) => {
             <TableRow>
               <TableCell>Axis</TableCell>
               <TableCell>Position</TableCell>
-              <TableCell>Max XYZ</TableCell>
+              <TableCell>Max</TableCell>
               <TableCell>Step Size</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {['X', 'Y', 'Z', 'A'].map(axis => (
               <TableRow key={axis}>
-                <TableCell>{axis.toUpperCase()}</TableCell>
-                <TableCell>{position[axis]}</TableCell>
+                <TableCell>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                    {axis.toUpperCase()}
+                    <Typography variant="body2">{axis === 'A' ? '(deg)' : '(mm)'}</Typography>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <TextField
+                    value={position[axis]}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^-?\d*\.?\d*$/.test(val)) { setPosition({ ...position, [axis]: val }); }
+                    }}
+                    size="small"
+                    sx={{ width: 80, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13, }, }} />
+                </TableCell>
                 <TableCell>
                   {axis === 'X' ? 600 : axis === 'Y' ? 400 : axis === 'Z' ? 200 : 360}
                 </TableCell>
                 <TableCell>
                   <TextField
-                    type="number"
                     value={step[axis]}
-                    sx={{ '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
-                    onChange={(e) => setStep({ ...step, [axis]: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^-?\d*\.?\d*$/.test(val)) { setStep({ ...step, [axis]: val }); }
+                    }}
                     size="small"
-                  />
+                    sx={{ width: 80, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13, }, }} />
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-
-        {/* Speed control under table */}
         <Stack direction="row" spacing={1} alignItems="center">
+          <Typography sx={{ mr: 1 }}>Speed</Typography>
           <TextField
-            type="number"
-            inputProps={{ step: 0.01 }}
             value={speed}
-            onChange={(e) => setSpeed(parseFloat(e.target.value))}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (/^-?\d*\.?\d*$/.test(val)) { setSpeed(val === '' ? 0 : val); }
+            }}
             size="small"
-          />
-          <Button variant="contained" sx={{ width: 50, height: 50 }} onClick={() => reset()}>
+            sx={{ width: 80, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13, }, }}>
+          </TextField>
+          <Button variant="contained" sx={{ height: 32 }} onClick={() => reset()}>
             Reset
           </Button>
-          <Button variant="contained" sx={{ width: 50, height: 50 }} onClick={() => tinyg_send("?")}>
+          <Button variant="contained" sx={{ height: 32 }} onClick={() => tinyg_send("?")}>
             ?
           </Button>
         </Stack>

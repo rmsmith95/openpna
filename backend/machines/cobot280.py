@@ -1,7 +1,6 @@
 import logging
 from pydantic import BaseModel
 from fastapi import APIRouter
-from sections.machines import Cobot280
 import serial
 import socket
 

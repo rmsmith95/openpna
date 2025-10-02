@@ -13,40 +13,12 @@ import {
   TextField,
 } from "@mui/material";
 import { useState } from "react";
-import { NumericFormat } from 'react-number-format';
 
 const GantryControls = ({ connectedLitePlacer }) => {
-  const [moveMode, setMoveMode] = useState("G91"); // default relative
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
+  const [homePosition, setHonePosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
   const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 45 }); // default step per axis
   const [speed, setSpeed] = useState(1);
-
-  const makeRelative = async (makeRelative) => {
-    try {
-      // Send command only if needed
-      if (makeRelative && moveMode != "G91") {
-        console.log("Switching to relative mode (G91)...");
-        await fetch("/api/gantry/tinyg_send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ command: "G91" }),
-        });
-        setMoveMode("G91")
-      } else if (!makeRelative && moveMode != "G90") {
-        console.log("Switching to absolute mode (G90)...");
-        await fetch("/api/gantry/tinyg_send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ command: "G90" }),
-        });
-        setMoveMode("G90")
-      } else {
-        console.log("Error setting movement mode:");
-      }
-    } catch (err) {
-      console.error("Error setting movement mode:", err);
-    }
-  }
 
   const getInfo = async () => {
     if (!connectedLitePlacer) return;
@@ -74,11 +46,9 @@ const GantryControls = ({ connectedLitePlacer }) => {
           if (line.includes("Distance mode:")) {
             relative = line.includes("G91");
           }
-          setMoveMode(relative ? "G91" : "G90");
         });
 
         setPosition(positions);
-        setMoveMode(moveMode);
 
         console.log("Parsed positions:", positions, "Relative mode:", relative);
       }
@@ -99,6 +69,21 @@ const GantryControls = ({ connectedLitePlacer }) => {
     console.log("Reset response:", data);
   };
 
+  const setGantryPosition = async () => {
+    const res = await fetch("/api/gantry/set_position", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        x: Number(position.X),
+        y: Number(position.Y),
+        z: Number(position.Z),
+        a: Number(position.A),
+      }),
+    });
+    const data = await res.json();
+    console.log("Reset response:", data);
+  };
+
   const tinyg_send = async (command) => {
     console.log("sending TinyG command:", command);
 
@@ -113,10 +98,43 @@ const GantryControls = ({ connectedLitePlacer }) => {
     return data;
   };
 
-  const moveGantry = async (axis, direction) => {
+  const goto = async () => {
     if (!connectedLitePlacer) return;
 
-    makeRelative(true)
+    try {
+      console.log("GoTo:", {
+        x: position.X,
+        y: position.Y,
+        z: position.Z,
+        a: position.A,
+        speed
+      });
+
+      // Ensure absolute mode for goto
+      await makeRelative(false);
+
+      const res = await fetch("/api/gantry/goto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          x: Number(position.X),
+          y: Number(position.Y),
+          z: Number(position.Z),
+          a: Number(position.A),
+          speed: Number(speed),
+        }),
+      });
+
+      const data = await res.json();
+      console.log("GoTo response:", data);
+    } catch (err) {
+      console.error("Error in GoTo:", err);
+    }
+  };
+
+  const stepMove = async (axis, direction) => {
+    if (!connectedLitePlacer) return;
+
     try {
       const delta = Number(step[axis]); // step size
       const moveValue = direction * delta;
@@ -129,7 +147,7 @@ const GantryControls = ({ connectedLitePlacer }) => {
         return;
       }
 
-      const res = await fetch("/api/gantry/move", {
+      const res = await fetch("/api/gantry/step", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -210,11 +228,20 @@ const GantryControls = ({ connectedLitePlacer }) => {
             size="small"
             sx={{ width: 80, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13, }, }}>
           </TextField>
+          <Button variant="contained" sx={{ height: 32 }} onClick={() => goto(position)}>
+            GoTo
+          </Button>
+          <Button variant="contained" sx={{ height: 32 }} onClick={() => setGantryPosition()}>
+            Set P
+          </Button>
           <Button variant="contained" sx={{ height: 32 }} onClick={() => reset()}>
             Reset
           </Button>
           <Button variant="contained" sx={{ height: 32 }} onClick={() => tinyg_send("?")}>
-            ?
+            Info
+          </Button>
+          <Button variant="contained" sx={{ height: 32 }} onClick={() => goto(homePosition)}>
+            Home
           </Button>
         </Stack>
       </Stack>
@@ -223,35 +250,29 @@ const GantryControls = ({ connectedLitePlacer }) => {
       <Stack direction="row" paddingTop={1} spacing={2} alignItems="flex-start">
         {/* X/Y Controls */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-          <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("Y", +1)}>
+          <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => stepMove("Y", +1)}>
             +Y
           </Button>
           <Stack direction="row" spacing={1} alignItems="center">
-            <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("X", -1)}>
+            <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => stepMove("X", -1)}>
               -X
             </Button>
             <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
-              <Button variant="contained" sx={{ width: 60, height: 60 }}
-                onClick={getInfo}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                P
-              </Button>
             </Box>
-            <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("X", +1)}>
+            <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => stepMove("X", +1)}>
               +X
             </Button>
           </Stack>
-          <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("Y", -1)}>
+          <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => stepMove("Y", -1)}>
             -Y
           </Button>
           <Stack direction="row" spacing={1} alignItems="center">
-            <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("A", -1)}>
+            <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => stepMove("A", -1)}>
               -R
             </Button>
             <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
             </Box>
-            <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("A", +1)}>
+            <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => stepMove("A", +1)}>
               +R
             </Button>
           </Stack>
@@ -259,12 +280,12 @@ const GantryControls = ({ connectedLitePlacer }) => {
 
         {/* Z Controls */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, marginTop: 0 }}>
-          <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("Z", +1)}>
+          <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => stepMove("Z", +1)}>
             +Z
           </Button>
           <Box sx={{ width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: 1 }}>
           </Box>
-          <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => moveGantry("Z", -1)}>
+          <Button variant="contained" sx={{ width: 60, height: 60 }} onClick={() => stepMove("Z", -1)}>
             -Z
           </Button>
         </Box>

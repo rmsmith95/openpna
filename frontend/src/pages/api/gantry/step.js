@@ -1,6 +1,6 @@
 // pages/api/gantry/move.js
 export default async function handler(req, res) {
-  console.log("Received request to /api/gantry/move", req.body);
+  console.log("Received request to /api/gantry/step", req.body);
 
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
   console.log("body:", { x, y, z, a, speed });
   try {
-    const response = await fetch("http://127.0.0.1:8000/liteplacer/move_xyz", {
+    const response = await fetch("http://127.0.0.1:8000/liteplacer/step", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ x, y, z, a, speed }),

@@ -1,11 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
 import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
-import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
-import PlayIcon from '@heroicons/react/24/solid/PlayIcon';
-import StopIcon from '@heroicons/react/24/solid/StopIcon';
-import ArrowPathIcon from '@heroicons/react/24/solid/ArrowPathIcon';
 import {
   Box,
   Button,
@@ -23,7 +19,6 @@ import { PartsTable } from 'src/sections/parts/part-table';
 import { PartSearch } from 'src/sections/parts/part-search';
 import { applyPagination } from 'src/utils/apply-pagination';
 import { initialJobs, initialParts } from 'src/utils/jobs-set1';
-import { useSimulation } from 'src/sections/jobs/simulation';
 
 const useParts = (page, rowsPerPage, visibleClasses, parts) => {
   return useMemo(() => {
@@ -40,15 +35,42 @@ const PartsPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
+  const [parts, setParts] = useState(initialParts);
 
   const [visibleClasses, setVisibleClasses] = useState({
     part: true,
     jig: true,
     assembly: true,
   });
+  
+  // Fetch jobs from backend using POST
+  const fetchParts = useCallback(async () => {
+    try {
+      const res = await fetch('/api/get_parts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          offset: page * rowsPerPage,
+          search: searchQuery,
+          showParts: visibleClasses.part,
+          showJigs: visibleClasses.jig,
+          showAssemblies: visibleClasses.assembly,
+        }),
+      });
 
-  const [parts, setParts] = useState(initialParts);
-  const [jobs, setJobs] = useState(initialJobs);
+      const data = await res.json();
+      // Expecting data.jobs as object/dict
+      setJobs(data.jobs || {});
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+    }
+  }, [page, rowsPerPage, searchQuery]);
+
+  useEffect(() => {
+    fetchParts();
+  }, [fetchParts]);
 
   const filteredParts = useMemo(() => {
     return parts.filter((p) =>

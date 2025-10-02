@@ -70,8 +70,8 @@ def tinyg_send(req: TinyGCommand):
         logging.error(f"Error sending TinyG command '{command}': {e}")
         return {"error": str(e)}
 
-@router.post("/soft_reset")
-def soft_reset():
+@router.post("/reset")
+def reset():
     """Soft reset TinyG (Ctrl+X)."""
     if not connection or not connection.is_open:
         logging.warning("TinyG not connected")
@@ -85,10 +85,6 @@ def soft_reset():
         logging.error(f"TinyG soft reset error: {e}")
         return {"error": str(e)}
 
-
-def tinyg_relative_movement():
-    """Resume motion (~)."""
-    return tinyg_send(TinyGCommand(command="G91"))
 
 def tinyg_feed_hold():
     """Pause motion (!)."""
@@ -105,10 +101,12 @@ def tinyg_home_all():
     return tinyg_send("$H")
 
 
-def tinyg_set_position(x=0, y=0, z=0, a=0):
+@router.post("/set_position")
+def set_position(x=0, y=0, z=0, a=0):
     """Set current position (G92)."""
     gcode = f"G92 X{x} Y{y} Z{z} A{a}"
     return tinyg_send(gcode)
+
 
 # --- Get full TinyG status ---
 @router.get("/get_info")
@@ -150,47 +148,6 @@ def get_info():
         return {"error": str(e)}
 
 
-# --- Get position (plain-text parsing) ---
-# @router.get("/get_position")
-# def get_position():
-#     if not connection or not connection.is_open:
-#         return {"error": "LitePlacer not connected"}
-
-#     try:
-#         connection.reset_input_buffer()
-#         connection.write(b"?\n")
-#         time.sleep(0.05)  # wait for TinyG to respond
-
-#         # Read all available lines
-#         lines = []
-#         while connection.in_waiting:
-#             line = connection.readline().decode(errors="ignore").strip()
-#             if line:
-#                 lines.append(line)
-
-#         if not lines:
-#             return {"error": "No response from TinyG"}
-
-#         logging.info("TinyG raw response:\n" + "\n".join(lines))
-
-#         # Parse X/Y/Z positions
-#         positions = {"X": 0.0, "Y": 0.0, "Z": 0.0, "A": 0.0}
-#         for line in lines:
-#             m = re.search(r"X position:\s*([-0-9.]+)", line)
-#             if m: positions["X"] = float(m.group(1))
-#             m = re.search(r"Y position:\s*([-0-9.]+)", line)
-#             if m: positions["Y"] = float(m.group(1))
-#             m = re.search(r"Z position:\s*([-0-9.]+)", line)
-#             if m: positions["Z"] = float(m.group(1))
-#             m = re.search(r"A position:\s*([-0-9.]+)", line)
-#             if m: positions["A"] = float(m.group(1))
-
-#         return {"positions": positions}
-
-    # except Exception as e:
-    #     logging.error(f"LitePlacer get_positions error: {e}")
-    #     return {"error": str(e)}
-
 # --- Move gantry ---
 class MoveXYZRequest(BaseModel):
     x: float
@@ -199,12 +156,13 @@ class MoveXYZRequest(BaseModel):
     a: float
     speed: float  # mm/min
 
-@router.post("/move_xyz")
-def move_xyz(req: MoveXYZRequest):
+@router.post("/goto")
+def goto(req: MoveXYZRequest):
     if not connection or not connection.is_open:
         return {"error": "LitePlacer not connected"}
 
     try:
+        tinyg_send(TinyGCommand(command="G91"))
         # Form G-code command (G0 = rapid move)
         gcode = f"G0 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
         connection.write(gcode.encode())
@@ -217,6 +175,27 @@ def move_xyz(req: MoveXYZRequest):
     except Exception as e:
         logging.error(f"LitePlacer move_xyz error: {e}")
         return {"error": str(e)}
+
+
+@router.post("/move")
+def move(req: MoveXYZRequest):
+    if not connection or not connection.is_open:
+        return {"error": "LitePlacer not connected"}
+
+    try:
+        tinyg_send(TinyGCommand(command="G90"))  # (G0 = rapid move)
+        gcode = f"G0 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
+        connection.write(gcode.encode())
+        logging.info(f"Sent G-code: {gcode.strip()}")
+
+        return {
+            "status": "ok",
+            "target": {"x": req.x, "y": req.y, "z": req.z, "a": req.a, "speed": req.speed}
+        }
+    except Exception as e:
+        logging.error(f"LitePlacer move_xyz error: {e}")
+        return {"error": str(e)}
+
 
     # Form G-code command (G0 = rapid move)
     # gcode = f"G0 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"

@@ -18,42 +18,46 @@ import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { PartsTable } from 'src/sections/parts/part-table';
 import { PartSearch } from 'src/sections/parts/part-search';
 import { applyPagination } from 'src/utils/apply-pagination';
-import { initialJobs, initialParts } from 'src/utils/jobs-set1';
 
-const useParts = (page, rowsPerPage, visibleClasses, parts) => {
-  return useMemo(() => {
-    const filtered = parts.filter((item) => visibleClasses[item.class]);
-    return applyPagination(filtered, page, rowsPerPage);
-  }, [page, rowsPerPage, visibleClasses, parts]);
-};
-
-const usePartIds = (parts) => {
-  return useMemo(() => parts.map((part) => part.id), [parts]);
+// Pagination helper
+const usePaginated = (items, page, rowsPerPage) => {
+  return useMemo(() => applyPagination(items, page, rowsPerPage), [items, page, rowsPerPage]);
 };
 
 const PartsPage = () => {
+  const [parts, setParts] = useState({}); // dict of partId -> part
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
-  const [parts, setParts] = useState(initialParts);
 
   const [visibleClasses, setVisibleClasses] = useState({
     part: true,
     jig: true,
     assembly: true,
   });
-  
-  // Fetch jobs from backend using POST
+
+  // Convert dict to array + ids
+  const partsArray = useMemo(() => Object.values(parts), [parts]);
+  const partsIds = useMemo(() => Object.keys(parts), [parts]);
+  const selection = useSelection(partsIds);
+
+  // Filter by visible class
+  const filteredParts = useMemo(
+    () => partsArray.filter((p) => visibleClasses[p.class]),
+    [partsArray, visibleClasses]
+  );
+
+  const paginatedParts = usePaginated(filteredParts, page, rowsPerPage);
+
+  // Fetch parts from backend
   const fetchParts = useCallback(async () => {
     try {
       const res = await fetch('/api/get_parts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          offset: page * rowsPerPage,
           search: searchQuery,
+          offset: page * rowsPerPage,
           showParts: visibleClasses.part,
           showJigs: visibleClasses.jig,
           showAssemblies: visibleClasses.assembly,
@@ -61,37 +65,22 @@ const PartsPage = () => {
       });
 
       const data = await res.json();
-      // Expecting data.jobs as object/dict
-      setJobs(data.jobs || {});
+      setParts(data.parts || {});
     } catch (err) {
-      console.error('Error fetching jobs:', err);
+      console.error('Error fetching parts:', err);
     }
-  }, [page, rowsPerPage, searchQuery]);
+  }, [page, rowsPerPage, searchQuery, visibleClasses]);
 
   useEffect(() => {
     fetchParts();
   }, [fetchParts]);
 
-  const filteredParts = useMemo(() => {
-    return parts.filter((p) =>
-      visibleClasses[p.class] &&
-      (
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.id.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  }, [parts, visibleClasses, searchQuery]);
+  const handlePageChange = (event, newPage) => setPage(newPage);
 
-  const partsPaginated = useMemo(
-    () => applyPagination(filteredParts, page, rowsPerPage),
-    [filteredParts, page, rowsPerPage]
-  );
-
-  const partsIds = useMemo(() => partsPaginated.map((part) => part.id), [partsPaginated]);
-  const selection = useSelection(partsIds);
-
-  const handlePageChange = useCallback((event, value) => setPage(value), []);
-  const handleRowsPerPageChange = useCallback((event) => setRowsPerPage(event.target.value), []);
+  const handleRowsChange = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   const toggleClass = (cls) => {
     setVisibleClasses((prev) => ({ ...prev, [cls]: !prev[cls] }));
@@ -111,27 +100,46 @@ const PartsPage = () => {
               <Stack spacing={1}>
                 <Typography variant="h4">Parts</Typography>
                 <Stack alignItems="center" direction="row" spacing={1}>
-                  <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowUpOnSquareIcon /></SvgIcon>}>Import</Button>
-                  <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowDownOnSquareIcon /></SvgIcon>}>Export</Button>
-                  <PartSearch value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }} />
-                  <FormControlLabel control={<Checkbox checked={visibleClasses.part} onChange={() => toggleClass('part')} />} label="Parts" />
-                  <FormControlLabel control={<Checkbox checked={visibleClasses.jig} onChange={() => toggleClass('jig')} />} label="Jigs" />
-                  <FormControlLabel control={<Checkbox checked={visibleClasses.assembly} onChange={() => toggleClass('assembly')} />} label="Assembly" />
+                  <Button
+                    color="inherit"
+                    startIcon={<SvgIcon fontSize="small"><ArrowUpOnSquareIcon /></SvgIcon>}
+                  >
+                    Import
+                  </Button>
+                  <Button
+                    color="inherit"
+                    startIcon={<SvgIcon fontSize="small"><ArrowDownOnSquareIcon /></SvgIcon>}
+                  >
+                    Export
+                  </Button>
+                  <PartSearch
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={visibleClasses.part} onChange={() => toggleClass('part')} />}
+                    label="Parts"
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={visibleClasses.jig} onChange={() => toggleClass('jig')} />}
+                    label="Jigs"
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={visibleClasses.assembly} onChange={() => toggleClass('assembly')} />}
+                    label="Assembly"
+                  />
                 </Stack>
               </Stack>
-              {/* <div>
-                <Button startIcon={<SvgIcon fontSize="small"><PlusIcon /></SvgIcon>} variant="contained">Add</Button>
-              </div> */}
             </Stack>
 
             {/* Parts table */}
             <PartsTable
-              count={parts.filter((p) => visibleClasses[p.class]).length}
-              items={partsPaginated}
+              count={filteredParts.length}
+              items={paginatedParts}
               onDeselectAll={selection.handleDeselectAll}
               onDeselectOne={selection.handleDeselectOne}
               onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
+              onRowsPerPageChange={handleRowsChange}
               onSelectAll={selection.handleSelectAll}
               onSelectOne={selection.handleSelectOne}
               page={page}

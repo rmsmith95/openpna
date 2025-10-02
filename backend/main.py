@@ -3,7 +3,6 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import threading
 from machines.liteplacer import router as liteplacer_router
 from machines.cobot280 import router as cobot280_router
 # from parse_xml import parse_xml_file
@@ -61,29 +60,12 @@ class PartRequest(BaseModel):
 
 @app.post("/get_parts")
 def get_parts(req: PartRequest):
-    global factory
-    if factory is None:
-        return {}
-
-    # Filter by search
+    # Filter jobs by search
     result = {k: v for k, v in factory.parts.items() if req.search.lower() in k.lower()}
-
-    # Filter by visibility
-    def is_visible(part):
-        part_type = v.get("type", "part")  # assuming parts have a "type" field: "part", "jig", "assembly"
-        if part_type == "part" and not req.showParts:
-            return False
-        if part_type == "jig" and not req.showJigs:
-            return False
-        if part_type == "assembly" and not req.showAssemblies:
-            return False
-        return True
-
-    filtered = {k: v for k, v in result.items() if is_visible(v)}
     # Apply offset and limit
     start = req.offset
     end = req.offset + req.limit
-    limited = dict(list(filtered.items())[start:end])
+    limited = dict(list(result.items())[start:end])
     return limited
 
 
@@ -107,5 +89,6 @@ def get_machines():
     return factory.machines
 
 @app.get("/run_job")
-def get_machines(job_id):
-    job = factory.jobs[job_id]
+def run_job(job_id):
+    factory.run_job(job_id)
+    return True

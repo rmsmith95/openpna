@@ -7,6 +7,9 @@ import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { JobsTable } from 'src/sections/jobs/job-table';
 import { applyPagination } from 'src/utils/apply-pagination';
+import { JobSearch } from 'src/sections/jobs/job-search';
+import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
+import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
 
 // Pagination helper
 const usePaginated = (items, page, rowsPerPage) => {
@@ -71,7 +74,7 @@ const JobsPage = () => {
           <Stack spacing={3}>
             <Typography variant="h4">Jobs</Typography>
 
-            <Stack direction="row" spacing={2}>
+            <Stack direction="row" spacing={2} alignItems="center">
               <Button
                 variant="contained"
                 color="primary"
@@ -98,6 +101,22 @@ const JobsPage = () => {
                 startIcon={<SvgIcon fontSize="small"><ArrowPathIcon /></SvgIcon>}
               >
                 Reset
+              </Button>
+              <JobSearch
+                value={searchFilter}
+                onChange={(e) => { setSearchFilter(e.target.value); setPage(0); }}
+              />
+              <Button
+                color="inherit"
+                startIcon={<SvgIcon fontSize="small"><ArrowUpOnSquareIcon /></SvgIcon>}
+              >
+                Import
+              </Button>
+              <Button
+                color="inherit"
+                startIcon={<SvgIcon fontSize="small"><ArrowDownOnSquareIcon /></SvgIcon>}
+              >
+                Export
               </Button>
             </Stack>
 

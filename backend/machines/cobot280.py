@@ -6,7 +6,7 @@ import socket
 
 router = APIRouter()
 connection: serial.Serial | None = None
-current_joints: list[float] = [0, 0, 0, 0, 0, 0]  # track joint angles
+# current_joints: list[float] = [0, 0, 0, 0, 0, 0]  # track joint angles
 
 # --- Models ---
 class SerialConnectRequest(BaseModel):
@@ -54,25 +54,20 @@ def connect_network(req: NetworkConnectRequest):
 # --- Move specific joint ---
 @router.post("/move_joint")
 def move_joint(req: MoveJointRequest):
-    global current_joints
-    if not Cobot280:
-        return {"error": "Cobot 280 not connected"}
 
-    if req.joint < 0 or req.joint >= len(current_joints):
-        return {"error": "Invalid joint index"}
-
+    joint_angles: list[float] = [0, 0, 0, 0, 0, 0]
     if req.direction == "left":
-        current_joints[req.joint] -= req.delta
+        joint_angles[req.joint] -= req.delta
     elif req.direction == "right":
-        current_joints[req.joint] += req.delta
+        joint_angles[req.joint] += req.delta
     else:
         return {"error": "Invalid direction, must be 'left' or 'right'"}
 
     try:
-        Cobot280.send_angles(current_joints, req.speed)
+        connection.send_angles(joint_angles, req.speed)
         return {
             "status": "ok",
-            "joints": current_joints,
+            "joints": joint_angles,
             "moved_joint": req.joint,
             "direction": req.direction,
             "speed": req.speed,

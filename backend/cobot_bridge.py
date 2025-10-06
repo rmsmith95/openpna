@@ -1,51 +1,69 @@
-# this files runs on a rpi cobot 280. it bridges the commands from the backend to the cobot controller.
-
+#!/usr/bin/env python3
 import socket
+import threading
+import json
 from pymycobot.mycobot import MyCobot
 
-HOST = "0.0.0.0"   # Listen on all interfaces
-PORT = 8000        # Choose your port
+# --- MyCobot setup ---
+PORT = "/dev/ttyAMA0"
+BAUD = 115200
+mc = MyCobot(PORT, BAUD)
+print("✅ Connected to MyCobot 280 on", PORT)
 
-# Initialize the myCobot
-mc = MyCobot("/dev/ttyAMA0", 115200)
+# --- TCP server setup ---
+HOST = "0.0.0.0"  # listen on all interfaces
+PORT_TCP = 8000
 
-# Create a TCP socket server
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((HOST, PORT))
-server.listen(1)
-
-print(f"✅ Listening for cobot commands on {HOST}:{PORT}")
-
-while True:
-    client, addr = server.accept()
-    print(f"📡 Connection from {addr}")
-
-    with client:
+def handle_client(conn, addr):
+    print(f"🔌 Client connected: {addr}")
+    try:
         while True:
-            data = client.recv(1024)
+            data = conn.recv(1024)
             if not data:
                 break
+            try:
+                cmd = json.loads(data.decode())
+                command = cmd.get("command")
 
-            cmd = data.decode().strip()
-            print(f"➡️ Received command: {cmd}")
+                if command == "set_angles":
+                    angles = cmd.get("angles")
+                    if not angles or len(angles) != 6:
+                        raise ValueError("Must provide 6 angles")
+                    speed = int(cmd.get("speed", 50))
+                    mc.send_angles(angles, speed)
+                    resp = {"status": "ok", "angles": angles}
 
-            # Example commands
-            if cmd.startswith("MOVEJ"):
-                try:
-                    # Example: MOVEJ 0 10 20 30 40 50
-                    angles = list(map(float, cmd.split()[1:]))
-                    mc.send_angles(angles, 50)
-                    client.sendall(b"OK\n")
-                except Exception as e:
-                    client.sendall(f"ERR {e}\n".encode())
+                elif command == "get_position":
+                    angles = mc.get_angles()
+                    resp = {"status": "ok", "angles": angles}
 
-            elif cmd == "GETPOS":
-                pos = mc.get_coords()
-                client.sendall(f"{pos}\n".encode())
+                elif command == "gripper_open":
+                    mc.open_gripper()
+                    resp = {"status": "ok"}
 
-            elif cmd == "STOP":
-                mc.stop()
-                client.sendall(b"STOPPED\n")
+                elif command == "gripper_close":
+                    mc.close_gripper()
+                    resp = {"status": "ok"}
 
-            else:
-                client.sendall(b"UNKNOWN COMMAND\n")
+                else:
+                    resp = {"status": "error", "message": f"Unknown command '{command}'"}
+
+                conn.sendall(json.dumps(resp).encode())
+
+            except Exception as e:
+                conn.sendall(json.dumps({"status":"error","message": str(e)}).encode())
+
+    finally:
+        conn.close()
+        print(f"❌ Client disconnected: {addr}")
+
+# --- Start TCP server ---
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+sock.bind((HOST, PORT_TCP))
+sock.listen(5)
+print(f"🚀 Listening for commands on {HOST}:{PORT_TCP}")
+
+while True:
+    conn, addr = sock.accept()
+    threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()

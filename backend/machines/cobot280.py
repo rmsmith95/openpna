@@ -1,83 +1,60 @@
-import logging
 import socket
+import logging
 from fastapi import APIRouter
 from pydantic import BaseModel
+from typing import List
+import json
 
 router = APIRouter()
-sock: socket.socket | None = None  # will hold the network connection
-
 
 # --- Models ---
-class NetworkConnectRequest(BaseModel):
+class ConnectRequest(BaseModel):
+    ip: str
+    port: int = 8000
+    timeout: float = 3.0  # seconds
+
+class SetAnglesRequest(BaseModel):
+    angles: List[float]
+    speed: int = 50
+    ip: str       # Pi IP
+    port: int = 8000  # optional override
+
+# --- Helper to send command to Pi ---
+def send_command_to_pi(cmd: dict, ip: str, port: int, timeout: float = 3.0):
+    print(f'cmd: {cmd}, ip: {ip}:{port}')
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(timeout)
+            s.connect((ip, port))
+            s.sendall((json.dumps(cmd) + "\n").encode())
+            resp = s.recv(1024).decode().strip()
+            return json.loads(resp)
+    except Exception as e:
+        logging.error(f"Failed to send command to Pi ({ip}:{port}): {e}")
+        return {"status": "error", "message": str(e)}
+
+# --- Test connection endpoint ---
+@router.post("/connect_network")
+def connect_network(req: ConnectRequest):
+    test_cmd = {"command": "get_position"}
+    return send_command_to_pi(test_cmd, req.ip, req.port, req.timeout)
+
+# --- Set angles ---
+@router.post("/set_angles")
+def set_angles(req: SetAnglesRequest):
+    if len(req.angles) != 6:
+        return {"status": "error", "message": "'angles' must be a list of 6 values"}
+    cmd = {"command": "set_angles", "angles": req.angles, "speed": req.speed}
+    return send_command_to_pi(cmd, req.ip, req.port)
+
+# --- Get current joint angles ---
+class GetPositionRequest(BaseModel):
     ip: str
     port: int = 8000
 
-
-class MoveJointRequest(BaseModel):
-    joint: int
-    direction: str   # "left" or "right"
-    delta: float = 5
-    speed: int = 50
-
-
-# --- Connect to Raspberry Pi cobot server ---
-@router.post("/connect_network")
-def connect_network(req: NetworkConnectRequest):
-    global sock
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((req.ip, req.port))
-        sock.settimeout(3)
-        logging.info(f"Connected to cobot server at {req.ip}:{req.port}")
-        return {"status": "connected", "ip": req.ip, "port": req.port}
-    except Exception as e:
-        logging.error(f"Network connect failed: {e}")
-        sock = None
-        return {"status": "error", "message": str(e)}
-
-
-# --- Move a specific joint ---
-@router.post("/move_joint")
-def move_joint(req: MoveJointRequest):
-    global sock
-    if sock is None:
-        return {"error": "Not connected to cobot server"}
-
-    # Build joint angle command string
-    joint_angles = [0, 0, 0, 0, 0, 0]
-    if req.direction == "left":
-        joint_angles[req.joint] -= req.delta
-    elif req.direction == "right":
-        joint_angles[req.joint] += req.delta
-    else:
-        return {"error": "Direction must be 'left' or 'right'"}
-
-    cmd = f"MOVEJ {' '.join(map(str, joint_angles))}\n"
-
-    try:
-        sock.sendall(cmd.encode())
-        response = sock.recv(1024).decode().strip()
-        return {
-            "status": "sent",
-            "command": cmd.strip(),
-            "response": response,
-        }
-    except Exception as e:
-        logging.error(f"Failed to send MOVEJ: {e}")
-        return {"error": str(e)}
-
-
-# --- Get current position ---
-@router.get("/getpos")
-def get_position():
-    global sock
-    if sock is None:
-        return {"error": "Not connected"}
-
-    try:
-        sock.sendall(b"GETPOS\n")
-        response = sock.recv(1024).decode().strip()
-        return {"status": "ok", "coords": response}
-    except Exception as e:
-        logging.error(f"Get position failed: {e}")
-        return {"error": str(e)}
+@router.post("/get_position")
+def get_position(req: GetPositionRequest):
+    cmd = {"command": "get_position"}
+    values =  send_command_to_pi(cmd, req.ip, req.port)
+    print(values)
+    return values

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Card, CardContent, Stack, Table, TableBody, TableCell, TableHead, TableRow,
@@ -14,86 +14,103 @@ export const Arm6DOF = (props) => {
   const [tab, setTab] = useState(0);
 
   // Connection states
-  const [connectedCobot280, setConnectedCobot280] = useState(false);
-  const [connectedCobot280Gripper, setConnectedCobot280Gripper] = useState(false);
+  // const [connectedCobot280, setConnectedCobot280] = useState(false);
+  // const [connectedCobot280Gripper, setConnectedCobot280Gripper] = useState(false);
 
-  const [connectionType, setConnectionType] = useState("serial"); // "serial" or "network"
+  const [connectionType, setConnectionType] = useState("serial");
   const [port, setPort] = useState("COM4");
   const [baud, setBaud] = useState(115200);
   const [ipAddress, setIpAddress] = useState("10.194.92.60");
 
   const [joints, setJoints] = useState([0, 0, 0, 0, 0, 0]);
-  const [step, setStep] = useState([5, 5, 5, 5, 5, 5]); // per joint movement step
+  const [step, setStep] = useState([5, 5, 5, 5, 5, 5]);
 
   const handleChange = (_, newValue) => setTab(newValue);
 
   const handleConnectCobot280 = async () => {
+    fetchPositions()
+    // try {
+    //   let res;
+
+    //   if (connectionType === "serial") {
+    //     res = await fetch("/api/arm6dof/connect_serial", {
+    //       method: "POST",
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify({ port, baud }),
+    //     });
+    //   } else {
+    //     res = await fetch("/api/arm6dof/connect_network", {
+    //       method: "POST",
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify({ ip: ipAddress }),
+    //     });
+    //   }
+
+    //   if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    //   const data = await res.json();
+    //   setConnectedCobot280(data.status === "connected");
+
+    //   // fetch positions once after connecting
+    //   if (data.status === "connected") {
+    //     fetchPositions();
+    //   }
+    // } catch (err) {
+    //   console.error("Cobot280 connect failed:", err);
+    //   setConnectedCobot280(false);
+    // }
+  };
+
+  const fetchPositions = async () => {
     try {
-      let res;
-
-      if (connectionType === "serial") {
-        // Serial connection
-        res = await fetch("/api/arm6dof/connect_serial", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ port, baud }),
-        });
-      } else {
-        // Network connection
-        res = await fetch("/api/arm6dof/connect_network", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ip: ipAddress }),
-        });
-      }
-
+      const res = await fetch("/api/arm6dof/get_position", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ipAddress: ipAddress }),
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
       const data = await res.json();
-      if (data.status === "connected") {
-        setConnectedCobot280(true);
-      } else {
-        setConnectedCobot280(false);
+      if (data.status === "ok" && Array.isArray(data.angles)) {
+        setJoints(data.angles.map(Number)); // ensure numeric
       }
     } catch (err) {
-      console.error("Cobot280 connect failed:", err);
-      setConnectedCobot280(false);
+      console.error("❌ Error fetching joint positions:", err);
     }
   };
 
-  const moveJoint = async (jointIndex, direction) => {
-    if (!connectedCobot280) return;
+  // --- Move joint by delta and then refresh positions ---
+  const moveJoint = async (jointIndex, deltaValue) => {
+    // if (!connectedCobot280) return;
+    const newAngles = [...joints];
+    newAngles[jointIndex] += deltaValue;
 
     try {
-      const response = await fetch("/api/arm6dof/move_joint", {
+      const response = await fetch("/api/arm6dof/set_angles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          joint: jointIndex,
-          direction: direction,                 // "left" or "right"
-          delta: step[jointIndex] || 5,         // movement amount
-          speed: 50,                            // optional speed override
+          ipAddress: ipAddress,
+          angles: newAngles,
+          speed: 50,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
       const data = await response.json();
-      console.log("✅ MoveJoint response:", data);
+      console.log("✅ SetAngles response:", data);
 
-      // update local state only if backend confirmed move
       if (data.status === "ok" || data.status === "sent") {
-        const newJoints = [...joints];
-        newJoints[jointIndex] +=
-          direction === "left" ? -step[jointIndex] : step[jointIndex];
-        setJoints(newJoints);
+        // fetch updated positions from backend to avoid drift
+        fetchPositions();
       }
     } catch (err) {
-      console.error("❌ Error moving joint:", err);
+      console.error("❌ Error setting angles:", err);
     }
   };
+
+  // fetch positions once on mount
+  useEffect(() => {
+    fetchPositions();
+  }, []);
 
   const axisData = [
     { joint: "J1", max: 360 },
@@ -120,7 +137,7 @@ export const Arm6DOF = (props) => {
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <span>Cobot280</span>
-                  {connectedCobot280 ? (
+                  {/* {connectedCobot280 ? (
                     <SvgIcon fontSize="small" color="success">
                       <CheckCircleIcon />
                     </SvgIcon>
@@ -128,7 +145,7 @@ export const Arm6DOF = (props) => {
                     <SvgIcon fontSize="small" color="error">
                       <XCircleIcon />
                     </SvgIcon>
-                  )}
+                  )} */}
                 </Stack>
               }
             />
@@ -137,7 +154,7 @@ export const Arm6DOF = (props) => {
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <span>Gripper</span>
-                  {connectedCobot280Gripper ? (
+                  {/* {connectedCobot280Gripper ? (
                     <SvgIcon fontSize="small" color="success">
                       <CheckCircleIcon />
                     </SvgIcon>
@@ -145,7 +162,7 @@ export const Arm6DOF = (props) => {
                     <SvgIcon fontSize="small" color="error">
                       <XCircleIcon />
                     </SvgIcon>
-                  )}
+                  )} */}
                 </Stack>
               }
             />
@@ -158,7 +175,6 @@ export const Arm6DOF = (props) => {
           {tab === 0 && (
             <Stack spacing={3}>
               <Stack spacing={2} direction="row" alignItems="center">
-                {/* Connection Type */}
                 <FormControl size="small" sx={{ minWidth: 120 }}>
                   <InputLabel>Type</InputLabel>
                   <Select
@@ -171,7 +187,6 @@ export const Arm6DOF = (props) => {
                   </Select>
                 </FormControl>
 
-                {/* Serial or IP Input */}
                 {connectionType === "serial" ? (
                   <>
                     <TextField
@@ -194,12 +209,11 @@ export const Arm6DOF = (props) => {
                   />
                 )}
 
-                {/* Connect Button */}
                 <Button
                   variant="contained"
                   color="success"
                   onClick={handleConnectCobot280}
-                  disabled={connectedCobot280}
+                  // disabled={connectedCobot280}
                 >
                   Connect
                 </Button>
@@ -248,25 +262,29 @@ export const Arm6DOF = (props) => {
                           value={step[index]}
                           size="small"
                           onChange={(e) => {
-                            const val = e.target.value; if (/^-?\d*\.?\d*$/.test(val)) {
-                              const newStep = [...step]; newStep[index] = val; setStep(newStep)
+                            const val = e.target.value;
+                            if (/^-?\d*\.?\d*$/.test(val)) {
+                              const newStep = [...step];
+                              newStep[index] = Number(val);
+                              setStep(newStep);
                             }
                           }}
-                          sx={{ width: 80, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13, }, }} />
+                          sx={{ width: 80, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
+                        />
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={1}>
                           <Button
                             variant="contained"
                             size="small"
-                            onClick={() => moveJoint(index, "left")}
+                            onClick={() => moveJoint(index, -step[index])}
                           >
                             <SvgIcon component={ArrowLeftIcon} />
                           </Button>
                           <Button
                             variant="contained"
                             size="small"
-                            onClick={() => moveJoint(index, "right")}
+                            onClick={() => moveJoint(index, step[index])}
                           >
                             <SvgIcon component={ArrowRightIcon} />
                           </Button>
@@ -275,7 +293,6 @@ export const Arm6DOF = (props) => {
                     </TableRow>
                   ))}
                 </TableBody>
-
               </Table>
             </Stack>
           )}

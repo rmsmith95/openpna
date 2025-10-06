@@ -1,4 +1,4 @@
-// pages/api/cobot280/connect_network.js
+// pages/api/arm6dof/connect_network.js
 export default async function handler(req, res) {
   console.log("Received request to /api/cobot280/connect_network", req.body);
 

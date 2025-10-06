@@ -63,23 +63,35 @@ export const Arm6DOF = (props) => {
 
   const moveJoint = async (jointIndex, direction) => {
     if (!connectedCobot280) return;
-    const newJoints = [...joints];
-    newJoints[jointIndex] += direction === "left" ? -step[jointIndex] : step[jointIndex];
 
     try {
-      const res = await fetch("/api/arm6dof/move_joint", {
+      const response = await fetch("/api/arm6dof/move_joint", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          joints: newJoints,
-          speed: step[jointIndex], // send as speed to backend if needed
+          joint: jointIndex,
+          direction: direction,                 // "left" or "right"
+          delta: step[jointIndex] || 5,         // movement amount
+          speed: 50,                            // optional speed override
         }),
       });
 
-      if (!res.ok) throw new Error(`Move failed HTTP ${res.status}`);
-      setJoints(newJoints);
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("✅ MoveJoint response:", data);
+
+      // update local state only if backend confirmed move
+      if (data.status === "ok" || data.status === "sent") {
+        const newJoints = [...joints];
+        newJoints[jointIndex] +=
+          direction === "left" ? -step[jointIndex] : step[jointIndex];
+        setJoints(newJoints);
+      }
     } catch (err) {
-      console.error("Joint move failed:", err);
+      console.error("❌ Error moving joint:", err);
     }
   };
 
@@ -235,9 +247,12 @@ export const Arm6DOF = (props) => {
                         <TextField
                           value={step[index]}
                           size="small"
-                          onChange={(e) => {const val = e.target.value; if (/^-?\d*\.?\d*$/.test(val)) {
-                              const newStep = [...step]; newStep[index] = val; setStep(newStep)}}}
-                          sx={{width: 80,'& .MuiInputBase-input': {padding: '4px 8px', fontSize: 13,},}}/>
+                          onChange={(e) => {
+                            const val = e.target.value; if (/^-?\d*\.?\d*$/.test(val)) {
+                              const newStep = [...step]; newStep[index] = val; setStep(newStep)
+                            }
+                          }}
+                          sx={{ width: 80, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13, }, }} />
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={1}>

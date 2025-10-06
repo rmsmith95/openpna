@@ -6,15 +6,12 @@ import {
   Box,
   Button,
   Container,
-  Pagination,
   Stack,
   SvgIcon,
   Typography,
   Unstable_Grid2 as Grid
 } from '@mui/material';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
-// import { CompanyCard } from 'src/sections/cameras/company-card';
-// import { CompaniesSearch } from 'src/sections/cameras/companies-search';
 import CameraDashboard from 'src/sections/cameras/camera-layout';
 
 
@@ -70,18 +67,6 @@ const Page = () => (
                 </Button>
               </Stack>
             </Stack>
-            {/* <div>
-              <Button
-                startIcon={(
-                  <SvgIcon fontSize="small">
-                    <PlusIcon />
-                  </SvgIcon>
-                )}
-                variant="contained"
-              >
-                Add
-              </Button>
-            </div> */}
           </Stack>
 
           <Box

@@ -1,4 +1,4 @@
-// pages/api/gantry/move.js
+// pages/api/gantry/set_position.js
 export default async function handler(req, res) {
   console.log("Received request to /api/gantry/set_position", req.body);
 
@@ -21,7 +21,8 @@ export default async function handler(req, res) {
     });
   }
 
-  console.log("body:", { x, y, z, a });
+  console.log("Forwarding to LitePlacer:", { x, y, z, a });
+
   try {
     const response = await fetch("http://127.0.0.1:8000/liteplacer/set_position", {
       method: "POST",
@@ -29,9 +30,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({ x, y, z, a }),
     });
 
-    console.log("FastAPI response status:", response.status);
     const data = await response.json();
-    console.log("FastAPI response body:", data);
+    console.log("FastAPI response:", data);
 
     res.status(200).json(data);
   } catch (err) {

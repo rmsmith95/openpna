@@ -31,3 +31,19 @@ while ($port.BytesToRead -gt 0) {
 
 # 6️⃣ Close port when done
 $port.Close()
+
+
+
+
+
+import serial
+
+port = "COM10"  # or COM3 on Windows
+baud = 115200
+
+with serial.Serial(port, baud, timeout=2) as ser:
+    ser.write(b"\r\n")
+    ser.flush()
+    print("Sent wakeup newline")
+    response = ser.read(100)
+    print("Got:", response)

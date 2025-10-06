@@ -18,7 +18,7 @@ const GantryControls = ({ connectedLitePlacer }) => {
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
   const [homePosition, setHonePosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
   const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 45 }); // default step per axis
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(3000);
 
   const getInfo = async () => {
     if (!connectedLitePlacer) return;
@@ -33,24 +33,14 @@ const GantryControls = ({ connectedLitePlacer }) => {
 
         // Parse X/Y/Z/A positions
         const positions = { X: 0, Y: 0, Z: 0, A: 0 };
-        let relative = false;
-
         lines.forEach(line => {
           let m;
           if ((m = line.match(/X position:\s*([-0-9.]+)/))) positions.X = parseFloat(m[1]);
           if ((m = line.match(/Y position:\s*([-0-9.]+)/))) positions.Y = parseFloat(m[1]);
           if ((m = line.match(/Z position:\s*([-0-9.]+)/))) positions.Z = parseFloat(m[1]);
           if ((m = line.match(/A position:\s*([-0-9.]+)/))) positions.A = parseFloat(m[1]);
-
-          let relative = false;
-          if (line.includes("Distance mode:")) {
-            relative = line.includes("G91");
-          }
         });
-
         setPosition(positions);
-
-        console.log("Parsed positions:", positions, "Relative mode:", relative);
       }
 
     } catch (err) {
@@ -81,7 +71,7 @@ const GantryControls = ({ connectedLitePlacer }) => {
       }),
     });
     const data = await res.json();
-    console.log("Reset response:", data);
+    console.log("Set position response:", data);
   };
 
   const tinyg_send = async (command) => {
@@ -109,9 +99,6 @@ const GantryControls = ({ connectedLitePlacer }) => {
         a: position.A,
         speed
       });
-
-      // Ensure absolute mode for goto
-      await makeRelative(false);
 
       const res = await fetch("/api/gantry/goto", {
         method: "POST",
@@ -237,7 +224,7 @@ const GantryControls = ({ connectedLitePlacer }) => {
           <Button variant="contained" sx={{ height: 32 }} onClick={() => reset()}>
             Reset
           </Button>
-          <Button variant="contained" sx={{ height: 32 }} onClick={() => tinyg_send("?")}>
+          <Button variant="contained" sx={{ height: 32 }} onClick={() => getInfo()}>
             Info
           </Button>
           <Button variant="contained" sx={{ height: 32 }} onClick={() => goto(homePosition)}>

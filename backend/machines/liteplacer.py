@@ -102,13 +102,18 @@ def tinyg_home_all():
 
 
 @router.post("/set_position")
-def set_position(x=0, y=0, z=0, a=0):
+def set_position(x: float = 0, y: float = 0, z: float = 0, a: float = 0):
     """Set current position (G92)."""
-    gcode = f"G92 X{x} Y{y} Z{z} A{a}"
-    return tinyg_send(gcode)
+    try:
+        gcode = f"G92 X{x} Y{y} Z{z} A{a}"
+        cmd = TinyGCommand(command=gcode)
+        result = tinyg_send(cmd)
+        return result  # should be JSON
+    except Exception as e:
+        logging.error(f"set_position error: {e}")
+        return {"status": "error", "message": str(e)}
 
 
-# --- Get full TinyG status ---
 @router.get("/get_info")
 def get_info():
     if not connection or not connection.is_open:
@@ -117,28 +122,30 @@ def get_info():
     try:
         connection.reset_input_buffer()
         connection.write(b"?\n")
-        time.sleep(0.05)  # wait for TinyG to respond
 
-        # Read all available lines
         lines = []
-        while connection.in_waiting:
-            line = connection.readline().decode(errors="ignore").strip()
-            if line:
-                lines.append(line)
+        timeout = time.time() + 1.0  # wait up to 1 second
+        while time.time() < timeout:
+            while connection.in_waiting:
+                line = connection.readline().decode(errors="ignore").strip()
+                if line:
+                    lines.append(line)
+            if lines:  # got something, break early
+                break
+            time.sleep(0.01)
 
         if not lines:
             return {"error": "No response from TinyG"}
 
         logging.info("TinyG raw response:\n" + "\n".join(lines))
 
-        # Try to parse JSON lines from TinyG (some lines may be plain text)
+        # Parse JSON lines if possible
         status_list = []
         for line in lines:
             try:
                 import json
                 status_list.append(json.loads(line))
             except Exception:
-                # If line is not JSON, just include as raw string
                 status_list.append({"raw": line})
 
         return {"status": status_list}
@@ -162,9 +169,8 @@ def goto(req: MoveXYZRequest):
         return {"error": "LitePlacer not connected"}
 
     try:
-        tinyg_send(TinyGCommand(command="G91"))
-        # Form G-code command (G0 = rapid move)
-        gcode = f"G0 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
+        tinyg_send(TinyGCommand(command="G90"))
+        gcode = f"G1 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
         connection.write(gcode.encode())
         logging.info(f"Sent G-code: {gcode.strip()}")
 
@@ -177,14 +183,15 @@ def goto(req: MoveXYZRequest):
         return {"error": str(e)}
 
 
-@router.post("/move")
-def move(req: MoveXYZRequest):
+@router.post("/step")
+def step(req: MoveXYZRequest):
     if not connection or not connection.is_open:
         return {"error": "LitePlacer not connected"}
 
     try:
-        tinyg_send(TinyGCommand(command="G90"))  # (G0 = rapid move)
-        gcode = f"G0 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
+        tinyg_send(TinyGCommand(command="G91"))
+        # g0 = max speed, g1 = controlled speed
+        gcode = f"G1 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
         connection.write(gcode.encode())
         logging.info(f"Sent G-code: {gcode.strip()}")
 

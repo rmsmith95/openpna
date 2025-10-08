@@ -1,4 +1,3 @@
-// components/GantryControls.jsx
 "use client";
 
 import PropTypes from "prop-types";
@@ -19,6 +18,7 @@ import {
 } from "@mui/material";
 import CameraModel from "src/sections/cameras/camera-model";
 import { useFactory } from "src/utils/factory-context";
+import { useCameraStreams } from "src/hooks/use-camera-streams";
 
 const GantryControls = ({ connectedLitePlacer }) => {
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
@@ -26,7 +26,9 @@ const GantryControls = ({ connectedLitePlacer }) => {
   const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 45 });
   const [speed, setSpeed] = useState(3000);
   const [cameraTab, setCameraTab] = useState(0);
+
   const { setGantryPosition } = useFactory();
+  const { videoRefs, selectedCameras } = useCameraStreams();
 
   const getInfo = async () => {
     if (!connectedLitePlacer) return;
@@ -47,7 +49,7 @@ const GantryControls = ({ connectedLitePlacer }) => {
       }
 
       setPosition(positions); // local
-      setGantryPosition(positions); // 🔥 global
+      setGantryPosition(positions); // global
     } catch (err) {
       console.error("Error getting gantry position:", err);
     }
@@ -115,7 +117,6 @@ const GantryControls = ({ connectedLitePlacer }) => {
 
   const handleCameraTabChange = (e, newVal) => setCameraTab(newVal);
 
-  // === UI ===
   return (
     <Stack direction="row" spacing={4} alignItems="flex-start">
       {/* Axis Control Table */}
@@ -133,12 +134,11 @@ const GantryControls = ({ connectedLitePlacer }) => {
             {["X", "Y", "Z", "A"].map((axis) => (
               <TableRow key={axis}>
                 <TableCell>
-                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                  <Stack direction="row" spacing={0.5} alignItems="center">
                     {axis}
                     <Typography variant="body2">{axis === "A" ? "(deg)" : "(mm)"}</Typography>
-                  </Box>
+                  </Stack>
                 </TableCell>
-
                 <TableCell>
                   <TextField
                     value={position[axis]}
@@ -147,7 +147,6 @@ const GantryControls = ({ connectedLitePlacer }) => {
                     sx={{ width: 70, "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 } }}
                   />
                 </TableCell>
-
                 <TableCell>
                   <TextField
                     value={step[axis]}
@@ -156,7 +155,6 @@ const GantryControls = ({ connectedLitePlacer }) => {
                     sx={{ width: 70, "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 } }}
                   />
                 </TableCell>
-
                 <TableCell>
                   <Stack direction="row" spacing={0.5}>
                     <Button size="small" sx={{ minWidth: 32 }} onClick={() => stepMove(axis, -1)}>
@@ -174,30 +172,24 @@ const GantryControls = ({ connectedLitePlacer }) => {
 
         {/* Bottom controls */}
         <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2 }}>
-          <Typography>Speed</Typography>
-          <TextField
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-            size="small"
-            sx={{ width: 90 }}
-          />
           <Button variant="contained" onClick={goto}>GoTo</Button>
           <Button variant="contained" onClick={setCurrentPosition}>Set</Button>
           <Button variant="contained" onClick={reset}>Reset</Button>
           <Button variant="contained" onClick={getInfo}>Info</Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              setPosition(homePosition);
+          <Button variant="contained" onClick={() => {setPosition(homePosition);
               fetch("/api/gantry/goto", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...homePosition, speed }),
               });
-            }}
-          >
+            }}>
             Home
           </Button>
+          <Typography>Speed</Typography>
+          <TextField value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            size="small"
+            sx={{ width: 90 }}/>
         </Stack>
       </Box>
 
@@ -211,21 +203,35 @@ const GantryControls = ({ connectedLitePlacer }) => {
           </Tabs>
         </Box>
 
-        <Box sx={{ mt: 2 }}>
-          {cameraTab === 0 && (
-            <Box sx={{ bgcolor: "#000", height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Typography sx={{ color: "#fff" }}>LitePlacer Down — Camera Preview</Typography>
-            </Box>
-          )}
-          {cameraTab === 1 && (
-            <Box sx={{ bgcolor: "#000", height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Typography sx={{ color: "#fff" }}>Board Up — Camera Preview</Typography>
-            </Box>
-          )}
+        <Box sx={{ mt: 2, position: "relative" }}>
+          {/* Keep both real camera video elements mounted */}
+          <video
+            ref={(el) => (videoRefs.current["liteplacer"] = el)}
+            autoPlay
+            playsInline
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: cameraTab === 0 ? "block" : "none",
+            }}
+          />
+          <video
+            ref={(el) => (videoRefs.current["board"] = el)}
+            autoPlay
+            playsInline
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: cameraTab === 1 ? "block" : "none",
+            }}
+          />
+
+          {/* Digital model tab */}
           {cameraTab === 2 && (
             <Box sx={{ bgcolor: "#111", borderRadius: 1, overflow: "hidden" }}>
-              {/* ✅ Integrated CameraModel */}
-              <CameraModel active={cameraTab === 2} />
+              <CameraModel active />
             </Box>
           )}
         </Box>

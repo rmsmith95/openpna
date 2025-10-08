@@ -5,9 +5,9 @@ import { useFactory } from "src/utils/factory-context";
 
 export default function CameraModel({ active }) {
   const canvasRef = useRef(null);
-  const { parts, machines, loading } = useFactory();
+  const { parts, machines, gantryPosition, cameraOffset, loading } = useFactory();
 
-  // Use first machine as workspace, fallback
+  // Fallback workspace size
   const workspace = machines["m1"]?.workingArea || { width: 600, height: 400 };
 
   useEffect(() => {
@@ -15,42 +15,28 @@ export default function CameraModel({ active }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    console.log('parts', parts)
-    console.log('machines', machines)
-
     const ctx = canvas.getContext("2d");
     const width = canvas.width;
     const height = canvas.height;
 
+    // Clear and draw background
     ctx.clearRect(0, 0, width, height);
-
-    // Background
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, width, height);
 
-    // Determine scale factors
-    const scaleX = 1 // width / workspace.width;
-    const scaleY = 1 // height / workspace.height;
+    // Debug info
+    console.log("Drawing parts:", parts);
 
+    // --- Draw parts ---
     Object.values(parts).forEach((part) => {
       if (!part.bbox) return;
 
-      // Handle array bbox
-      let [x, y, w, h] = part.bbox;
-
-      // Ensure numbers
-      x = Number(x);
-      y = Number(y);
-      w = Number(w);
-      h = Number(h);
-      // console.log('x,y,w,h',x,y,w,h)
+      let [x, y, w, h] = part.bbox.map(Number);
       if ([x, y, w, h].some(isNaN)) return;
-      console.log('x,y,w,h',x,y,w,h)
 
-      // Colors by class
-      let strokeColor = "limegreen";
-      let fillColor = "rgba(0,255,0,0.15)";
-
+      // Choose color by type
+      let strokeColor = "lime";
+      let fillColor = "rgba(0,255,0,0.2)";
       switch (part.class) {
         case "assembly":
           strokeColor = "#0a4200";
@@ -68,33 +54,55 @@ export default function CameraModel({ active }) {
           strokeColor = "#007bff";
           fillColor = "rgba(0,123,255,0.25)";
           break;
-        default:
-          strokeColor = "white";
-          fillColor = "rgba(255,255,255,0.1)";
       }
 
-      // Draw
       ctx.fillStyle = fillColor;
-      ctx.fillRect(x * scaleX, y * scaleY, w * scaleX, h * scaleY);
-
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = 2;
-      ctx.strokeRect(x * scaleX, y * scaleY, w * scaleX, h * scaleY);
 
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+
+      // Label
       ctx.fillStyle = strokeColor;
-      ctx.font = "16px Arial";
+      ctx.font = "14px monospace";
       ctx.textBaseline = "top";
-      ctx.fillText(part.name, x * scaleX + 4, y * scaleY + 4);
+      ctx.fillText(part.name || "unnamed", x + 3, y + 3);
     });
 
-  }, [parts, workspace, active, loading.parts]);
+    // --- Draw camera box at gantry + offset ---
+    if (gantryPosition && cameraOffset) {
+      const cameraWidth = 80;
+      const cameraHeight = 60;
+      const camX = gantryPosition.X + cameraOffset.X;
+      const camY = gantryPosition.Y + cameraOffset.Y;
+
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(
+        camX - cameraWidth / 2,
+        camY - cameraHeight / 2,
+        cameraWidth,
+        cameraHeight
+      );
+
+      ctx.fillStyle = "red";
+      ctx.font = "14px monospace";
+      ctx.fillText("Camera1", camX - 30, camY - cameraHeight / 2 - 12);
+    }
+  }, [parts, active, loading.parts, machines, gantryPosition, cameraOffset]);
 
   return (
     <canvas
       ref={canvasRef}
-      width={640}
-      height={360}
-      style={{ width: "100%", height: "100%", objectFit: "contain" }}
+      width={600}
+      height={400}
+      style={{
+        width: "100%",
+        height: "auto",
+        background: "black",
+        border: "1px solid #333",
+      }}
     />
   );
 }

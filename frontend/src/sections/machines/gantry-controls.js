@@ -1,4 +1,6 @@
 // components/GantryControls.jsx
+"use client";
+
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
 import {
@@ -13,203 +15,111 @@ import {
   Button,
   TextField,
   Tabs,
-  Tab
+  Tab,
 } from "@mui/material";
+import CameraModel from "src/sections/cameras/camera-model";
+import { useFactory } from "src/utils/factory-context";
 
-/**
- * GantryControls
- * - per-axis position & step inputs
- * - step/jog buttons (relative)
- * - GoTo / Set position / Reset / Info / Home actions
- * - right-side camera tabs (placeholders)
- */
 const GantryControls = ({ connectedLitePlacer }) => {
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
   const [homePosition, setHomePosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
-  const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 45 }); // default step per axis
+  const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 45 });
   const [speed, setSpeed] = useState(3000);
   const [cameraTab, setCameraTab] = useState(0);
+  const { setGantryPosition } = useFactory();
 
-  // Get full TinyG status (raw lines)
- const getInfo = async () => {
-  if (!connectedLitePlacer) return;
-
-  try {
-    const res = await fetch("/api/gantry/get_info");
-    const data = await res.json();
-    console.log("Raw TinyG response:", data);
-
-    const positions = { X: 0, Y: 0, Z: 0, A: 0 };
-
-    if (Array.isArray(data.status)) {
-      data.status.forEach((lineObj) => {
-        const line = lineObj.raw; // <-- extract the string
-        let m;
-        if ((m = line.match(/X position:\s*([-0-9.]+)/))) positions.X = parseFloat(m[1]);
-        if ((m = line.match(/Y position:\s*([-0-9.]+)/))) positions.Y = parseFloat(m[1]);
-        if ((m = line.match(/Z position:\s*([-0-9.]+)/))) positions.Z = parseFloat(m[1]);
-        if ((m = line.match(/A position:\s*([-0-9.]+)/))) positions.A = parseFloat(m[1]);
-      });
-    } else {
-      console.warn("getInfo: unexpected response format", data);
-    }
-
-    setPosition(positions);
-  } catch (err) {
-    console.error("Error getting gantry position:", err);
-  }
-};
-
-  // Soft reset TinyG (Ctrl+X)
-  const reset = async () => {
-    console.log("resetting...");
+  const getInfo = async () => {
+    if (!connectedLitePlacer) return;
     try {
-      const res = await fetch("/api/gantry/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
+      const res = await fetch("/api/gantry/get_info");
       const data = await res.json();
-      console.log("Reset response:", data);
+      const positions = { X: 0, Y: 0, Z: 0, A: 0 };
+
+      if (Array.isArray(data.status)) {
+        data.status.forEach((lineObj) => {
+          const line = lineObj.raw;
+          let m;
+          if ((m = line.match(/X position:\s*([-0-9.]+)/))) positions.X = parseFloat(m[1]);
+          if ((m = line.match(/Y position:\s*([-0-9.]+)/))) positions.Y = parseFloat(m[1]);
+          if ((m = line.match(/Z position:\s*([-0-9.]+)/))) positions.Z = parseFloat(m[1]);
+          if ((m = line.match(/A position:\s*([-0-9.]+)/))) positions.A = parseFloat(m[1]);
+        });
+      }
+
+      setPosition(positions); // local
+      setGantryPosition(positions); // 🔥 global
+    } catch (err) {
+      console.error("Error getting gantry position:", err);
+    }
+  };
+
+  const reset = async () => {
+    try {
+      const res = await fetch("/api/gantry/reset", { method: "POST" });
+      console.log("Reset response:", await res.json());
     } catch (err) {
       console.error("Reset error:", err);
     }
   };
 
-  // Set current gantry position with G92
-  const setGantryPosition = async () => {
+  const setCurrentPosition = async () => {
     try {
       const res = await fetch("/api/gantry/set_position", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          x: Number(position.X),
-          y: Number(position.Y),
-          z: Number(position.Z),
-          a: Number(position.A),
-        }),
+        body: JSON.stringify(position),
       });
-      const data = await res.json();
-      console.log("Set position response:", data);
+      console.log("Set position response:", await res.json());
     } catch (err) {
       console.error("Set position error:", err);
     }
   };
 
-  // Raw TinyG command helper (for debugging / manual commands)
-  const tinyg_send = async (command, delay = 0.05) => {
-    console.log("sending TinyG command:", command);
-    try {
-      const res = await fetch("/api/gantry/tinyg_send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command, delay }),
-      });
-      const data = await res.json();
-      console.log("TinyG response:", data);
-      return data;
-    } catch (err) {
-      console.error("tinyg_send error:", err);
-      return { error: err.message || String(err) };
-    }
-  };
-
-  // Absolute GOTO
   const goto = async () => {
     if (!connectedLitePlacer) return;
-
     try {
-      console.log("GoTo:", {
-        x: position.X,
-        y: position.Y,
-        z: position.Z,
-        a: position.A,
-        speed,
-      });
-
       const res = await fetch("/api/gantry/goto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          x: Number(position.X),
-          y: Number(position.Y),
-          z: Number(position.Z),
-          a: Number(position.A),
-          speed: Number(speed),
-        }),
+        body: JSON.stringify({ ...position, speed }),
       });
-
-      const data = await res.json();
-      console.log("GoTo response:", data);
+      console.log("GoTo response:", await res.json());
     } catch (err) {
-      console.error("Error in GoTo:", err);
+      console.error("GoTo error:", err);
     }
   };
 
-  // Relative step/jog
   const stepMove = async (axis, direction) => {
     if (!connectedLitePlacer) return;
+    const delta = Number(step[axis]) || 0;
+    const moveValue = direction * delta;
+    const move = { X: 0, Y: 0, Z: 0, A: 0 };
+    move[axis] = moveValue;
 
     try {
-      // ensure step is numeric
-      const delta = Number(step[axis]) || 0;
-      const moveValue = direction * delta;
-
-      // Build move object with only the axis to move, others 0
-      const move = { X: 0, Y: 0, Z: 0, A: 0 };
-      if (["X", "Y", "Z", "A"].includes(axis)) move[axis] = moveValue;
-      else return;
-
       const res = await fetch("/api/gantry/step", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          x: move.X,
-          y: move.Y,
-          z: move.Z,
-          a: move.A,
-          speed: Number(speed) || 1000,
-        }),
+        body: JSON.stringify({ ...move, speed }),
       });
-
-      console.log("Move:", { ...move, speed });
-      const data = await res.json();
-      console.log("Move response:", data);
-
-      // After a successful step it's often useful to refresh reported position
-      if (data?.status === "ok") {
-        // small delay to allow TinyG to update internal position
-        setTimeout(() => getInfo(), 120);
-      }
+      console.log("Step response:", await res.json());
+      setTimeout(getInfo, 120);
     } catch (err) {
       console.error("Error moving gantry:", err);
     }
   };
 
-  // Optional: fetch current position on mount (once)
   useEffect(() => {
-    if (connectedLitePlacer) {
-      getInfo();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (connectedLitePlacer) getInfo();
   }, [connectedLitePlacer]);
 
-  // camera tab change handler
-  const handleCameraTabChange = (e, newVal) => {
-    setCameraTab(newVal);
-  };
+  const handleCameraTabChange = (e, newVal) => setCameraTab(newVal);
 
-  // Render
+  // === UI ===
   return (
     <Stack direction="row" spacing={4} alignItems="flex-start">
-      {/* Axis Table */}
-      <Box
-        sx={{
-          tableLayout: "fixed",
-          width: "50%", // ⬅️ take half the parent width
-          minWidth: 380, // optional safety to avoid collapsing too much
-        }}
-      >
+      {/* Axis Control Table */}
+      <Box sx={{ width: "50%", minWidth: 380 }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -223,7 +133,7 @@ const GantryControls = ({ connectedLitePlacer }) => {
             {["X", "Y", "Z", "A"].map((axis) => (
               <TableRow key={axis}>
                 <TableCell>
-                  <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
                     {axis}
                     <Typography variant="body2">{axis === "A" ? "(deg)" : "(mm)"}</Typography>
                   </Box>
@@ -232,39 +142,27 @@ const GantryControls = ({ connectedLitePlacer }) => {
                 <TableCell>
                   <TextField
                     value={position[axis]}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^-?\d*\.?\d*$/.test(val)) setPosition({ ...position, [axis]: val });
-                    }}
+                    onChange={(e) => setPosition({ ...position, [axis]: e.target.value })}
                     size="small"
-                    sx={{
-                      width: 70,
-                      "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 },
-                    }}
+                    sx={{ width: 70, "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 } }}
                   />
                 </TableCell>
 
                 <TableCell>
                   <TextField
                     value={step[axis]}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^-?\d*\.?\d*$/.test(val)) setStep({ ...step, [axis]: val });
-                    }}
+                    onChange={(e) => setStep({ ...step, [axis]: e.target.value })}
                     size="small"
-                    sx={{
-                      width: 70,
-                      "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 },
-                    }}
+                    sx={{ width: 70, "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 } }}
                   />
                 </TableCell>
 
                 <TableCell>
                   <Stack direction="row" spacing={0.5}>
-                    <Button variant="contained" size="small" sx={{ minWidth: 32, fontSize: 11 }} onClick={() => stepMove(axis, -1)}>
+                    <Button size="small" sx={{ minWidth: 32 }} onClick={() => stepMove(axis, -1)}>
                       -{axis}
                     </Button>
-                    <Button variant="contained" size="small" sx={{ minWidth: 32, fontSize: 11 }} onClick={() => stepMove(axis, +1)}>
+                    <Button size="small" sx={{ minWidth: 32 }} onClick={() => stepMove(axis, 1)}>
                       +{axis}
                     </Button>
                   </Stack>
@@ -274,59 +172,28 @@ const GantryControls = ({ connectedLitePlacer }) => {
           </TableBody>
         </Table>
 
-        {/* Controls under table */}
-        <Stack
-          direction="row"
-          spacing={1}
-          alignItems="center"
-          flexWrap="wrap" // ⬅️ allow wrapping to new line
-          sx={{ mt: 2, rowGap: 1 }} // add small vertical gap when wrapped
-        >
-          <Typography sx={{ mr: 1 }}>Speed</Typography>
+        {/* Bottom controls */}
+        <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2 }}>
+          <Typography>Speed</Typography>
           <TextField
             value={speed}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (/^-?\d*\.?\d*$/.test(val)) setSpeed(val === "" ? 0 : Number(val));
-            }}
+            onChange={(e) => setSpeed(Number(e.target.value))}
             size="small"
-            sx={{
-              width: 90, // ⬅️ slightly wider so value fits
-              "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 },
-            }}
+            sx={{ width: 90 }}
           />
-
-          <Button variant="contained" sx={{ height: 32, fontSize: 12 }} onClick={goto}>
-            GoTo
-          </Button>
-          <Button variant="contained" sx={{ height: 32, fontSize: 12 }} onClick={setGantryPosition}>
-            Set
-          </Button>
-          <Button variant="contained" sx={{ height: 32, fontSize: 12 }} onClick={reset}>
-            Reset
-          </Button>
-          <Button variant="contained" sx={{ height: 32, fontSize: 12 }} onClick={getInfo}>
-            Info
-          </Button>
+          <Button variant="contained" onClick={goto}>GoTo</Button>
+          <Button variant="contained" onClick={setCurrentPosition}>Set</Button>
+          <Button variant="contained" onClick={reset}>Reset</Button>
+          <Button variant="contained" onClick={getInfo}>Info</Button>
           <Button
             variant="contained"
-            sx={{ height: 32, fontSize: 12 }}
             onClick={() => {
               setPosition(homePosition);
               fetch("/api/gantry/goto", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  x: Number(homePosition.X),
-                  y: Number(homePosition.Y),
-                  z: Number(homePosition.Z),
-                  a: Number(homePosition.A),
-                  speed: Number(speed),
-                }),
-              })
-                .then((r) => r.json())
-                .then((d) => console.log("Home response:", d))
-                .catch((err) => console.error(err));
+                body: JSON.stringify({ ...homePosition, speed }),
+              });
             }}
           >
             Home
@@ -334,31 +201,31 @@ const GantryControls = ({ connectedLitePlacer }) => {
         </Stack>
       </Box>
 
-      {/* Right-side Camera Tabs */}
+      {/* Right-side camera tabs */}
       <Box sx={{ flex: 1, minWidth: 420 }}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Tabs value={cameraTab} onChange={handleCameraTabChange} variant="scrollable" scrollButtons="auto" aria-label="camera tabs">
+          <Tabs value={cameraTab} onChange={handleCameraTabChange}>
             <Tab label="LitePlacer Down" />
             <Tab label="Board Up" />
             <Tab label="Digital Model" />
           </Tabs>
         </Box>
 
-        {/* camera panel content */}
         <Box sx={{ mt: 2 }}>
           {cameraTab === 0 && (
-            <Box sx={{ bgcolor: "#000", height: 300, borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Typography sx={{ color: "white" }}>LitePlacer Down — Camera Preview</Typography>
+            <Box sx={{ bgcolor: "#000", height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Typography sx={{ color: "#fff" }}>LitePlacer Down — Camera Preview</Typography>
             </Box>
           )}
           {cameraTab === 1 && (
-            <Box sx={{ bgcolor: "#000", height: 300, borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Typography sx={{ color: "white" }}>Board Up — Camera Preview</Typography>
+            <Box sx={{ bgcolor: "#000", height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Typography sx={{ color: "#fff" }}>Board Up — Camera Preview</Typography>
             </Box>
           )}
           {cameraTab === 2 && (
-            <Box sx={{ bgcolor: "#000", height: 300, borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Typography sx={{ color: "white" }}>Digital Model — Preview</Typography>
+            <Box sx={{ bgcolor: "#111", borderRadius: 1, overflow: "hidden" }}>
+              {/* ✅ Integrated CameraModel */}
+              <CameraModel active={cameraTab === 2} />
             </Box>
           )}
         </Box>

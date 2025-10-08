@@ -20,9 +20,9 @@ import { initialJobs } from 'src/utils/jobs-set1';
 
 // --- Example machine list ---
 const machines = [
-  { name: 'LitePlacer1', size: '600mm x 400mm x 200mm', attachments: 'gripper1, soldering iron1' },
-  { name: 'Cobot 6DOF Arm', size: '300mm reach', attachments: 'gripper2' },
-  { name: 'Linear Actuator', size: '150mm', attachments: '' },
+  { name: 'LitePlacer1', attachments: 'gripper1, soldering iron1' },
+  { name: 'Cobot 6DOF Arm', attachments: 'gripper2' },
+  { name: 'Linear Actuator', attachments: '' },
 ];
 
 // --- Pagination helpers ---

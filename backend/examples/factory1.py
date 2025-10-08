@@ -11,7 +11,8 @@ def get_factory1() -> Factory:
     """
 
     machines = {
-        "m1": {"name": "LitePlacer1", "workingArea": [600,400,100], "dimensions": [750,550,400], "effector": "", "cad": "/home/liteplacer.stl"}
+        "m1": {"name": "LitePlacer-1", "workingArea": [600,400,100], "dimensions": [750,550,400], "effector": "", "cad": "/home/liteplacer.stl"},
+        "m2": {"name": "Cobot280-1", "workingArea": [600,400,100], "dimensions": [750,550,400], "effector": "", "cad": "/home/cobot280.stl"}
         }
     
     tray_x, tray_y = [5,5]

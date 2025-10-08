@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
 import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
@@ -18,6 +18,7 @@ import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { PartsTable } from 'src/sections/parts/part-table';
 import { PartSearch } from 'src/sections/parts/part-search';
 import { applyPagination } from 'src/utils/apply-pagination';
+import { useFactory } from 'src/utils/factory-context';
 
 // Pagination helper
 const usePaginated = (items, page, rowsPerPage) => {
@@ -25,55 +26,28 @@ const usePaginated = (items, page, rowsPerPage) => {
 };
 
 const PartsPage = () => {
-  const [parts, setParts] = useState({}); // dict of partId -> part
+  const { parts } = useFactory(); // <-- global parts
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
-
   const [visibleClasses, setVisibleClasses] = useState({
     part: true,
     jig: true,
     assembly: true,
   });
 
-  // Convert dict to array + ids
   const partsArray = useMemo(() => Object.values(parts), [parts]);
   const partsIds = useMemo(() => Object.keys(parts), [parts]);
   const selection = useSelection(partsIds);
 
   // Filter by visible class
-  const filteredParts = useMemo(
-    () => partsArray.filter((p) => visibleClasses[p.class]),
-    [partsArray, visibleClasses]
-  );
+  const filteredParts = useMemo(() => {
+    return partsArray.filter((p) => visibleClasses[p.class] &&
+      p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [partsArray, visibleClasses, searchQuery]);
 
   const paginatedParts = usePaginated(filteredParts, page, rowsPerPage);
-
-  // Fetch parts from backend
-  const fetchParts = useCallback(async () => {
-    try {
-      const res = await fetch('/api/get_parts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          search: searchQuery,
-          offset: page * rowsPerPage,
-          showParts: visibleClasses.part,
-          showJigs: visibleClasses.jig,
-          showAssemblies: visibleClasses.assembly,
-        }),
-      });
-
-      const data = await res.json();
-      setParts(data.parts || {});
-    } catch (err) {
-      console.error('Error fetching parts:', err);
-    }
-  }, [page, rowsPerPage, searchQuery, visibleClasses]);
-
-  useEffect(() => {
-    fetchParts();
-  }, [fetchParts]);
 
   const handlePageChange = (event, newPage) => setPage(newPage);
 

@@ -5,8 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from machines.liteplacer import router as liteplacer_router
 from machines.cobot280 import router as cobot280_router
-# from parse_xml import parse_xml_file
-from sections.utils import Pose
 from sections.factory import Factory
 from examples.factory1 import get_factory1
 
@@ -41,8 +39,10 @@ def startup():
     logging.info("===== Initialise Factory1 =====")
     global factory
     factory = get_factory1()
+    print(f"factory has {len(factory.jobs)} jobs")
+    print(f"factory has {len(factory.parts)} parts")
+    print(f"factory has {len(factory.machines)} machines")
     logging.info(f"factory1 loaded: {factory}")
-
     return {"status": "Factory initialized"}
 
 @app.get("/factory_status")
@@ -50,45 +50,40 @@ def factory_status():
     global factory
     return {"factory_initialized": factory is not None}
 
-class PartRequest(BaseModel):
-    search: str = ""
-    limit: int = 25
-    offset: int = 0
-    showParts: bool = True
-    showJigs: bool = True
-    showAssemblies: bool = True
+# --- Parts ---
 
-@app.post("/get_parts")
-def get_parts(req: PartRequest):
-    # Filter jobs by search
-    result = {k: v for k, v in factory.parts.items() if req.search.lower() in k.lower()}
-    # Apply offset and limit
-    start = req.offset
-    end = req.offset + req.limit
-    limited = dict(list(result.items())[start:end])
-    return limited
+@app.get("/get_parts")
+def get_parts():
+    """
+    Return all parts as a dict: partId -> part
+    """
+    global factory
+    return factory.parts
 
+# --- Jobs ---
 
-class JobRequest(BaseModel):
-    search: str = ""
-    limit: int = 25
-    offset: int = 0  # new field for pagination
+@app.get("/get_jobs")
+def get_jobs():
+    """
+    Return all jobs as a dict: jobId -> job
+    """
+    global factory
+    return factory.jobs
 
-@app.post("/get_jobs")
-def get_jobs(req: JobRequest):
-    # Filter jobs by search
-    result = {k: v for k, v in factory.jobs.items() if req.search.lower() in k.lower()}
-    # Apply offset and limit
-    start = req.offset
-    end = req.offset + req.limit
-    limited = dict(list(result.items())[start:end])
-    return limited
+# --- Machines ---
 
 @app.get("/get_machines")
 def get_machines():
+    """
+    Return all machines as a dict: machineId -> machine
+    """
+    global factory
     return factory.machines
 
+# --- Run Job ---
+
 @app.get("/run_job")
-def run_job(job_id):
+def run_job(job_id: str):
+    global factory
     factory.run_job(job_id)
-    return True
+    return {"status": "ok"}

@@ -11,6 +11,8 @@ import {
   Checkbox,
   Typography
 } from "@mui/material";
+import CameraModel from "./camera-model";
+
 
 // Hardcoded camera metadata
 const CAMERA_METADATA = [
@@ -65,6 +67,13 @@ export default function CameraDashboard() {
       cad: "/home/arm.stl",
       assembly_id: false,
       bbox: { x: 0, y: 140, w: 120, h: 60 }
+    },
+    p4: {
+      id: "p4",
+      name: "Camera1",
+      class: "camera",
+      mass: 0.2,
+      bbox: { x: 100, y: 100, w: 80, h: 60 }
     }
   });
 
@@ -147,19 +156,49 @@ export default function CameraDashboard() {
     const scaleX = width / workspace.width;
     const scaleY = height / workspace.height;
 
+    // Background
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, width, height);
 
     Object.values(parts).forEach((part) => {
       const { x, y, w, h } = part.bbox;
 
-      // Draw rectangle
-      ctx.strokeStyle = "limegreen";
+      // Set colors based on class
+      let strokeColor = "limegreen";
+      let fillColor = "rgba(0,255,0,0.15)";
+
+      switch (part.class) {
+        case "assembly":
+          strokeColor = "#0a4200"; // dark green
+          fillColor = "rgba(0,128,0,0.25)";
+          break;
+        case "part":
+          strokeColor = "#00ff00"; // light green
+          fillColor = "rgba(0,255,0,0.15)";
+          break;
+        case "camera":
+          strokeColor = "#ff0000"; // red
+          fillColor = "rgba(255,0,0,0.2)";
+          break;
+        case "jig":
+          strokeColor = "#007bff"; // blue
+          fillColor = "rgba(0,123,255,0.25)";
+          break;
+        default:
+          strokeColor = "white";
+          fillColor = "rgba(255,255,255,0.1)";
+      }
+
+      // Draw filled rectangle with stroke
+      ctx.fillStyle = fillColor;
+      ctx.fillRect(x * scaleX, y * scaleY, w * scaleX, h * scaleY);
+
+      ctx.strokeStyle = strokeColor;
       ctx.lineWidth = 2;
       ctx.strokeRect(x * scaleX, y * scaleY, w * scaleX, h * scaleY);
 
-      // Draw part name
-      ctx.fillStyle = "limegreen";
+      // Draw name text
+      ctx.fillStyle = strokeColor;
       ctx.font = "16px Arial";
       ctx.textBaseline = "top";
       ctx.fillText(part.name, x * scaleX + 4, y * scaleY + 4);
@@ -210,11 +249,10 @@ export default function CameraDashboard() {
                 }}
               >
                 {device.deviceId === "DigitalModel" ? (
-                  <canvas
-                    ref={(el) => (canvasRefs.current[device.deviceId] = el)}
-                    width={640}
-                    height={360}
-                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                  <CameraModel
+                    active={selectedCameras["DigitalModel"]}
+                    parts={parts}
+                    workspace={workspace}
                   />
                 ) : (
                   <video

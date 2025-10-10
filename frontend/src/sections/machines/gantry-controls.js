@@ -21,39 +21,48 @@ import { useFactory } from "src/utils/factory-context";
 import { useCameraStreams } from "src/hooks/use-camera-streams";
 
 const GantryControls = ({ connectedLitePlacer }) => {
-  const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
-  const [homePosition, setHomePosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
-  const [step, setStep] = useState({ X: 5, Y: 5, Z: 2, A: 45 });
+  const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
+  const [homePosition, setHomePosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
+  const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 45 });
   const [speed, setSpeed] = useState(3000);
   const [cameraTab, setCameraTab] = useState(0);
 
   const { setGantryPosition } = useFactory();
-  const { videoRefs, selectedCameras } = useCameraStreams();
+  const { videoRefs } = useCameraStreams();
 
-  const getInfo = async () => {
+  // Call getInfo on mount and repeatedly to keep camera box updated
+  useEffect(() => {
     if (!connectedLitePlacer) return;
-    try {
-      const res = await fetch("/api/gantry/get_info");
-      const data = await res.json();
-      const positions = { X: 0, Y: 0, Z: 0, A: 0 };
+    getInfo();
+    const interval = setInterval(getInfo, 500); // poll every 500ms
+    return () => clearInterval(interval);
+  }, [connectedLitePlacer]);
 
-      if (Array.isArray(data.status)) {
-        data.status.forEach((lineObj) => {
-          const line = lineObj.raw;
-          let m;
-          if ((m = line.match(/X position:\s*([-0-9.]+)/))) positions.X = parseFloat(m[1]);
-          if ((m = line.match(/Y position:\s*([-0-9.]+)/))) positions.Y = parseFloat(m[1]);
-          if ((m = line.match(/Z position:\s*([-0-9.]+)/))) positions.Z = parseFloat(m[1]);
-          if ((m = line.match(/A position:\s*([-0-9.]+)/))) positions.A = parseFloat(m[1]);
-        });
-      }
+const getInfo = async () => {
+  if (!connectedLitePlacer) return;
+  try {
+    const res = await fetch("/api/gantry/get_info");
+    const data = await res.json();
+    const positions = { x: 0, y: 0, z: 0, a: 0 };
 
-      setPosition(positions); // local
-      setGantryPosition(positions); // global
-    } catch (err) {
-      console.error("Error getting gantry position:", err);
+    if (Array.isArray(data.status)) {
+      data.status.forEach((lineObj) => {
+        const line = lineObj.raw;
+        let m;
+        if ((m = line.match(/X position:\s*([-0-9.]+)/))) positions.x = parseFloat(m[1]);
+        if ((m = line.match(/Y position:\s*([-0-9.]+)/))) positions.y = parseFloat(m[1]);
+        if ((m = line.match(/Z position:\s*([-0-9.]+)/))) positions.z = parseFloat(m[1]);
+        if ((m = line.match(/A position:\s*([-0-9.]+)/))) positions.a = parseFloat(m[1]);
+      });
     }
-  };
+
+    // update both local and global
+    setPosition(positions);
+    setGantryPosition(positions);
+  } catch (err) {
+    console.error("Error getting gantry position:", err);
+  }
+};
 
   const reset = async () => {
     try {
@@ -95,7 +104,7 @@ const GantryControls = ({ connectedLitePlacer }) => {
     if (!connectedLitePlacer) return;
     const delta = Number(step[axis]) || 0;
     const moveValue = direction * delta;
-    const move = { X: 0, Y: 0, Z: 0, A: 0 };
+    const move = { x: 0, y: 0, z: 0, a: 0 };
     move[axis] = moveValue;
 
     try {
@@ -104,16 +113,12 @@ const GantryControls = ({ connectedLitePlacer }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...move, speed }),
       });
+      console.log(move, speed);
       console.log("Step response:", await res.json());
-      setTimeout(getInfo, 120);
     } catch (err) {
       console.error("Error moving gantry:", err);
     }
   };
-
-  useEffect(() => {
-    if (connectedLitePlacer) getInfo();
-  }, [connectedLitePlacer]);
 
   const handleCameraTabChange = (e, newVal) => setCameraTab(newVal);
 
@@ -131,37 +136,69 @@ const GantryControls = ({ connectedLitePlacer }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {["X", "Y", "Z", "A"].map((axis) => (
+            {["x", "y", "z", "a"].map((axis) => (
               <TableRow key={axis}>
                 <TableCell>
                   <Stack direction="row" spacing={0.5} alignItems="center">
-                    {axis}
-                    <Typography variant="body2">{axis === "A" ? "(deg)" : "(mm)"}</Typography>
+                    {axis.toUpperCase()}
+                    <Typography variant="body2">
+                      {axis === "a" ? "(deg)" : "(mm)"}
+                    </Typography>
                   </Stack>
                 </TableCell>
                 <TableCell>
                   <TextField
                     value={position[axis]}
-                    onChange={(e) => setPosition({ ...position, [axis]: e.target.value })}
+                    onChange={(e) =>
+                      setPosition({
+                        ...position,
+                        [axis]: parseFloat(e.target.value) || 0,
+                      })
+                    }
                     size="small"
-                    sx={{ width: 70, "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 } }}
+                    sx={{
+                      width: 70,
+                      "& .MuiInputBase-input": {
+                        padding: "4px 6px",
+                        fontSize: 12,
+                      },
+                    }}
                   />
                 </TableCell>
                 <TableCell>
                   <TextField
                     value={step[axis]}
-                    onChange={(e) => setStep({ ...step, [axis]: e.target.value })}
+                    onChange={(e) =>
+                      setStep({
+                        ...step,
+                        [axis]: parseFloat(e.target.value) || 0,
+                      })
+                    }
                     size="small"
-                    sx={{ width: 70, "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 } }}
+                    sx={{
+                      width: 70,
+                      "& .MuiInputBase-input": {
+                        padding: "4px 6px",
+                        fontSize: 12,
+                      },
+                    }}
                   />
                 </TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={0.5}>
-                    <Button size="small" sx={{ minWidth: 32 }} onClick={() => stepMove(axis, -1)}>
-                      -{axis}
+                    <Button
+                      size="small"
+                      sx={{ minWidth: 32 }}
+                      onClick={() => stepMove(axis, -1)}
+                    >
+                      -{axis.toUpperCase()}
                     </Button>
-                    <Button size="small" sx={{ minWidth: 32 }} onClick={() => stepMove(axis, 1)}>
-                      +{axis}
+                    <Button
+                      size="small"
+                      sx={{ minWidth: 32 }}
+                      onClick={() => stepMove(axis, 1)}
+                    >
+                      +{axis.toUpperCase()}
                     </Button>
                   </Stack>
                 </TableCell>
@@ -172,24 +209,41 @@ const GantryControls = ({ connectedLitePlacer }) => {
 
         {/* Bottom controls */}
         <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2 }}>
-          <Button variant="contained" onClick={goto}>GoTo</Button>
-          <Button variant="contained" onClick={setCurrentPosition}>Set</Button>
-          <Button variant="contained" onClick={reset}>Reset</Button>
-          <Button variant="contained" onClick={getInfo}>Info</Button>
-          <Button variant="contained" onClick={() => {setPosition(homePosition);
+          <Button variant="contained" onClick={goto}>
+            GoTo
+          </Button>
+          <Button variant="contained" onClick={setCurrentPosition}>
+            Set
+          </Button>
+          <Button variant="contained" onClick={reset}>
+            Reset
+          </Button>
+          <Button variant="contained" onClick={getInfo}>
+            Info
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setPosition(homePosition);
               fetch("/api/gantry/goto", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...homePosition, speed }),
               });
-            }}>
+            }}
+          >
             Home
           </Button>
           <Typography>Speed</Typography>
-          <TextField value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
+          <TextField
+            value={speed}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSpeed(val === "" ? 0 : parseFloat(val));
+            }}
             size="small"
-            sx={{ width: 90 }}/>
+            sx={{ width: 90 }}
+          />
         </Stack>
       </Box>
 
@@ -204,7 +258,6 @@ const GantryControls = ({ connectedLitePlacer }) => {
         </Box>
 
         <Box sx={{ mt: 2, position: "relative" }}>
-          {/* Keep both real camera video elements mounted */}
           <video
             ref={(el) => (videoRefs.current["liteplacer"] = el)}
             autoPlay
@@ -228,7 +281,6 @@ const GantryControls = ({ connectedLitePlacer }) => {
             }}
           />
 
-          {/* Digital model tab */}
           {cameraTab === 2 && (
             <Box sx={{ bgcolor: "#111", borderRadius: 1, overflow: "hidden" }}>
               <CameraModel active />

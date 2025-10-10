@@ -19,22 +19,18 @@ export default function CameraModel({ active }) {
     const width = canvas.width;
     const height = canvas.height;
 
-    // Clear and draw background
+    // Clear background
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, width, height);
 
-    // Debug info
-    console.log("Drawing parts:", parts);
-
-    // --- Draw parts ---
+    // Draw parts
     Object.values(parts).forEach((part) => {
       if (!part.bbox) return;
 
       let [x, y, w, h] = part.bbox.map(Number);
       if ([x, y, w, h].some(isNaN)) return;
 
-      // Choose color by type
       let strokeColor = "lime";
       let fillColor = "rgba(0,255,0,0.2)";
       switch (part.class) {
@@ -63,19 +59,18 @@ export default function CameraModel({ active }) {
       ctx.fillRect(x, y, w, h);
       ctx.strokeRect(x, y, w, h);
 
-      // Label
       ctx.fillStyle = strokeColor;
       ctx.font = "14px monospace";
       ctx.textBaseline = "top";
       ctx.fillText(part.name || "unnamed", x + 3, y + 3);
     });
 
-    // --- Draw camera box at gantry + offset ---
+    // Draw camera box at gantry + offset (use lowercase keys!)
     if (gantryPosition && cameraOffset) {
       const cameraWidth = 80;
       const cameraHeight = 60;
-      const camX = gantryPosition.X + cameraOffset.X;
-      const camY = gantryPosition.Y + cameraOffset.Y;
+      const camX = gantryPosition.x + cameraOffset.x;
+      const camY = gantryPosition.y + cameraOffset.y;
 
       ctx.strokeStyle = "red";
       ctx.lineWidth = 3;

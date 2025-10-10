@@ -7,8 +7,8 @@ export const FactoryProvider = ({ children }) => {
   const [jobs, setJobs] = useState({});
   const [machines, setMachines] = useState({});
   const [loading, setLoading] = useState({ parts: false, jobs: false, machines: false });
-  const [gantryPosition, setGantryPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
-  const [cameraOffset, setCameraOffset] = useState({ X: 0, Y: 0, Z: 0 });
+  const [gantryPosition, setGantryPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
+  const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0, z: 0 });
 
   // Generic backend fetch helper
   const fetchData = useCallback(async (endpoint, setStateKey) => {

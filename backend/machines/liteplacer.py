@@ -137,7 +137,7 @@ def get_info():
         if not lines:
             return {"error": "No response from TinyG"}
 
-        logging.info("TinyG raw response:\n" + "\n".join(lines))
+        # logging.info("TinyG raw response:\n" + "\n".join(lines))
 
         # Parse JSON lines if possible
         status_list = []

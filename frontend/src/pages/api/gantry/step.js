@@ -1,6 +1,6 @@
 // pages/api/gantry/move.js
 export default async function handler(req, res) {
-  console.log("Received request to /api/gantry/step", req.body);
+  console.log("Received request to /api/gantry/move", req.body);
 
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
@@ -14,15 +14,17 @@ export default async function handler(req, res) {
     typeof y !== "number" ||
     typeof z !== "number" ||
     typeof a !== "number" ||
-    typeof speed !== "number"
+    typeof speed !== "number" ||
+    [x, y, z, a, speed].some((v) => Number.isNaN(v))
   ) {
     return res.status(400).json({
       status: "error",
-      message: "x, y, z, and speed must all be numbers",
+      message: "x, y, z, a, and speed must all be valid numbers",
     });
   }
 
-  console.log("body:", { x, y, z, a, speed });
+  console.log("Forwarding to FastAPI:", { x, y, z, a, speed });
+
   try {
     const response = await fetch("http://127.0.0.1:8000/liteplacer/step", {
       method: "POST",
@@ -34,9 +36,9 @@ export default async function handler(req, res) {
     const data = await response.json();
     console.log("FastAPI response body:", data);
 
-    res.status(200).json(data);
+    return res.status(200).json(data);
   } catch (err) {
     console.error("Error forwarding to FastAPI:", err);
-    res.status(500).json({ status: "error", message: err.message });
+    return res.status(500).json({ status: "error", message: err.message });
   }
 }

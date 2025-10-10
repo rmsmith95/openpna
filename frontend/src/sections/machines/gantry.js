@@ -124,7 +124,7 @@ export const Gantry = (props) => {
                 <TableBody>
                   <TableRow>
                     <TableCell>700x500x300</TableCell>
-                    <TableCell>600x400x200x360deg</TableCell>
+                    <TableCell>560x360x50xinfdeg</TableCell>
                     <TableCell>3kg</TableCell>
                     <TableCell>liteplacer.stl</TableCell>
                   </TableRow>

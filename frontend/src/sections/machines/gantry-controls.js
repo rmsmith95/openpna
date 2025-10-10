@@ -22,6 +22,7 @@ import { useCameraStreams } from "src/hooks/use-camera-streams";
 
 const GantryControls = ({ connectedLitePlacer }) => {
   const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
+  const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [homePosition, setHomePosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 45 });
   const [speed, setSpeed] = useState(3000);
@@ -38,31 +39,31 @@ const GantryControls = ({ connectedLitePlacer }) => {
     return () => clearInterval(interval);
   }, [connectedLitePlacer]);
 
-const getInfo = async () => {
-  if (!connectedLitePlacer) return;
-  try {
-    const res = await fetch("/api/gantry/get_info");
-    const data = await res.json();
-    const positions = { x: 0, y: 0, z: 0, a: 0 };
+  const getInfo = async () => {
+    if (!connectedLitePlacer) return;
+    try {
+      const res = await fetch("/api/gantry/get_info");
+      const data = await res.json();
+      const positions = { x: 0, y: 0, z: 0, a: 0 };
 
-    if (Array.isArray(data.status)) {
-      data.status.forEach((lineObj) => {
-        const line = lineObj.raw;
-        let m;
-        if ((m = line.match(/X position:\s*([-0-9.]+)/))) positions.x = parseFloat(m[1]);
-        if ((m = line.match(/Y position:\s*([-0-9.]+)/))) positions.y = parseFloat(m[1]);
-        if ((m = line.match(/Z position:\s*([-0-9.]+)/))) positions.z = parseFloat(m[1]);
-        if ((m = line.match(/A position:\s*([-0-9.]+)/))) positions.a = parseFloat(m[1]);
-      });
+      if (Array.isArray(data.status)) {
+        data.status.forEach((lineObj) => {
+          const line = lineObj.raw;
+          let m;
+          if ((m = line.match(/X position:\s*([-0-9.]+)/))) positions.x = parseFloat(m[1]);
+          if ((m = line.match(/Y position:\s*([-0-9.]+)/))) positions.y = parseFloat(m[1]);
+          if ((m = line.match(/Z position:\s*([-0-9.]+)/))) positions.z = parseFloat(m[1]);
+          if ((m = line.match(/A position:\s*([-0-9.]+)/))) positions.a = parseFloat(m[1]);
+        });
+      }
+
+      // update both local and global
+      setPosition(positions);
+      setGantryPosition(positions);
+    } catch (err) {
+      console.error("Error getting gantry position:", err);
     }
-
-    // update both local and global
-    setPosition(positions);
-    setGantryPosition(positions);
-  } catch (err) {
-    console.error("Error getting gantry position:", err);
-  }
-};
+  };
 
   const reset = async () => {
     try {
@@ -92,7 +93,7 @@ const getInfo = async () => {
       const res = await fetch("/api/gantry/goto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...position, speed }),
+        body: JSON.stringify({ ...gotoPosition, speed }),
       });
       console.log("GoTo response:", await res.json());
     } catch (err) {
@@ -129,82 +130,89 @@ const getInfo = async () => {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ width: 60 }}>Axis</TableCell>
-              <TableCell sx={{ width: 80 }}>Position</TableCell>
-              <TableCell sx={{ width: 80 }}>Step</TableCell>
-              <TableCell>Controls</TableCell>
+              <TableCell sx={{ width: 60 }} align="center">Axis</TableCell>
+              <TableCell sx={{ width: 60 }} align="center">Pos</TableCell>
+              <TableCell sx={{ width: 60 }} align="center">Goto</TableCell>
+              <TableCell sx={{ width: 60 }} align="center">Step</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {["x", "y", "z", "a"].map((axis) => (
               <TableRow key={axis}>
-                <TableCell>
+                <TableCell sx={{ p: 0.5 }} align="center">
                   <Stack direction="row" spacing={0.5} alignItems="center">
                     {axis.toUpperCase()}
-                    <Typography variant="body2">
-                      {axis === "a" ? "(deg)" : "(mm)"}
-                    </Typography>
+                    <Typography variant="body2">{axis === "a" ? "(deg)" : "(mm)"}</Typography>
                   </Stack>
                 </TableCell>
-                <TableCell>
+
+                {/* Read-only Position */}
+                <TableCell sx={{ width: 40, p: 0.5 }} align="center">
+                  {/* <TextField */}
+                    {/* value={position[axis]} */}
+                    {/* size="small" */}
+                    {/* InputProps={{ readOnly: true }} */}
+                    {/* sx={{ width: 50, "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 } }} */}
+                  {/* /> */}
+                  {position[axis]}
+                </TableCell>
+
+                {/* Editable Goto */}
+                <TableCell sx={{ width: 60, p: 0.5 }} align="center">
                   <TextField
-                    value={position[axis]}
-                    onChange={(e) =>
-                      setPosition({
-                        ...position,
-                        [axis]: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    size="small"
-                    sx={{
-                      width: 70,
-                      "& .MuiInputBase-input": {
-                        padding: "4px 6px",
-                        fontSize: 12,
-                      },
+                    value={gotoPosition[axis]}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setGotoPosition({ ...gotoPosition, [axis]: isNaN(val) ? "" : val });
                     }}
+                    size="small"
+                    sx={{ width: 60, "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 } }}
+                    type="number"
+                    inputProps={{ step: "any" }}
                   />
                 </TableCell>
-                <TableCell>
-                  <TextField
-                    value={step[axis]}
-                    onChange={(e) =>
-                      setStep({
-                        ...step,
-                        [axis]: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    size="small"
-                    sx={{
-                      width: 70,
-                      "& .MuiInputBase-input": {
-                        padding: "4px 6px",
-                        fontSize: 12,
-                      },
-                    }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={0.5}>
+
+                {/* Controls with Step input in between buttons */}
+                <TableCell sx={{ width: 40, p: 0.5 }} align="center">
+                  <Stack direction="row" spacing={0.5} alignItems="center">
                     <Button
                       size="small"
-                      sx={{ minWidth: 32 }}
+                      sx={{ minWidth: 28 }}
                       onClick={() => stepMove(axis, -1)}
                     >
-                      -{axis.toUpperCase()}
+                      -
                     </Button>
+
+                    {/* Step input */}
+                    <TextField
+                      align="center"
+                      value={step[axis]}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setStep({ ...step, [axis]: isNaN(val) ? "" : val });
+                      }}
+                      size="small"
+                      sx={{
+                        width: 60,
+                        "& .MuiInputBase-input": { padding: "4px 6px", fontSize: 12 },
+                      }}
+                      type="number"
+                      inputProps={{ step: "any" }}
+                    />
+
                     <Button
                       size="small"
-                      sx={{ minWidth: 32 }}
+                      sx={{ minWidth: 28 }}
                       onClick={() => stepMove(axis, 1)}
                     >
-                      +{axis.toUpperCase()}
+                      +
                     </Button>
                   </Stack>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
+
         </Table>
 
         {/* Bottom controls */}
@@ -221,7 +229,7 @@ const getInfo = async () => {
           <Button variant="contained" onClick={getInfo}>
             Info
           </Button>
-          <Button
+          {/* <Button
             variant="contained"
             onClick={() => {
               setPosition(homePosition);
@@ -233,7 +241,7 @@ const getInfo = async () => {
             }}
           >
             Home
-          </Button>
+          </Button> */}
           <Typography>Speed</Typography>
           <TextField
             value={speed}

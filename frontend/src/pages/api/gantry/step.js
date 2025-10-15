@@ -1,6 +1,6 @@
-// pages/api/gantry/move.js
+// pages/api/gantry/step.js
 export default async function handler(req, res) {
-  console.log("Received request to /api/gantry/move", req.body);
+  console.log("Received request to /api/gantry/step", req.body);
 
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });

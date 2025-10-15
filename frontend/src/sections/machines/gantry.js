@@ -35,7 +35,6 @@ export const Gantry = (props) => {
   const [port, setPort] = useState('COM10');
   const [baud, setBaud] = useState(115200);
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
-  const [moveMode, setMoveMode] = useState("unknown");
 
   const handleChange = (event, newValue) => setTab(newValue);
   const handleConnectLitePlacer = async () => {

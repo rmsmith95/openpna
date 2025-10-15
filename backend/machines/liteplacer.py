@@ -5,6 +5,10 @@ from fastapi import APIRouter
 import serial
 import time
 import re
+import random
+import json
+from simulation.liteplacer import sim
+
 
 router = APIRouter()
 connection: serial.Serial | None = None
@@ -46,11 +50,12 @@ def tinyg_send(req: TinyGCommand):
     command = req.command
     delay = req.delay
 
-    logging.info(f"tinyg_send {command}")
-
     if not connection or not connection.is_open:
-        logging.warning("TinyG not connected")
-        return {"error": "LitePlacer not connected"}
+        logging.info("Running simulation, TinyG not connected")
+        return sim(command)
+        # return {"error": "LitePlacer not connected"}
+
+    logging.info(f"tinyg_send {command}")
 
     try:
         connection.reset_input_buffer()
@@ -104,8 +109,10 @@ def tinyg_home_all():
 @router.post("/set_position")
 def set_position(x: float = 0, y: float = 0, z: float = 0, a: float = 0):
     """Set current position (G92)."""
+    gcode = f"G92 X{x} Y{y} Z{z} A{a}"
+    if not connection or not connection.is_open:
+        return sim(gcode)
     try:
-        gcode = f"G92 X{x} Y{y} Z{z} A{a}"
         cmd = TinyGCommand(command=gcode)
         result = tinyg_send(cmd)
         return result  # should be JSON
@@ -117,7 +124,7 @@ def set_position(x: float = 0, y: float = 0, z: float = 0, a: float = 0):
 @router.get("/get_info")
 def get_info():
     if not connection or not connection.is_open:
-        return {"error": "LitePlacer not connected"}
+        return sim("?")
 
     try:
         connection.reset_input_buffer()
@@ -136,8 +143,6 @@ def get_info():
 
         if not lines:
             return {"error": "No response from TinyG"}
-
-        # logging.info("TinyG raw response:\n" + "\n".join(lines))
 
         # Parse JSON lines if possible
         status_list = []
@@ -165,12 +170,13 @@ class MoveXYZRequest(BaseModel):
 
 @router.post("/goto")
 def goto(req: MoveXYZRequest):
+    gcode = f"G1 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
     if not connection or not connection.is_open:
-        return {"error": "LitePlacer not connected"}
+        sim("G90")
+        return sim(gcode)
 
     try:
         tinyg_send(TinyGCommand(command="G90"))
-        gcode = f"G1 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
         connection.write(gcode.encode())
         logging.info(f"Sent G-code: {gcode.strip()}")
 
@@ -185,13 +191,15 @@ def goto(req: MoveXYZRequest):
 
 @router.post("/step")
 def step(req: MoveXYZRequest):
+    """ step relative to current position """
+    gcode = f"G1 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
     if not connection or not connection.is_open:
-        return {"error": "LitePlacer not connected"}
+        sim("G91")
+        return sim(gcode)
 
     try:
         tinyg_send(TinyGCommand(command="G91"))
         # g0 = max speed, g1 = controlled speed
-        gcode = f"G1 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
         connection.write(gcode.encode())
         logging.info(f"Sent G-code: {gcode.strip()}")
 
@@ -203,7 +211,3 @@ def step(req: MoveXYZRequest):
         logging.error(f"LitePlacer move_xyz error: {e}")
         return {"error": str(e)}
 
-
-    # Form G-code command (G0 = rapid move)
-    # gcode = f"G0 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
-    # tinyg_send(gcode)

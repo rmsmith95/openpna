@@ -1,6 +1,6 @@
 // frontend/pages/api/gantry/get_position.j
 export default async function handler(req, res) {
-  console.log("Received request to /api/gantry/get_info");
+  // console.log("Received request to /api/gantry/get_info");
 
   if (req.method !== "GET") {
     return res.status(405).json({ status: "method not allowed" });

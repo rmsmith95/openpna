@@ -17,12 +17,15 @@ def get_factory1() -> Factory:
     
     tray_x, tray_y = [5,5]
     initial_parts = {
-        "p1": {"id": "p1", "name": "Body", "class": "part", "mass": 0.3, "description": "3d printed", "cad": "/home/body.stl", "assembly_id": False, "bbox": [tray_x+5, tray_y+0, 120, 120], },
-        "p2": {"id": "p2", "name": "Body Jig", "class": "jig", "mass": 0.3, "description": "3d printed", "cad": "/home/body_jig.stl", "assembly_id": False, "bbox": [tray_x+135, tray_y+0, 140, 140], },
-        "p3": {"id": "p3", "name": "Arm1", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": False, "bbox": [tray_x+5, tray_y+150, 120, 60],  },
-        "p4": {"id": "p4", "name": "Arm2", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": False, "bbox": [tray_x+5, tray_y+220, 120, 60],  },
-        "p5": {"id": "p5", "name": "Arm3", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": False, "bbox": [tray_x+135, tray_y+150, 120, 60],  },
-        "p6": {"id": "p6", "name": "Arm4", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": False, "bbox": [tray_x+135, tray_y+220, 120, 60],  },
+        "p1": {"id": "p1", "name": "Attachment Holder", "class": "holder", "mass": 0.3, "description": "3d printed", "cad": "/home/holder.stl", "assembly_id": False, "bbox": [205, 308, 150, 52], },
+        "p2": {"id": "p2", "name": "Gripper", "class": "tool", "mass": 0.3, "description": "3d printed", "cad": "/home/gripper.stl", "assembly_id": False, "bbox": [215, 308, 75, 58], },
+        "p3": {"id": "p3", "name": "Screwdriver", "class": "tool", "mass": 0.3, "description": "3d printed", "cad": "/home/screwdriver.stl", "assembly_id": False, "bbox": [305, 308, 52, 52], },
+        "p11": {"id": "p11", "name": "Body", "class": "part", "mass": 0.3, "description": "3d printed", "cad": "/home/body.stl", "assembly_id": False, "bbox": [tray_x+5, tray_y+0, 120, 120], },
+        "p12": {"id": "p12", "name": "Body Jig", "class": "jig", "mass": 0.3, "description": "3d printed", "cad": "/home/body_jig.stl", "assembly_id": False, "bbox": [tray_x+135, tray_y+0, 140, 140], },
+        "p13": {"id": "p13", "name": "Arm1", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": False, "bbox": [tray_x+5, tray_y+150, 120, 60],  },
+        "p14": {"id": "p14", "name": "Arm2", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": False, "bbox": [tray_x+5, tray_y+220, 120, 60],  },
+        "p15": {"id": "p15", "name": "Arm3", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": False, "bbox": [tray_x+135, tray_y+150, 120, 60],  },
+        "p16": {"id": "p16", "name": "Arm4", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": False, "bbox": [tray_x+135, tray_y+220, 120, 60],  },
         # "p7": {"id": "p7", "name": "Motor1", "class": "part", "mass": 0.3, "description": "EMax", "cad": "/home/motor.stl", "assembly_id": False, "bbox": [tray_x+0, tray_y+0, 150, 150],  },
         # "p8": {"id": "p8", "name": "Electric Speed Controller", "class": "part", "mass": 0.3, "description": "SpeedyBee", "cad": "/home/esc.stl", "assembly_id": False, "bbox": [tray_x+0, tray_y+0, 150, 150],  },
         # "p9": {"id": "p9", "name": "Flight Controller", "class": "part", "mass": 0.3, "description": "SpeedyBee", "cad": "/home/fc.stl", "assembly_id": False, "bbox": [tray_x+0, tray_y+0, 150, 150],  },

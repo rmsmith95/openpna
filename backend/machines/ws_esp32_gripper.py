@@ -3,7 +3,7 @@ import time
 
 # --- CONFIG ---
 PORT = "COM3"          # Change to your Arduino’s serial port (e.g. "/dev/ttyUSB0" on Linux/Mac)
-BAUD = 115200
+BAUD = 1000000
 TIMEOUT = 1            # seconds
 
 # --- SETUP SERIAL ---
@@ -13,13 +13,20 @@ time.sleep(2)  # wait for Arduino to reset
 def send_command(cmd: str):
     """Send command string and return Arduino reply."""
     ser.write((cmd + "\n").encode())
-    time.sleep(0.1)
+    time.sleep(2)
     output = []
     while ser.in_waiting:
         line = ser.readline().decode(errors="ignore").strip()
         if line:
             output.append(line)
     return "\n".join(output)
+
+def move_gripper_speed(speed: int, duration_ms: int):
+    """Move the servo at a given speed for a specific duration."""
+    print(f"Moving gripper at speed {speed} for {duration_ms}ms...")
+    response = send_command(f"speed {speed} {duration_ms}")
+    print(response)
+    return response
 
 def move_gripper(position: int):
     """Move gripper to position 0–4095."""
@@ -34,24 +41,5 @@ def get_info():
     print(response)
     return response
 
-get_info()
-
-# # --- MAIN EXAMPLE ---
-# if __name__ == "__main__":
-#     print("Connected to Arduino.\n")
-
-#     # Move to middle position
-#     move_gripper(2048)
-#     time.sleep(2)
-
-#     # Get full servo status
-#     get_info()
-
-#     # Move back to start
-#     move_gripper(1024)
-#     time.sleep(2)
-
-#     get_info()
-
-#     ser.close()
-#     print("\nDone.")
+# get_info()
+move_gripper(2000)

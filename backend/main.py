@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from machines.liteplacer import router as liteplacer_router
 from machines.cobot280 import router as cobot280_router
+from machines.ws_esp32_gripper import router as ws_esp32_gripper_router
 from sections.factory import Factory
 from examples.factory1 import get_factory1
 
@@ -24,6 +25,7 @@ app.add_middleware(
 
 app.include_router(liteplacer_router, prefix="/liteplacer")
 app.include_router(cobot280_router, prefix="/cobot280")
+app.include_router(ws_esp32_gripper_router, prefix="/ws_esp32_gripper")
 
 @app.get("/")
 def read_root():

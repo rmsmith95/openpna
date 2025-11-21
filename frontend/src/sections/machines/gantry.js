@@ -24,6 +24,7 @@ import ArrowRightIcon from '@heroicons/react/24/solid/ArrowRightIcon';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import GantryControls from './gantry-controls';
+import GripperControls from '../../components/gripper-controls';
 
 export const Gantry = (props) => {
   const { difference, positive = false, sx, value } = props;
@@ -139,42 +140,13 @@ export const Gantry = (props) => {
           )}
 
           {tab === 2 && (
-            <Stack spacing={2}>
-              <Stack spacing={2} direction="row" alignItems="center">
-                <Button variant="contained" color="success" disabled={connectedLitePlacerGripper}>Connect</Button>
-                <TextField label="Port" value={port} onChange={(e) => setPort(e.target.value)} />
-                <TextField label="Baud Rate" type="number" value={baud} onChange={(e) => setBaud(Number(e.target.value))} />
-                <Button variant="contained" color="primary" onClick={() => console.log("Attach")}>Attach</Button>
-                <Button variant="outlined" color="secondary" onClick={() => console.log("Detach")}>Detach</Button>
-              </Stack>
-              <Table size="small" sx={{ minWidth: 250 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Min Width (mm)</TableCell>
-                    <TableCell>Current Width (mm)</TableCell>
-                    <TableCell>Max Width (mm)</TableCell>
-                    <TableCell>Controls</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>0</TableCell>
-                    <TableCell>20</TableCell>
-                    <TableCell>60</TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1}>
-                        <Button variant="contained" sx={{ width: 40, height: 35 }} onClick={() => console.log("Decrease width")}>
-                          <SvgIcon component={ArrowLeftIcon} />
-                        </Button>
-                        <Button variant="contained" sx={{ width: 40, height: 35 }} onClick={() => console.log("Increase width")}>
-                          <SvgIcon component={ArrowRightIcon} />
-                        </Button>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </Stack>
+            <GripperControls
+              connected={connectedLitePlacerGripper}
+              port={port}
+              baud={baud}
+              setPort={setPort}
+              setBaud={setBaud}
+            />
           )}
         </Box>
       </CardContent>
@@ -186,5 +158,5 @@ Gantry.propTypes = {
   difference: PropTypes.number,
   positive: PropTypes.bool,
   sx: PropTypes.object,
-  value: PropTypes.string.isRequired
+  // value: PropTypes.string
 };

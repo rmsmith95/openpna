@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   try {
     console.log("➡️ Forwarding to FastAPI...");
     const response = await fetch("http://127.0.0.1:8000/ws_esp32_gripper/get_status"); // GET by default
-    const text = await response.text();  // or use response.json() if FastAPI returns JSON
+    const text = await response.json();  // or use response.json() if FastAPI returns JSON
     console.log("⬅️ FastAPI returned:", text);
 
     res.status(200).json({ status: "ok", raw: text });

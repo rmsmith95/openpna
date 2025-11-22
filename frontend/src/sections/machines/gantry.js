@@ -142,10 +142,6 @@ export const Gantry = (props) => {
           {tab === 2 && (
             <GripperControls
               connected={connectedLitePlacerGripper}
-              port={port}
-              baud={baud}
-              setPort={setPort}
-              setBaud={setBaud}
             />
           )}
         </Box>

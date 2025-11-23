@@ -10,104 +10,62 @@ import {
     TableRow,
     TableHead
 } from "@mui/material";
-import { ArrowsPointingInIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/solid'
+import { ArrowUturnLeftIcon, ArrowUturnRightIcon } from '@heroicons/react/24/solid'
 
 export default function GripperControls({ connected }) {
     const [port, setPort] = useState('COM4');
     const [servoId, setServoId] = useState(1);
 
     const [status, setStatus] = useState({
-        "Active ID": "",
-        Position: "",
-        "Device Mode": "",
-        Voltage: "",
-        Load: "",
-        Speed: "",
-        Temper: "",
-        "Speed Set": "",
-        "ID to Set": "",
-        Mode: "",
-        "Torque On": ""
+        "active_id": "",
+        "position": "",
+        "device_mode": "",
+        "voltage": "",
+        "load": "",
+        "speed": "",
+        "temper": "",
+        "speed_set": "",
+        "id_to_set": "",
+        "mode": "",
+        "torque_on": ""
     });
 
-    // ---- NEW: call FastAPI ----
-    async function openGripper() {
-        await fetch("/api/gripper/open", { method: "POST" });
-    }
-
-    async function closeGripper() {
-        await fetch("/api/gripper/close", { method: "POST" });
-    }
-
-    function parseGripperStatus(raw) {
-        if (!raw || typeof raw !== "string") return {};
-
-        // Remove all <p> tags
-        let text = raw.replace(/<p>/g, " ");
-
-        // Define the keys in order
-        const keys = [
-            "Active ID:",
-            "Position:",
-            "Device Mode:",
-            "Voltage:",
-            "Load:",
-            "Speed:",
-            "Temper:",
-            "Speed Set:",
-            "ID to Set:",
-            "Mode:",
-            "Torque On"
-        ];
-
-        const status = {};
-        for (let i = 0; i < keys.length; i++) {
-            const key = keys[i];
-            const nextKey = keys[i + 1];
-
-            const startIndex = text.indexOf(key);
-            if (startIndex === -1) continue;
-
-            let endIndex;
-            if (nextKey) {
-                endIndex = text.indexOf(nextKey, startIndex + key.length);
-                if (endIndex === -1) endIndex = text.length;
-            } else {
-                endIndex = text.length;
-            }
-
-            const value = text.substring(startIndex + key.length, endIndex).trim();
-            const cleanKey = key.replace(":", "").replace(/\s+/g, "_").toLowerCase();
-            status[cleanKey] = value;
-        }
-
-        return status;
-    }
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
                 const res = await fetch("/api/gripper/get_status");
                 const data = await res.json();
-                console.log("Raw gripper data:", data);
+                // console.log("Raw gripper data:", data);
 
                 if (data.raw) {
-                    // Remove escaped quotes if any
-                    const raw = typeof data.raw === "string" ? data.raw.replace(/\\"/g, "") : "";
-                    const parsed = parseGripperStatus(raw);
-
-                    // Assign parsed values to status state
-                    setStatus(parsed);
-                    console.log("Cleaned Status:", parsed);
-                    console.log("Status:", status);
+                    setStatus(data.raw);
                 }
+
             } catch (err) {
                 console.error("Error fetching gripper status:", err);
             }
-        }, 5000);
+        }, 200);
 
         return () => clearInterval(interval);
     }, []);
 
+
+    // --- Send open/close commands ---
+    async function stepOpenGripper(time = 1, speed = status.speed_set || 100) {
+        await fetch("/api/gripper/open", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ time, speed }),
+        });
+    }
+
+    async function stepCloseGripper(time = 1, speed = status.speed_set || 100) {
+        await fetch("/api/gripper/close", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ time, speed }),
+        });
+    }
 
     return (
         <Stack spacing={2}>
@@ -130,21 +88,13 @@ export default function GripperControls({ connected }) {
                     value={servoId}
                     onChange={(e) => setServoId(Number(e.target.value))}
                 />
-
-                {/* NEW: Gripper buttons */}
-                <Button variant="contained" color="primary" onClick={openGripper}>
-                    Open
-                </Button>
-
-                <Button variant="contained" color="error" onClick={closeGripper}>
-                    Close
-                </Button>
             </Stack>
 
             {/* Always visible status table */}
             <Table size="small" sx={{ minWidth: 900 }}>
                 <TableHead>
                     <TableRow>
+                        <TableCell>Voltage</TableCell>
                         <TableCell>Position</TableCell>
                         <TableCell>Load</TableCell>
                         <TableCell>Speed</TableCell>
@@ -155,13 +105,13 @@ export default function GripperControls({ connected }) {
                 </TableHead>
                 <TableBody>
                     <TableRow>
+                        <TableCell>{status.voltage}</TableCell>
                         <TableCell>{status.position}</TableCell>
                         <TableCell>{status.load}</TableCell>
-                        <TableCell>{status.speed}</TableCell>
+                        <TableCell>{status.speed_set}</TableCell>
                         <TableCell>
-                            {/* Simple gap estimation: convert position 0–4095 to 0–60mm */}
                             {status.position
-                                ? (Number(status.position) / 4095 * 60).toFixed(1)
+                                ? (status.position / 4095 * 60).toFixed(1)
                                 : ""}
                         </TableCell>
                         <TableCell>{status.temper}</TableCell>
@@ -170,17 +120,17 @@ export default function GripperControls({ connected }) {
                                 <Button
                                     variant="contained"
                                     sx={{ width: 40, height: 35 }}
-                                    onClick={closeGripper}
+                                    onClick={() => stepCloseGripper(1, status.speed_set)}
                                 >
-                                    <SvgIcon component={ArrowsPointingInIcon} />
+                                    <SvgIcon component={ArrowUturnLeftIcon} />
                                 </Button>
 
                                 <Button
                                     variant="contained"
                                     sx={{ width: 40, height: 35 }}
-                                    onClick={openGripper}
+                                    onClick={() => stepOpenGripper(1, status.speed_set)}
                                 >
-                                    <SvgIcon component={ArrowsPointingOutIcon} />
+                                    <SvgIcon component={ArrowUturnRightIcon} />
                                 </Button>
                             </Stack>
                         </TableCell>

@@ -5,18 +5,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { command } = req.body || {}; // get command from frontend
+    const { time, speed } = req.body || {}; // get time and speed from frontend
 
-    if (!command) {
-      return res.status(400).json({ status: "error", message: "Missing command" });
+    if (time === undefined || speed === undefined) {
+      return res.status(400).json({ status: "error", message: "Missing time or speed" });
     }
 
     // Forward the command to FastAPI
-    const response = await fetch("http://127.0.0.1:8000/ws_esp32_gripper/open_gripper", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ command }), // send the actual command
-    });
+    const response = await fetch(
+      "http://127.0.0.1:8000/ws_esp32_gripper/gripper_open",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ time, speed }), // send time and speed to FastAPI
+      }
+    );
 
     const data = await response.json();
     console.log("FastAPI response:", data);

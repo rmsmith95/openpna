@@ -12,11 +12,15 @@ router = APIRouter()
 class ST3020Servo:
     """
     requests.get("http://192.168.4.1/cmd",params={"arg0": 1, "arg1": 2, "arg2": 0, "arg3": 0}, timeout=2) 
+    r=requests.get("http://192.168.4.1/readSTS")
+    r.raise_for_status()
+    r.text
     """
     def __init__(self, ssid="ESP32_DEV", password="12345678", ip="192.168.4.1"):
         self.ssid = ssid
         self.password = password
         self.ip = ip
+        self.status	= {}
 
     def send_command(self, cmd_type, cmd_value, extra1=0, extra2=0):
         """Send a command to the ESP32 via HTTP GET."""
@@ -48,32 +52,23 @@ class ST3020Servo:
         """Set speed (steps/sec) by stepping +100/-100 until target"""
         # Read current speed
         status = self.get_status()
-        if not status:
+        print("status:", status)
+        speed = status['set_speed']
+        if not speed:
             print("Cannot read speed")
             return
 
-        # Extract current speed
-        current = 0
-        try:
-            for line in status.splitlines():
-                if "Speed Set:" in line:
-                    current = int(line.split("Speed Set:")[1])
-                    break
-        except:
-            print("Failed to parse speed")
+        if target_speed == speed:
             return
 
-        if target_speed == current:
-            return
-
-        case = 7 if target_speed > current else 8
-        while current != target_speed:
-            self.send_command(1, case)
-            time.sleep(0.1)
-            current += 100 if case == 7 else -100
-            # clamp
-            if (case == 7 and current > target_speed) or (case == 8 and current < target_speed):
-                current = target_speed
+        case = 7 if target_speed > speed else 8
+        # while speed != target_speed:
+        self.send_command(1, case)
+        time.sleep(0.1)
+        # speed += 100 if case == 7 else -100
+        # clamp
+        # if (case == 7 and speed > target_speed) or (case == 8 and speed < target_speed):
+        #     speed = target_speed
 
     def get_status(self):
         """Get current servo status from /readSTS"""
@@ -81,6 +76,7 @@ class ST3020Servo:
         try:
             r = requests.get(url, timeout=2)
             r.raise_for_status()
+            self.status = r.text
             return r.text
         except requests.RequestException as e:
             print("Error reading status:", e)
@@ -91,6 +87,25 @@ class ST3020Servo:
 servo = ST3020Servo()
 servo.select_id(1)
 servo.set_mode("motor")
+
+
+@router.post("/set_speed")
+def set_speed(speed):
+    # print("Set speed: ", speed)
+    result = servo.send_command(1, 7)
+    return result
+
+
+@router.post("/speed_up")
+def speed_up():
+    result = servo.send_command(1, 7)
+    return result
+
+
+@router.post("/speed_down")
+def speed_down():
+    result = servo.send_command(1, 8)
+    return result
 
 
 def run_motor_for(duration, command):

@@ -10,7 +10,7 @@ import {
     TableRow,
     TableHead
 } from "@mui/material";
-import { ArrowUturnLeftIcon, ArrowUturnRightIcon } from '@heroicons/react/24/solid'
+import { ArrowsPointingInIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/solid'
 
 export default function GripperControls({ connected }) {
     const [port, setPort] = useState('COM4');
@@ -35,9 +35,9 @@ export default function GripperControls({ connected }) {
             try {
                 const res = await fetch("/api/gripper/get_status");
                 const data = await res.json();
-                // console.log("Raw gripper data:", data);
 
                 if (data.raw) {
+                    console.log(data.raw)
                     setStatus(data.raw);
                 }
 
@@ -48,7 +48,6 @@ export default function GripperControls({ connected }) {
 
         return () => clearInterval(interval);
     }, []);
-
 
     // --- Send open/close commands ---
     async function stepOpenGripper(time = 1, speed = status.speed_set || 100) {
@@ -64,6 +63,33 @@ export default function GripperControls({ connected }) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ time, speed }),
+        });
+    }
+
+    async function speedUp () {
+        await fetch("/api/gripper/speed_up", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+        });
+    }
+
+    async function speedDown () {
+        await fetch("/api/gripper/speed_down", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+        });
+    }
+
+    async function setSpeed(speed) {
+        // Update UI instantly
+        setStatus((prev) => ({ ...prev, speed_set: speed }));
+
+        await fetch("/api/gripper/set_speed", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ speed }),
         });
     }
 
@@ -108,13 +134,43 @@ export default function GripperControls({ connected }) {
                         <TableCell>{status.voltage}</TableCell>
                         <TableCell>{status.position}</TableCell>
                         <TableCell>{status.load}</TableCell>
-                        <TableCell>{status.speed_set}</TableCell>
+
+                        {/* ------- UPDATED SPEED COLUMN WITH +/- BUTTONS ------- */}
+                        <TableCell>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <Button
+                                    variant="outlined"
+                                    sx={{ minWidth: 30, padding: 0 }}
+                                    onClick={() => {
+                                        speedDown();
+                                    }}
+                                >
+                                    -
+                                </Button>
+
+                                <strong>{status.speed_set}</strong>
+
+                                <Button
+                                    variant="outlined"
+                                    sx={{ minWidth: 30, padding: 0 }}
+                                    onClick={() => {
+                                        speedUp();
+                                    }}
+                                >
+                                    +
+                                </Button>
+                            </Stack>
+                        </TableCell>
+                        {/* ----------------------------------------------------- */}
+
                         <TableCell>
                             {status.position
                                 ? (status.position / 4095 * 60).toFixed(1)
                                 : ""}
                         </TableCell>
+
                         <TableCell>{status.temper}</TableCell>
+
                         <TableCell>
                             <Stack direction="row" spacing={1}>
                                 <Button
@@ -122,7 +178,7 @@ export default function GripperControls({ connected }) {
                                     sx={{ width: 40, height: 35 }}
                                     onClick={() => stepCloseGripper(1, status.speed_set)}
                                 >
-                                    <SvgIcon component={ArrowUturnLeftIcon} />
+                                    <SvgIcon component={ArrowsPointingInIcon} />
                                 </Button>
 
                                 <Button
@@ -130,7 +186,7 @@ export default function GripperControls({ connected }) {
                                     sx={{ width: 40, height: 35 }}
                                     onClick={() => stepOpenGripper(1, status.speed_set)}
                                 >
-                                    <SvgIcon component={ArrowUturnRightIcon} />
+                                    <SvgIcon component={ArrowsPointingOutIcon} />
                                 </Button>
                             </Stack>
                         </TableCell>

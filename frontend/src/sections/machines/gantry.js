@@ -17,10 +17,6 @@ import {
   Typography,
   TextField
 } from '@mui/material';
-import ArrowUpIcon from '@heroicons/react/24/solid/ArrowUpIcon';
-import ArrowDownIcon from '@heroicons/react/24/solid/ArrowDownIcon';
-import ArrowLeftIcon from '@heroicons/react/24/solid/ArrowLeftIcon';
-import ArrowRightIcon from '@heroicons/react/24/solid/ArrowRightIcon';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import GantryControls from './gantry-controls';
@@ -31,28 +27,64 @@ export const Gantry = (props) => {
   const [tab, setTab] = useState(0);
 
   // Connection state
-  const [connectedLitePlacer, setConnectedLitePlacer] = useState(false);
+  const [connectedTinyG, setConnectedTinyG] = useState(false);
+  const [connectedArduino, setConnectedArduino] = useState(false);
   const [connectedLitePlacerGripper, setConnectedLitePlacerGripper] = useState(false);
-  const [port, setPort] = useState('COM10');
-  const [baud, setBaud] = useState(115200);
+  const [tinyGPort, setTinyGPort] = useState('COM10');
+  const [tinyGBaud, setTinyGBaud] = useState(115200);
+  const [arduinoPort, setArduinoPort] = useState('COM3');
+  const [arduinoBaud, setArduinoBaud] = useState(9600);
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
 
   const handleChange = (event, newValue) => setTab(newValue);
-  const handleConnectLitePlacer = async () => {
+  const handleConnectTinyG = async () => {
     try {
       const res = await fetch("/api/gantry/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ port, baud }),
+        body: JSON.stringify({ PORT: tinyGPort, BAUD: tinyGBaud }),
       });
       const data = await res.json();
-      if (data.status === "connected") setConnectedLitePlacer(true);
-      else setConnectedLitePlacer(false);
+      if (data.status === "connected") setConnectedTinyG(true);
+      else setConnectedTinyG(false);
     } catch (err) {
       console.error("LitePlacer connect failed:", err);
-      setConnectedLitePlacer(false);
+      setConnectedTinyG(false);
     }
   };
+
+  const handleConnectArduino = async () => {
+    try {
+      const res = await fetch("/api/tool_changer/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ port: arduinoPort, baud: arduinoBaud }),
+      });
+      const data = await res.json();
+      console.log("status:", data.status)
+      if (data.status === "connected") setConnectedArduino(true);
+      else setConnectedArduino(false);
+    } catch (err) {
+      console.error("Arduino connect failed:", err);
+      setConnectedArduino(false);
+    }
+  };
+
+  async function handleLockToolChanger() {
+      await fetch("/api/tool_changer/lock", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ }),
+      });
+  }
+
+  async function handleUnlockToolChanger() {
+    await fetch("/api/tool_changer/unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ }),
+    });
+  }
 
   return (
     <Card sx={sx}>
@@ -69,7 +101,7 @@ export const Gantry = (props) => {
             <Tab label={
               <Stack direction="row" alignItems="center" spacing={1}>
                 <span>LitePlacer1</span>
-                {connectedLitePlacer ? (
+                {connectedTinyG ? (
                   <SvgIcon fontSize="small" color="success"><CheckCircleIcon /></SvgIcon>
                 ) : (
                   <SvgIcon fontSize="small" color="error"><XCircleIcon /></SvgIcon>
@@ -102,12 +134,31 @@ export const Gantry = (props) => {
             <Stack spacing={2} alignItems="flex-start">
               {/* Connection controls */}
               <Stack direction="row" spacing={2} alignItems="center">
-                <TextField label="Port" value={port} onChange={(e) => setPort(e.target.value)} />
-                <TextField label="Baud Rate" type="number" value={baud} onChange={(e) => setBaud(Number(e.target.value))} />
+                TinyG
+                <TextField label="Port" value={tinyGPort} onChange={(e) => setTinyGPort(e.target.value)} />
+                <TextField label="Baud Rate" type="number" value={tinyGBaud} onChange={(e) => setTinyGBaud(Number(e.target.value))} />
                 <Button variant="contained" color="success" 
-                  onClick={handleConnectLitePlacer} 
+                  onClick={handleConnectTinyG} 
                   // disabled={connectedLitePlacer}
                   >Connect
+                </Button>
+              </Stack>
+
+              {/* Connection controls */}
+              <Stack direction="row" spacing={2} alignItems="center">
+                Arduino
+                <TextField label="Port" value={arduinoPort} onChange={(e) => setArduinoPort(e.target.value)} />
+                <TextField label="Baud Rate" type="number" value={arduinoBaud} onChange={(e) => setArduinoBaud(Number(e.target.value))} />
+                <Button variant="contained" color="success" 
+                  onClick={handleConnectArduino} 
+                  // disabled={connectedLitePlacer}
+                  >Connect
+                </Button>
+                <Button variant="contained" onClick={handleLockToolChanger}>
+                  Lock
+                </Button>
+                <Button variant="contained" onClick={handleUnlockToolChanger}>
+                  Unlock
                 </Button>
               </Stack>
 
@@ -135,7 +186,7 @@ export const Gantry = (props) => {
 
           {tab === 1 && (
             <GantryControls
-              connectedLitePlacer={connectedLitePlacer}
+              connectedLitePlacer={connectedTinyG}
             />
           )}
 

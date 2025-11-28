@@ -1,6 +1,6 @@
-// pages/api/gantry/connect.js
+// pages/api/liteplacer/connect.js
 export default async function handler(req, res) {
-  console.log("Received request to /api/gantry/connect", req.body);
+  console.log("Received request to /api/liteplacer/connect", req.body);
 
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });

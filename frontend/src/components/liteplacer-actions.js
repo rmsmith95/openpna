@@ -51,7 +51,7 @@ const LiteplacerActions = ({
   const runAction = (row) => {
     switch (row.change) {
       case "Goto":
-        goto?.(row.x, row.y, row.z);
+        goto?.({ x: row.x, y: row.y, z: row.z, a: row.a ?? 0 }, 2000);
         break;
 
       case "Open":

@@ -152,7 +152,8 @@ def get_info():
                 status_list.append(json.loads(line))
             except Exception:
                 status_list.append({"raw": line})
-
+        
+        logging.info(f"status: {status_list}")
         return {"status": status_list}
 
     except Exception as e:

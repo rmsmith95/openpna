@@ -22,6 +22,8 @@ import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import LiteplacerControls from '../../components/liteplacer-controls';
 import LiteplacerActions from '../../components/liteplacer-actions';
 import GripperControls from '../../components/gripper-controls';
+import { useFactory } from "src/utils/factory-context";
+
 
 export const Liteplacer = (props) => {
   const { difference, positive = false, sx, value } = props;
@@ -36,6 +38,8 @@ export const Liteplacer = (props) => {
   const [arduinoPort, setArduinoPort] = useState('COM3');
   const [arduinoBaud, setArduinoBaud] = useState(9600);
   const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
+  const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
+  const { setGantryPosition } = useFactory();
 
   const handleChange = (event, newValue) => setTab(newValue);
   const handleConnectTinyG = async () => {
@@ -43,9 +47,10 @@ export const Liteplacer = (props) => {
       const res = await fetch("/api/liteplacer/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ PORT: tinyGPort, BAUD: tinyGBaud }),
+        body: JSON.stringify({ port: tinyGPort, baud: tinyGBaud }),
       });
       const data = await res.json();
+      console.log(data.status)
       if (data.status === "connected") setConnectedTinyG(true);
       else setConnectedTinyG(false);
     } catch (err) {
@@ -53,6 +58,38 @@ export const Liteplacer = (props) => {
       setConnectedTinyG(false);
     }
   };
+
+    // Poll gantry info
+  useEffect(() => {
+    const getInfo = async () => {
+      try {
+        const res = await fetch("/api/liteplacer/get_info");
+        const data = await res.json();
+        const positions = { x: 0, y: 0, z: 0, a: 0 };
+
+        if (Array.isArray(data.status)) {
+          data.status.forEach((item) => {
+            const raw = item.raw ?? JSON.stringify(item);
+            let m;
+            if ((m = raw.match(/X position:\s*([-0-9.]+)/))) positions.x = parseFloat(m[1]);
+            if ((m = raw.match(/Y position:\s*([-0-9.]+)/))) positions.y = parseFloat(m[1]);
+            if ((m = raw.match(/Z position:\s*([-0-9.]+)/))) positions.z = parseFloat(m[1]);
+            if ((m = raw.match(/A position:\s*([-0-9.]+)/))) positions.a = parseFloat(m[1]);
+          });
+        }
+
+        setPosition(positions);
+        setGantryPosition(positions);
+      } catch (err) {
+        console.error("Error getting gantry position:", err);
+      }
+    };
+
+    getInfo();
+    const interval = setInterval(getInfo, 1000);
+    return () => clearInterval(interval);
+  }, [setGantryPosition]);
+
 
   const handleConnectArduino = async () => {
     try {
@@ -87,9 +124,9 @@ export const Liteplacer = (props) => {
     });
   }
 
-  const goto = async () => {
+  const goto = async (gotoPosition, speed) => {
     try {
-      const res = await fetch("/api/gantry/goto", {
+      const res = await fetch("/api/liteplacer/goto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...gotoPosition, speed }),
@@ -157,6 +194,22 @@ export const Liteplacer = (props) => {
                 </Stack>
               }
             />
+            <Box
+  sx={{
+    // border: "1px solid #ccc",
+    borderRadius: 2,
+    width: 220,
+    textAlign: "center",      // centers text horizontally
+    // pl: 1,                     // left padding (~8px, close to 10px)
+    // pr: 1,                     // optional right padding
+    py: 1.5                      // optional vertical padding
+  }}
+>
+  <Typography variant="h6">
+    P: {position.x} {position.y} {position.z} {position.a}
+  </Typography>
+</Box>
+
           </Tabs>
         </Box>
 
@@ -218,8 +271,9 @@ export const Liteplacer = (props) => {
 
           {tab === 1 && (
             <LiteplacerControls
-              connectedLitePlacer={connectedTinyG}
+              position={position}
               goto={goto}
+              gotoPosition={gotoPosition}
             />
           )}
 

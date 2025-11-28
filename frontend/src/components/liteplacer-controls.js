@@ -13,65 +13,45 @@ import {
   Box,
   Button,
   TextField,
-  Tabs,
-  Tab,
 } from "@mui/material";
 import CameraModel from "src/sections/cameras/camera-model";
 import { useFactory } from "src/utils/factory-context";
 import { useCameraStreams } from "src/hooks/use-camera-streams";
 
-const LiteplacerControls = ({ connectedLitePlacer, goto }) => {
-  const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
-  const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
+const LiteplacerControls = ({ goto, position, gotoPosition }) => {
+  // const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
+  // const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 45 });
   const [speed, setSpeed] = useState(3000);
-  const [cameraTab, setCameraTab] = useState(0);
+  // const { videoRefs } = useCameraStreams();
 
-  const { setGantryPosition } = useFactory();
-  const { videoRefs } = useCameraStreams();
-
-  // Poll gantry info
-  useEffect(() => {
-    const getInfo = async () => {
-      try {
-        const res = await fetch("/api/gantry/get_info");
-        const data = await res.json();
-        const positions = { x: 0, y: 0, z: 0, a: 0 };
-
-        if (Array.isArray(data.status)) {
-          data.status.forEach(({ raw }) => {
-            let m;
-            if ((m = raw.match(/X position:\s*([-0-9.]+)/))) positions.x = parseFloat(m[1]);
-            if ((m = raw.match(/Y position:\s*([-0-9.]+)/))) positions.y = parseFloat(m[1]);
-            if ((m = raw.match(/Z position:\s*([-0-9.]+)/))) positions.z = parseFloat(m[1]);
-            if ((m = raw.match(/A position:\s*([-0-9.]+)/))) positions.a = parseFloat(m[1]);
-          });
-        }
-
-        setPosition(positions);
-        setGantryPosition(positions);
-      } catch (err) {
-        console.error("Error getting gantry position:", err);
-      }
-    };
-
-    getInfo();
-    const interval = setInterval(getInfo, 1000);
-    return () => clearInterval(interval);
-  }, [setGantryPosition]);
-
+  // --- RESET (Ctrl+X Soft Reset, RED BUTTON) ---
   const reset = async () => {
     try {
-      const res = await fetch("/api/gantry/reset", { method: "POST" });
+      const res = await fetch("/api/liteplacer/reset", { method: "POST" });
       console.log("Reset response:", await res.json());
     } catch (err) {
       console.error("Reset error:", err);
     }
   };
 
+  // --- ZERO (G92 X0 Y0 Z0 A0) ---
+  const zero = async () => {
+    try {
+      const res = await fetch("/api/liteplacer/set_position", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ x: 0, y: 0, z: 0, a: 0 }),
+      });
+      console.log("Zero response:", await res.json());
+    } catch (err) {
+      console.error("Zero error:", err);
+    }
+  };
+
   const setCurrentPosition = async () => {
     try {
-      const res = await fetch("/api/gantry/set_position", {
+      const res = await fetch("/api/liteplacer/set_position", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(position),
@@ -87,7 +67,7 @@ const LiteplacerControls = ({ connectedLitePlacer, goto }) => {
     const move = { x: 0, y: 0, z: 0, a: 0, [axis]: direction * delta };
 
     try {
-      const res = await fetch("/api/gantry/step", {
+      const res = await fetch("/api/liteplacer/step", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...move, speed }),
@@ -98,11 +78,8 @@ const LiteplacerControls = ({ connectedLitePlacer, goto }) => {
     }
   };
 
-  const handleCameraTabChange = (_, newVal) => setCameraTab(newVal);
-
   return (
     <Stack direction="row" spacing={4} alignItems="flex-start" sx={{ width: "100%" }}>
-      
       {/* --- Full Width Table --- */}
       <Box sx={{ width: "100%" }}>
         <Table size="small" sx={{ width: "100%" }}>
@@ -176,7 +153,7 @@ const LiteplacerControls = ({ connectedLitePlacer, goto }) => {
           </TableBody>
         </Table>
 
-        {/* --- Centered Bottom Controls --- */}
+        {/* --- Bottom Controls --- */}
         <Stack
           direction="row"
           spacing={3}
@@ -185,12 +162,16 @@ const LiteplacerControls = ({ connectedLitePlacer, goto }) => {
           sx={{ mt: 3 }}
           flexWrap="wrap"
         >
-          <Button variant="contained" onClick={goto}>GoTo</Button>
-          <Button variant="contained" onClick={setCurrentPosition}>Set</Button>
-          <Button variant="contained" onClick={reset}>Reset</Button>
-
-          {/* Speed Group */}
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Button variant="contained" onClick={() => goto(gotoPosition, speed)}>
+            GoTo
+          </Button>
+          <Button variant="contained" onClick={setCurrentPosition}>
+            Set
+          </Button>
+          <Button variant="contained" color="warning" onClick={zero}>
+            Zero
+          </Button>
+                    <Stack direction="row" spacing={1} alignItems="center">
             <Typography sx={{ fontWeight: 500 }}>Speed:</Typography>
             <TextField
               value={speed}
@@ -211,6 +192,12 @@ const LiteplacerControls = ({ connectedLitePlacer, goto }) => {
               inputProps={{ min: 0 }}
             />
           </Stack>
+
+          {/* RESET BUTTON (RED, MOVED RIGHT) */}
+          <Box sx={{ flexGrow: 1 }} /> {/* pushes reset fully to the right */}
+          <Button variant="contained" color="error" onClick={reset}>
+            Reset
+          </Button>
         </Stack>
       </Box>
     </Stack>

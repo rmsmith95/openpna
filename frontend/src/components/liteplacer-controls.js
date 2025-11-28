@@ -14,16 +14,10 @@ import {
   Button,
   TextField,
 } from "@mui/material";
-import CameraModel from "src/sections/cameras/camera-model";
-import { useFactory } from "src/utils/factory-context";
-import { useCameraStreams } from "src/hooks/use-camera-streams";
 
-const LiteplacerControls = ({ goto, position, gotoPosition }) => {
-  // const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
-  // const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
+const LiteplacerControls = ({ goto, position, gotoPosition, setGotoPosition }) => {
   const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 45 });
   const [speed, setSpeed] = useState(3000);
-  // const { videoRefs } = useCameraStreams();
 
   // --- RESET (Ctrl+X Soft Reset, RED BUTTON) ---
   const reset = async () => {
@@ -54,7 +48,7 @@ const LiteplacerControls = ({ goto, position, gotoPosition }) => {
       const res = await fetch("/api/liteplacer/set_position", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(position),
+        body: JSON.stringify(gotoPosition),
       });
       console.log("Set position response:", await res.json());
     } catch (err) {

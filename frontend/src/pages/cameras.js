@@ -17,71 +17,31 @@ import CameraDashboard from 'src/sections/cameras/camera-layout';
 
 const Page = () => (
   <>
-    <Head>
+    {/* <Head>
       <title>
         Cameras
       </title>
-    </Head>
-    <Box
+    </Head> */}
+    {/* <Box
       component="main"
       sx={{
         flexGrow: 1,
         py: 8
       }}
-    >
-      <Container maxWidth="xl">
-        <Stack spacing={3}>
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            spacing={4}
-          >
-            <Stack spacing={1}>
-              <Typography variant="h4">
-                Cameras
-              </Typography>
-              <Stack
-                alignItems="center"
-                direction="row"
-                spacing={1}
-              >
-                <Button
-                  color="inherit"
-                  startIcon={(
-                    <SvgIcon fontSize="small">
-                      <ArrowUpOnSquareIcon />
-                    </SvgIcon>
-                  )}
-                >
-                  Import
-                </Button>
-                <Button
-                  color="inherit"
-                  startIcon={(
-                    <SvgIcon fontSize="small">
-                      <ArrowDownOnSquareIcon />
-                    </SvgIcon>
-                  )}
-                >
-                  Export
-                </Button>
-              </Stack>
-            </Stack>
-          </Stack>
-
-          <Box
+    > */}
+      {/* <Container maxWidth="xl"> */}
+        {/* <Stack spacing={1}> */}
+          {/* <Box
             sx={{
               display: 'flex',
               justifyContent: 'center'
             }}
-          >
-
+          > */}
             <CameraDashboard />
-
-          </Box>
-        </Stack>
-      </Container>
-    </Box>
+          {/* </Box> */}
+        {/* </Stack> */}
+      {/* </Container> */}
+    {/* </Box> */}
   </>
 );
 

@@ -28,20 +28,15 @@ def send_cmd(cmd: str):
     arduino.write((cmd + "\n").encode())
     time.sleep(0.05)
 
-@router.post("/lock")
-def lock():
-    send_cmd("OFF")
-    return {"status": "locked"}
+
+class UnlockRequest(BaseModel):
+    time_s: float  # seconds to unlock
+
 
 @router.post("/unlock")
-def unlock():
+def unlock(req: UnlockRequest):
     send_cmd("ON")
-    return {"status": "unlocked"}
-
-@router.post("/unlock_2s")
-def unlock_2s():
-    send_cmd("ON")
-    time.sleep(2)
+    time.sleep(req.time_s)
     send_cmd("OFF")
     time.sleep(1)
-    return {"status": "unlocked_2s"}
+    return {"status": "completed"}

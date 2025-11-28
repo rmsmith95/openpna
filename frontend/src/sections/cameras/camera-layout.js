@@ -3,34 +3,34 @@
 import { useState, useRef, useEffect } from "react";
 import {
   Box,
-  Grid,
-  Paper,
   Container,
+  Tabs,
+  Tab,
+  Typography,
+  Checkbox,
   FormGroup,
   FormControlLabel,
-  Checkbox,
-  Typography
+  Paper,
 } from "@mui/material";
 import CameraModel from "./camera-model";
 
-// Hardcoded camera metadata
 const CAMERA_METADATA = [
   { label: "USB 2.0 PC Cam (5149:13d3)", name: "Board", location: "0,0,0", direction: "Facing Up" },
   { label: "USB 2.0 PC Cam (5149:13d3)", name: "LitePlacer", location: "End", direction: "Facing Down" },
-  { label: "Digital Model", name: "Digital Model", location: "Liteplacer", direction: "Top View" }
+  { label: "Digital Model", name: "Digital Model", location: "Liteplacer", direction: "Top View" },
 ];
 
 export default function CameraDashboard() {
   const [devices, setDevices] = useState([]);
   const [selectedCameras, setSelectedCameras] = useState({});
+  const [selectedTab, setSelectedTab] = useState(0);
   const [machines, setMachines] = useState({});
   const [parts, setParts] = useState({});
   const [workspace, setWorkspace] = useState({ width: 600, height: 400 });
 
   const videoRefs = useRef({});
-  const canvasRefs = useRef({});
 
-  // 🧠 Fetch parts & machines from backend
+  // Load machines & parts
   useEffect(() => {
     async function loadBackendData() {
       try {
@@ -38,17 +38,11 @@ export default function CameraDashboard() {
           fetch("/api/get_machines"),
           fetch("/api/get_parts"),
         ]);
-
         const machinesData = await machinesRes.json();
         const partsData = await partsRes.json();
-
-        console.log("Loaded machines:", machinesData);
-        console.log("Loaded parts:", partsData);
-
         setMachines(machinesData);
         setParts(partsData);
 
-        // derive workspace from first machine (if any)
         const firstMachine = Object.values(machinesData)[0];
         if (firstMachine?.workingArea) {
           setWorkspace({
@@ -57,13 +51,13 @@ export default function CameraDashboard() {
           });
         }
       } catch (err) {
-        console.error("Error loading backend data:", err);
+        console.error(err);
       }
     }
     loadBackendData();
   }, []);
 
-  // 🎥 Load real camera devices
+  // Load video devices
   useEffect(() => {
     async function loadDevices() {
       try {
@@ -73,26 +67,23 @@ export default function CameraDashboard() {
         const allDevices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = allDevices.filter((d) => d.kind === "videoinput");
 
-        // Add virtual "Digital Model" camera
         const digitalModel = { deviceId: "DigitalModel", label: "Digital Model" };
         const devicesWithFake = [...videoDevices, digitalModel];
 
         setDevices(devicesWithFake);
 
-        // Initialize selection map
+        // initialize selection
         const selected = {};
-        devicesWithFake.forEach((d) => {
-          selected[d.deviceId] = false;
-        });
+        devicesWithFake.forEach((d) => (selected[d.deviceId] = true)); // show all by default
         setSelectedCameras(selected);
       } catch (err) {
-        console.error("Error accessing cameras:", err);
+        console.error(err);
       }
     }
     loadDevices();
   }, []);
 
-  // Start/stop real camera streams
+  // Start / stop real cameras
   useEffect(() => {
     Object.keys(selectedCameras).forEach((deviceId) => {
       if (deviceId === "DigitalModel") return;
@@ -111,102 +102,81 @@ export default function CameraDashboard() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { deviceId: { exact: deviceId } },
       });
-      if (videoRefs.current[deviceId]) {
-        videoRefs.current[deviceId].srcObject = stream;
-      }
+      if (videoRefs.current[deviceId]) videoRefs.current[deviceId].srcObject = stream;
     } catch (err) {
-      console.error("Error starting camera:", err);
+      console.error(err);
     }
   }
 
-  const handleToggleCamera = (deviceId) => {
-    setSelectedCameras((prev) => ({ ...prev, [deviceId]: !prev[deviceId] }));
-  };
-
   return (
-    <Container maxWidth="lg" sx={{ mt: 5 }}>
-      {/* ✅ Camera selection checkboxes */}
-      <FormGroup row sx={{ mb: 3 }}>
-        {devices.map((device) => {
-          const sameLabelCount =
-            devices.filter((d) => d.label === device.label && d.deviceId <= device.deviceId).length - 1;
-
-          const meta = CAMERA_METADATA.filter((m) => m.label === device.label)[sameLabelCount];
-          return (
-            <FormControlLabel
-              key={device.deviceId}
-              control={
-                <Checkbox
-                  checked={selectedCameras[device.deviceId] || false}
-                  onChange={() => handleToggleCamera(device.deviceId)}
-                />
-              }
-              label={meta?.name || device.label || `Camera`}
-            />
-          );
+    <Box
+      sx={{
+        mt: 0,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        width: "100%",
+      }}
+    >
+      <Tabs
+        value={selectedTab}
+        onChange={(_, newVal) => setSelectedTab(newVal)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ mb: 0 }}
+      >
+        {devices.filter(d => selectedCameras[d.deviceId]).map((device, idx) => {
+          const meta = CAMERA_METADATA.find(m => m.label === device.label) || { name: device.label };
+          return <Tab key={device.deviceId} label={meta.name} />;
         })}
-      </FormGroup>
+      </Tabs>
 
-      {/* ✅ Camera / Digital Model grid */}
-      <Grid container spacing={3}>
-        {devices
-          .filter((d) => selectedCameras[d.deviceId])
-          .map((device) => {
-            const sameLabelCount =
-              devices.filter((dd) => dd.label === device.label && dd.deviceId <= device.deviceId).length - 1;
-            const meta = CAMERA_METADATA.filter((m) => m.label === device.label)[sameLabelCount];
-
-            return (
-              <Grid item xs={12} md={6} key={device.deviceId}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    position: "relative",
-                    borderRadius: 2,
-                    height: 360,
-                    backgroundColor: "black",
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* 🎨 If DigitalModel, draw parts */}
-                  {device.deviceId === "DigitalModel" ? (
-                    <CameraModel
-                      active={selectedCameras["DigitalModel"]}
-                      parts={parts}
-                      workspace={workspace}
-                    />
-                  ) : (
-                    <video
-                      ref={(el) => (videoRefs.current[device.deviceId] = el)}
-                      autoPlay
-                      playsInline
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                  )}
-
-                  {/* Overlay metadata */}
-                  {meta && (
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        bgcolor: "rgba(0,0,0,0.5)",
-                        color: "white",
-                        p: 1,
-                      }}
-                    >
-                      <Typography variant="subtitle2">
-                        {meta.name} | {meta.location} | {meta.direction}
-                      </Typography>
-                    </Box>
-                  )}
-                </Paper>
-              </Grid>
-            );
-          })}
-      </Grid>
-    </Container>
+      {/* Camera Panels */}
+      {devices.filter(d => selectedCameras[d.deviceId]).map((device, idx) => {
+        const meta = CAMERA_METADATA.find(m => m.label === device.label) || { name: device.label };
+        return (
+          <Box
+            key={device.deviceId}
+            sx={{
+          display: selectedTab === idx ? "block" : "none",
+          maxHeight: "100vh",
+          maxWidth: "100vw",
+          width: "95vw",
+          mx: "auto",
+          position: "relative",
+          bgcolor: "black",
+          overflow: "hidden",
+            }}
+          >
+            {device.deviceId === "DigitalModel" ? (
+              <CameraModel active parts={parts} workspace={workspace} />
+            ) : (
+              <video
+                ref={el => (videoRefs.current[device.deviceId] = el)}
+                autoPlay
+                playsInline
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            )}
+            {/* Overlay metadata */}
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                bgcolor: "rgba(0,0,0,0.5)",
+                color: "white",
+                p: 1,
+              }}
+            >
+              <Typography variant="subtitle2">
+                {meta.name} | {meta.location} | {meta.direction}
+              </Typography>
+            </Box>
+          </Box>
+        );
+      })}
+    </Box>
   );
 }

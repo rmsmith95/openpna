@@ -63,7 +63,7 @@ const LiteplacerActions = ({
         break;
 
       case "Unlock":
-        handleUnlockToolChanger?.();
+        handleUnlockToolChanger?.(5);
         break;
 
       default:
@@ -162,13 +162,6 @@ const LiteplacerActions = ({
                           updateRow(index, "time", Number(e.target.value))
                         }
                       />
-                    </TableCell>
-                  )}
-
-                  {/* Unlock – no fields */}
-                  {row.change === "Unlock" && (
-                    <TableCell sx={{ opacity: 0.5, minWidth: 120 }}>
-                      <em>No options</em>
                     </TableCell>
                   )}
 

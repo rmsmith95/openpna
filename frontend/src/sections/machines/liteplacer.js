@@ -59,7 +59,7 @@ export const Liteplacer = (props) => {
     }
   };
 
-    // Poll gantry info
+  // Poll gantry info
   useEffect(() => {
     const getInfo = async () => {
       try {
@@ -108,19 +108,11 @@ export const Liteplacer = (props) => {
     }
   };
 
-  async function handleLockToolChanger() {
-    await fetch("/api/tool_changer/lock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-  }
-
-  async function handleUnlockToolChanger() {
+  async function handleUnlockToolChanger(time_s) {
     await fetch("/api/tool_changer/unlock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
+      body: JSON.stringify({time_s}),
     });
   }
 
@@ -137,21 +129,21 @@ export const Liteplacer = (props) => {
     }
   };
 
-    // --- Send open/close commands ---
+  // --- Send open/close commands ---
   async function stepOpenGripper(time = 1, speed) {
-      await fetch("/api/gripper/open", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ time, speed }),
-      });
+    await fetch("/api/gripper/open", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ time, speed }),
+    });
   }
 
   async function stepCloseGripper(time = 1, speed) {
-      await fetch("/api/gripper/close", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ time, speed }),
-      });
+    await fetch("/api/gripper/close", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ time, speed }),
+    });
   }
 
   return (
@@ -177,7 +169,7 @@ export const Liteplacer = (props) => {
               </Stack>
             } />
             <Tab label="Step" />
-            <Tab label="Goto" />
+            <Tab label="Actions" />
             <Tab
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
@@ -195,20 +187,17 @@ export const Liteplacer = (props) => {
               }
             />
             <Box
-  sx={{
-    // border: "1px solid #ccc",
-    borderRadius: 2,
-    width: 220,
-    textAlign: "center",      // centers text horizontally
-    // pl: 1,                     // left padding (~8px, close to 10px)
-    // pr: 1,                     // optional right padding
-    py: 1.5                      // optional vertical padding
-  }}
->
-  <Typography variant="h6">
-    P: {position.x} {position.y} {position.z} {position.a}
-  </Typography>
-</Box>
+              sx={{
+                borderRadius: 2,
+                width: 220,
+                textAlign: "center",
+                py: 1.5
+              }}
+            >
+              <Typography variant="h6">
+                P: {position.x} {position.y} {position.z} {position.a}
+              </Typography>
+            </Box>
 
           </Tabs>
         </Box>
@@ -239,10 +228,7 @@ export const Liteplacer = (props) => {
                 // disabled={connectedLitePlacer}
                 >Connect
                 </Button>
-                <Button variant="contained" onClick={handleLockToolChanger}>
-                  Lock
-                </Button>
-                <Button variant="contained" onClick={handleUnlockToolChanger}>
+                <Button variant="contained" onClick={() => handleUnlockToolChanger(5)}>
                   Unlock
                 </Button>
               </Stack>
@@ -274,6 +260,7 @@ export const Liteplacer = (props) => {
               position={position}
               goto={goto}
               gotoPosition={gotoPosition}
+              setGotoPosition={setGotoPosition}
             />
           )}
 

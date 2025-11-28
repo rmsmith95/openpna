@@ -1,23 +1,28 @@
-export default async function lockTool() {
+// pages/api/tool_changer/unlock.js
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ status: "method not allowed" });
+  }
+
+  const { time_s } = req.body;
+
   try {
-    const res = await fetch("http://127.0.0.1:8000/tool_changer/unlock_2s", {
+    const response = await fetch("http://127.0.0.1:8000/tool_changer/unlock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({})
+      body: JSON.stringify({ time_s }),
     });
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Backend error:", text);
-      alert("Failed: " + text);
-      return;
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Backend error:", data);
+      return res.status(response.status).json(data);
     }
 
-    const data = await res.json();
-    console.log("Unlock response:", data);
-    alert("Unlocked!");
+    res.status(200).json(data);
   } catch (err) {
-    console.error("Error calling lock API:", err);
-    alert("Error: " + err.message);
+    console.error("Error forwarding to FastAPI:", err);
+    res.status(500).json({ status: "error", message: err.message });
   }
 }

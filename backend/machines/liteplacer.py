@@ -106,10 +106,16 @@ def tinyg_home_all():
     return tinyg_send("$H")
 
 
+class SetPositionRequest(BaseModel):
+    x: float
+    y: float
+    z: float
+    a: float
+
 @router.post("/set_position")
-def set_position(x: float = 0, y: float = 0, z: float = 0, a: float = 0):
+def set_position(req: SetPositionRequest):
     """Set current position (G92)."""
-    gcode = f"G92 X{x} Y{y} Z{z} A{a}"
+    gcode = f"G92 X{req.x} Y{req.y} Z{req.z} A{req.a}"
     if not connection or not connection.is_open:
         return sim(gcode)
     try:

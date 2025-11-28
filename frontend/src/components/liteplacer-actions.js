@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import { TrashIcon } from '@heroicons/react/24/solid';
 
+
 const LiteplacerActions = ({
   connected,
   goto,
@@ -26,9 +27,41 @@ const LiteplacerActions = ({
   handleUnlockToolChanger,
 }) => {
   const [rows, setRows] = useState([
-    { change: "Goto", name: "Home", x: "0", y: "0", z: "0", time: "0" },
-    { change: "Goto", name: "Point A", x: "10", y: "5", z: "2", time: "0" },
   ]);
+
+  const saveToFile = () => {
+    const json = JSON.stringify(rows, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "liteplacer-actions.json";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  };
+
+  const loadFromFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (Array.isArray(data)) {
+          setRows(data);
+        } else {
+          alert("Invalid JSON format");
+        }
+      } catch (err) {
+        alert("Failed to read JSON file");
+      }
+    };
+
+    reader.readAsText(file);
+  };
 
   const updateRow = (index, key, value) => {
     const updated = [...rows];
@@ -51,7 +84,7 @@ const LiteplacerActions = ({
   const runAction = (row) => {
     switch (row.change) {
       case "Goto":
-        goto?.({ x: Number(row.x), y: Number(row.y), z: Number(row.z), a: Number(row.a) ?? 0 }, 2000);
+        goto?.({ x: row.x, y: row.y, z: row.z, a: row.a ?? 0 }, 2000);
         break;
 
       case "Open":
@@ -73,6 +106,21 @@ const LiteplacerActions = ({
 
   return (
     <Stack spacing={2} alignItems="flex-start">
+      <Stack direction="row" spacing={2}>
+        <Button variant="contained" onClick={saveToFile}>
+          Download Actions
+        </Button>
+
+        <Button variant="outlined" component="label">
+          Load Actions
+          <input
+            type="file"
+            accept=".json"
+            hidden
+            onChange={loadFromFile}
+          />
+        </Button>
+      </Stack>
       <Stack direction="row" spacing={2} alignItems="center">
         <TableContainer component={Paper} sx={{ minWidth: 700 }}>
           <Table size="small">
@@ -119,7 +167,7 @@ const LiteplacerActions = ({
                           value={row.x}
                           size="small"
                           onChange={(e) =>
-                            updateRow(index, "x", e.target.value)
+                            updateRow(index, "x", Number(e.target.value))
                           }
                         />
                       </TableCell>

@@ -26,8 +26,8 @@ const LiteplacerActions = ({
   handleUnlockToolChanger,
 }) => {
   const [rows, setRows] = useState([
-    { change: "Goto", name: "Home", x: 0, y: 0, z: 0, time: 0 },
-    { change: "Goto", name: "Point A", x: 10, y: 5, z: 2, time: 0 },
+    { change: "Goto", name: "Home", x: "0", y: "0", z: "0", time: "0" },
+    { change: "Goto", name: "Point A", x: "10", y: "5", z: "2", time: "0" },
   ]);
 
   const updateRow = (index, key, value) => {
@@ -51,7 +51,7 @@ const LiteplacerActions = ({
   const runAction = (row) => {
     switch (row.change) {
       case "Goto":
-        goto?.({ x: row.x, y: row.y, z: row.z, a: row.a ?? 0 }, 2000);
+        goto?.({ x: Number(row.x), y: Number(row.y), z: Number(row.z), a: Number(row.a) ?? 0 }, 2000);
         break;
 
       case "Open":
@@ -119,7 +119,7 @@ const LiteplacerActions = ({
                           value={row.x}
                           size="small"
                           onChange={(e) =>
-                            updateRow(index, "x", Number(e.target.value))
+                            updateRow(index, "x", e.target.value)
                           }
                         />
                       </TableCell>

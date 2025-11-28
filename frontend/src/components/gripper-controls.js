@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { ArrowsPointingInIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/solid'
 
-export default function GripperControls({ connected }) {
+export default function GripperControls({ connected, stepOpenGripper, stepCloseGripper }) {
     const [port, setPort] = useState('COM4');
     const [servoId, setServoId] = useState(1);
 
@@ -48,23 +48,6 @@ export default function GripperControls({ connected }) {
 
         return () => clearInterval(interval);
     }, []);
-
-    // --- Send open/close commands ---
-    async function stepOpenGripper(time = 1, speed = status.speed_set || 100) {
-        await fetch("/api/gripper/open", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ time, speed }),
-        });
-    }
-
-    async function stepCloseGripper(time = 1, speed = status.speed_set || 100) {
-        await fetch("/api/gripper/close", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ time, speed }),
-        });
-    }
 
     async function speedUp () {
         await fetch("/api/gripper/speed_up", {

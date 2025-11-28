@@ -4,8 +4,8 @@ import { Box, Button, CircularProgress, Container, Stack, SvgIcon, Typography } 
 import ArrowDownOnSquareIcon from "@heroicons/react/24/solid/ArrowDownOnSquareIcon";
 import ArrowUpOnSquareIcon from "@heroicons/react/24/solid/ArrowUpOnSquareIcon";
 import { Layout as DashboardLayout } from "src/layouts/dashboard/layout";
-import { Gantry } from "src/sections/machines/gantry";
-import { Arm6DOF } from "src/sections/machines/arm6dof";
+import { Liteplacer } from "src/sections/machines/liteplacer";
+import { Cobot280 } from "src/sections/machines/cobot280";
 import CollapsibleCard from "src/components/collapsible-card";
 
 const Page = () => {
@@ -50,11 +50,11 @@ const Page = () => {
 
             <Stack spacing={2}>
               <CollapsibleCard title="LitePlacer1" color="secondary.main">
-                <Gantry difference={12} positive sx={{ height: "100%" }} value="LitePlacer1" />
+                <Liteplacer difference={12} positive sx={{ height: "100%" }} value="LitePlacer1" />
               </CollapsibleCard>
 
               <CollapsibleCard title="MyCobot1" color="success.main">
-                <Arm6DOF difference={12} positive sx={{ height: "100%" }} value="MyCobot1" />
+                <Cobot280 difference={12} positive sx={{ height: "100%" }} value="MyCobot1" />
               </CollapsibleCard>
             </Stack>
           </Stack>

@@ -19,10 +19,11 @@ import {
 } from '@mui/material';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
-import GantryControls from './gantry-controls';
+import LiteplacerControls from '../../components/liteplacer-controls';
+import LiteplacerActions from '../../components/liteplacer-actions';
 import GripperControls from '../../components/gripper-controls';
 
-export const Gantry = (props) => {
+export const Liteplacer = (props) => {
   const { difference, positive = false, sx, value } = props;
   const [tab, setTab] = useState(0);
 
@@ -39,7 +40,7 @@ export const Gantry = (props) => {
   const handleChange = (event, newValue) => setTab(newValue);
   const handleConnectTinyG = async () => {
     try {
-      const res = await fetch("/api/gantry/connect", {
+      const res = await fetch("/api/liteplacer/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ PORT: tinyGPort, BAUD: tinyGBaud }),
@@ -71,19 +72,49 @@ export const Gantry = (props) => {
   };
 
   async function handleLockToolChanger() {
-      await fetch("/api/tool_changer/lock", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ }),
-      });
+    await fetch("/api/tool_changer/lock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
   }
 
   async function handleUnlockToolChanger() {
     await fetch("/api/tool_changer/unlock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+  }
+
+  const goto = async () => {
+    try {
+      const res = await fetch("/api/gantry/goto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ }),
-    });
+        body: JSON.stringify({ ...gotoPosition, speed }),
+      });
+      console.log("GoTo response:", await res.json());
+    } catch (err) {
+      console.error("GoTo error:", err);
+    }
+  };
+
+    // --- Send open/close commands ---
+  async function stepOpenGripper(time = 1, speed) {
+      await fetch("/api/gripper/open", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ time, speed }),
+      });
+  }
+
+  async function stepCloseGripper(time = 1, speed) {
+      await fetch("/api/gripper/close", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ time, speed }),
+      });
   }
 
   return (
@@ -108,7 +139,8 @@ export const Gantry = (props) => {
                 )}
               </Stack>
             } />
-            <Tab label="Axis" />
+            <Tab label="Step" />
+            <Tab label="Goto" />
             <Tab
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
@@ -137,10 +169,10 @@ export const Gantry = (props) => {
                 TinyG
                 <TextField label="Port" value={tinyGPort} onChange={(e) => setTinyGPort(e.target.value)} />
                 <TextField label="Baud Rate" type="number" value={tinyGBaud} onChange={(e) => setTinyGBaud(Number(e.target.value))} />
-                <Button variant="contained" color="success" 
-                  onClick={handleConnectTinyG} 
-                  // disabled={connectedLitePlacer}
-                  >Connect
+                <Button variant="contained" color="success"
+                  onClick={handleConnectTinyG}
+                // disabled={connectedLitePlacer}
+                >Connect
                 </Button>
               </Stack>
 
@@ -149,10 +181,10 @@ export const Gantry = (props) => {
                 Arduino
                 <TextField label="Port" value={arduinoPort} onChange={(e) => setArduinoPort(e.target.value)} />
                 <TextField label="Baud Rate" type="number" value={arduinoBaud} onChange={(e) => setArduinoBaud(Number(e.target.value))} />
-                <Button variant="contained" color="success" 
-                  onClick={handleConnectArduino} 
-                  // disabled={connectedLitePlacer}
-                  >Connect
+                <Button variant="contained" color="success"
+                  onClick={handleConnectArduino}
+                // disabled={connectedLitePlacer}
+                >Connect
                 </Button>
                 <Button variant="contained" onClick={handleLockToolChanger}>
                   Lock
@@ -185,12 +217,23 @@ export const Gantry = (props) => {
           )}
 
           {tab === 1 && (
-            <GantryControls
+            <LiteplacerControls
               connectedLitePlacer={connectedTinyG}
+              goto={goto}
             />
           )}
 
           {tab === 2 && (
+            <LiteplacerActions
+              connectedLitePlacer={connectedTinyG}
+              openGripper={stepOpenGripper}
+              closeGripper={stepCloseGripper}
+              handleUnlockToolChanger={handleUnlockToolChanger}
+              goto={goto}
+            />
+          )}
+
+          {tab === 3 && (
             <GripperControls
               connected={connectedLitePlacerGripper}
             />
@@ -201,7 +244,7 @@ export const Gantry = (props) => {
   );
 };
 
-Gantry.propTypes = {
+Liteplacer.propTypes = {
   difference: PropTypes.number,
   positive: PropTypes.bool,
   sx: PropTypes.object,

@@ -20,7 +20,7 @@ import CameraModel from "src/sections/cameras/camera-model";
 import { useFactory } from "src/utils/factory-context";
 import { useCameraStreams } from "src/hooks/use-camera-streams";
 
-const GantryControls = ({ connectedLitePlacer }) => {
+const LiteplacerControls = ({ connectedLitePlacer, goto }) => {
   const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 45 });
@@ -30,7 +30,7 @@ const GantryControls = ({ connectedLitePlacer }) => {
   const { setGantryPosition } = useFactory();
   const { videoRefs } = useCameraStreams();
 
-  // Poll gantry info regularly
+  // Poll gantry info
   useEffect(() => {
     const getInfo = async () => {
       try {
@@ -59,20 +59,6 @@ const GantryControls = ({ connectedLitePlacer }) => {
     const interval = setInterval(getInfo, 1000);
     return () => clearInterval(interval);
   }, [setGantryPosition]);
-
-  // Movement helpers
-  const goto = async () => {
-    try {
-      const res = await fetch("/api/gantry/goto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...gotoPosition, speed }),
-      });
-      console.log("GoTo response:", await res.json());
-    } catch (err) {
-      console.error("GoTo error:", err);
-    }
-  };
 
   const reset = async () => {
     try {
@@ -115,10 +101,11 @@ const GantryControls = ({ connectedLitePlacer }) => {
   const handleCameraTabChange = (_, newVal) => setCameraTab(newVal);
 
   return (
-    <Stack direction="row" spacing={4} alignItems="flex-start">
-      {/* --- Axis Control Table --- */}
-      <Box sx={{ width: "50%", minWidth: 380 }}>
-        <Table size="small">
+    <Stack direction="row" spacing={4} alignItems="flex-start" sx={{ width: "100%" }}>
+      
+      {/* --- Full Width Table --- */}
+      <Box sx={{ width: "100%" }}>
+        <Table size="small" sx={{ width: "100%" }}>
           <TableHead>
             <TableRow>
               <TableCell align="center">Axis</TableCell>
@@ -144,7 +131,7 @@ const GantryControls = ({ connectedLitePlacer }) => {
                   {position[axis].toFixed(2)}
                 </TableCell>
 
-                <TableCell sx={{ width: 70, p: 0.5 }} align="center">
+                <TableCell sx={{ width: 80, p: 0.5 }} align="center">
                   <TextField
                     value={gotoPosition[axis]}
                     onChange={(e) => {
@@ -152,7 +139,7 @@ const GantryControls = ({ connectedLitePlacer }) => {
                       setGotoPosition({ ...gotoPosition, [axis]: isNaN(val) ? "" : val });
                     }}
                     size="small"
-                    sx={{ width: 70, "& .MuiInputBase-input": { p: "4px 6px", fontSize: 12 } }}
+                    sx={{ width: 80, "& .MuiInputBase-input": { p: "4px 6px", fontSize: 12 } }}
                     type="number"
                     inputProps={{ step: "any" }}
                   />
@@ -189,73 +176,49 @@ const GantryControls = ({ connectedLitePlacer }) => {
           </TableBody>
         </Table>
 
-        {/* --- Bottom Controls --- */}
-        <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2 }} alignItems="center">
+        {/* --- Centered Bottom Controls --- */}
+        <Stack
+          direction="row"
+          spacing={3}
+          justifyContent="center"
+          alignItems="center"
+          sx={{ mt: 3 }}
+          flexWrap="wrap"
+        >
           <Button variant="contained" onClick={goto}>GoTo</Button>
           <Button variant="contained" onClick={setCurrentPosition}>Set</Button>
           <Button variant="contained" onClick={reset}>Reset</Button>
-          <Typography sx={{ ml: 1 }}>Speed</Typography>
-          <TextField
-            value={speed}
-            onChange={(e) => {
-              const val = e.target.value;
-              setSpeed(val === "" ? 0 : parseFloat(val));
-            }}
-            size="small"
-            sx={{ width: 90 }}
-          />
+
+          {/* Speed Group */}
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography sx={{ fontWeight: 500 }}>Speed:</Typography>
+            <TextField
+              value={speed}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSpeed(val === "" ? 0 : parseFloat(val));
+              }}
+              size="small"
+              sx={{
+                width: 100,
+                "& .MuiInputBase-input": {
+                  textAlign: "center",
+                  p: "6px 8px",
+                  fontSize: 14,
+                },
+              }}
+              type="number"
+              inputProps={{ min: 0 }}
+            />
+          </Stack>
         </Stack>
-      </Box>
-
-      {/* --- Camera / Model Tabs --- */}
-      <Box sx={{ flex: 1, minWidth: 420 }}>
-        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Tabs value={cameraTab} onChange={handleCameraTabChange}>
-            <Tab label="LitePlacer Down" />
-            <Tab label="Board Up" />
-            <Tab label="Digital Model" />
-          </Tabs>
-        </Box>
-
-        <Box sx={{ mt: 2, position: "relative", borderRadius: 0 }}>
-          <video
-            ref={(el) => (videoRefs.current["liteplacer"] = el)}
-            autoPlay
-            playsInline
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: cameraTab === 0 ? "block" : "none",
-              borderRadius: 0,
-            }}
-          />
-          <video
-            ref={(el) => (videoRefs.current["board"] = el)}
-            autoPlay
-            playsInline
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: cameraTab === 1 ? "block" : "none",
-              borderRadius: 0,
-            }}
-          />
-
-          {cameraTab === 2 && (
-            <Box sx={{ bgcolor: "#111", overflow: "hidden", borderRadius: 0 }}>
-              <CameraModel active />
-            </Box>
-          )}
-        </Box>
       </Box>
     </Stack>
   );
 };
 
-GantryControls.propTypes = {
+LiteplacerControls.propTypes = {
   connectedLitePlacer: PropTypes.bool,
 };
 
-export default GantryControls;
+export default LiteplacerControls;

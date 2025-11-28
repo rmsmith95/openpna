@@ -9,13 +9,9 @@ import ArrowRightIcon from '@heroicons/react/24/solid/ArrowRightIcon';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 
-export const Arm6DOF = (props) => {
+export const Cobot280 = (props) => {
   const { sx, value } = props;
   const [tab, setTab] = useState(0);
-
-  // Connection states
-  // const [connectedCobot280, setConnectedCobot280] = useState(false);
-  // const [connectedCobot280Gripper, setConnectedCobot280Gripper] = useState(false);
 
   const [connectionType, setConnectionType] = useState("serial");
   const [port, setPort] = useState("COM4");
@@ -29,40 +25,11 @@ export const Arm6DOF = (props) => {
 
   const handleConnectCobot280 = async () => {
     fetchPositions()
-    // try {
-    //   let res;
-
-    //   if (connectionType === "serial") {
-    //     res = await fetch("/api/arm6dof/connect_serial", {
-    //       method: "POST",
-    //       headers: { "Content-Type": "application/json" },
-    //       body: JSON.stringify({ port, baud }),
-    //     });
-    //   } else {
-    //     res = await fetch("/api/arm6dof/connect_network", {
-    //       method: "POST",
-    //       headers: { "Content-Type": "application/json" },
-    //       body: JSON.stringify({ ip: ipAddress }),
-    //     });
-    //   }
-
-    //   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    //   const data = await res.json();
-    //   setConnectedCobot280(data.status === "connected");
-
-    //   // fetch positions once after connecting
-    //   if (data.status === "connected") {
-    //     fetchPositions();
-    //   }
-    // } catch (err) {
-    //   console.error("Cobot280 connect failed:", err);
-    //   setConnectedCobot280(false);
-    // }
   };
 
   const fetchPositions = async () => {
     try {
-      const res = await fetch("/api/arm6dof/get_position", {
+      const res = await fetch("/api/cobot280/get_position", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ipAddress: ipAddress }),
@@ -84,7 +51,7 @@ export const Arm6DOF = (props) => {
     newAngles[jointIndex] += deltaValue;
 
     try {
-      const response = await fetch("/api/arm6dof/set_angles", {
+      const response = await fetch("/api/cobot280/set_angles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -309,7 +276,7 @@ export const Arm6DOF = (props) => {
   );
 };
 
-Arm6DOF.propTypes = {
+Cobot280.propTypes = {
   difference: PropTypes.number,
   positive: PropTypes.bool,
   sx: PropTypes.object,

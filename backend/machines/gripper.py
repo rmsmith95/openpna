@@ -1,26 +1,58 @@
-import time
 from fastapi import APIRouter
+from fastapi import Request
 import requests
 import threading
+import logging
+import time
 
 
 # --- CONFIG ---
-PORT = "COM4"          # Change to your Arduino’s serial port
 router = APIRouter()
 
 
 class ST3020Servo:
-    """
-    requests.get("http://192.168.4.1/cmd",params={"arg0": 1, "arg1": 2, "arg2": 0, "arg3": 0}, timeout=2) 
-    r=requests.get("http://192.168.4.1/readSTS")
-    r.raise_for_status()
-    r.text
+    """ arg2 = 1, 2, 7, 8
+requests.get("http://192.168.4.1/cmd",params={"arg0": 1, "arg1": 2, "arg2": 0, "arg3": 0}, timeout=2) 
+r=requests.get("http://192.168.4.1/readSTS")
+# r.raise_for_status()
+r.text
     """
     def __init__(self, ssid="ESP32_DEV", password="12345678", ip="192.168.4.1"):
         self.ssid = ssid
         self.password = password
         self.ip = ip
         self.status	= {}
+
+    def connect(self, servo_index=1, mode="motor", retries=2, delay=1.0):
+        """
+        Connect to the servo, select ID and set mode.
+        Retries if it fails.
+        Returns True if successful, False otherwise.
+        """
+        for attempt in range(1, retries + 1):
+            try:
+                print(f"Attempt {attempt} to connect to servo...")
+                self.select_id(servo_index)
+                time.sleep(0.2)
+
+                self.set_mode(mode)
+                time.sleep(0.2)
+
+                status = self.get_status()
+                logging.warning(f"status:{status}")
+                current_mode = status.get("mode", "").strip().lower()
+                if current_mode == mode.lower():
+                    print(f"Servo connected. Mode: {current_mode}")
+                    return True
+                else:
+                    print(f"Mode not set yet: {current_mode}")
+            except Exception as e:
+                print("Connect attempt error:", e)
+
+            time.sleep(delay)
+
+        print("Failed to connect to servo after retries.")
+        return False
 
     def send_command(self, cmd_type, cmd_value, extra1=0, extra2=0):
         """Send a command to the ESP32 via HTTP GET."""
@@ -32,7 +64,7 @@ class ST3020Servo:
             "arg3": extra2
         }
         try:
-            r = requests.get(url, params=params, timeout=2)
+            r = requests.get(url, params=params, timeout=5)
             r.raise_for_status()
             return r.text
         except requests.RequestException as e:
@@ -65,28 +97,32 @@ class ST3020Servo:
         # while speed != target_speed:
         self.send_command(1, case)
         time.sleep(0.1)
-        # speed += 100 if case == 7 else -100
-        # clamp
-        # if (case == 7 and speed > target_speed) or (case == 8 and speed < target_speed):
-        #     speed = target_speed
 
     def get_status(self):
-        """Get current servo status from /readSTS"""
         url = f"http://{self.ip}/readSTS"
         try:
             r = requests.get(url, timeout=2)
-            r.raise_for_status()
-            self.status = r.text
-            return r.text
+            raw = r.text
+            parsed = parse_status(raw)
+            self.status = parsed
+            return parsed
         except requests.RequestException as e:
             print("Error reading status:", e)
-            return None
+            return {}
 
 
 # --- SETUP SERVO ---
 servo = ST3020Servo()
-servo.select_id(1)
-servo.set_mode("motor")
+
+
+@router.post("/connect")
+async def connect(req: Request):
+    """ Connect to the servo gripper """
+    body = await req.json()
+    servo_index = body.get("servo_index", 1)
+    success = servo.connect(servo_index=servo_index, mode='motor', retries=0, delay=1)
+    status = servo.get_status()
+    return {"connected": success, "status": status}
 
 
 @router.post("/set_speed")
@@ -184,7 +220,5 @@ def close_gripper(time_s: float = 2, speed: int = 1000):
 @router.get("/get_status")
 def get_status():
     """Return cleaned servo status as JSON"""
-    raw = servo.get_status()
-    if not raw:
-        return {}
-    return parse_status(raw)
+    status = servo.get_status()
+    return status

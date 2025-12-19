@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
     // Forward the command to FastAPI
     const response = await fetch(
-      "http://127.0.0.1:8000/ws_esp32_gripper/set_speed",
+      "http://127.0.0.1:8000/gripper/set_speed",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/liteplacer/get_info");
+    const response = await fetch("http://127.0.0.1:8000/tinyg/get_info");
     const text = await response.text(); // <- read as plain text
     // console.log("FastAPI response text:", text);
 

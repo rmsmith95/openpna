@@ -1,24 +1,24 @@
-// pages/api/tool_changer/unlock.js
+// pages/api/tool_changer/connect.js
 export default async function handler(req, res) {
+  console.log("Received request to /api/arduino/connect", req.body);
+
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
   }
 
-  const { time_s } = req.body;
+  const { port, baud } = req.body;
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/tool_changer/unlock", {
+    const response = await fetch("http://127.0.0.1:8000/arduino/connect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ time_s }),
+      body: JSON.stringify({ port, baud }),
     });
 
-    const data = await response.json();
+    console.log("FastAPI response status:", response.status);
 
-    if (!response.ok) {
-      console.error("Backend error:", data);
-      return res.status(response.status).json(data);
-    }
+    const data = await response.json();
+    console.log("FastAPI response body:", data);
 
     res.status(200).json(data);
   } catch (err) {

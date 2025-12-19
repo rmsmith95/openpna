@@ -3,10 +3,10 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from machines.liteplacer import router as liteplacer_router
+from machines.tinyg import router as tinyg_router
 from machines.cobot280 import router as cobot280_router
-from machines.ws_esp32_gripper import router as ws_esp32_gripper_router
-from machines.tool_changer import router as tool_changer_router
+from machines.gripper import router as gripper_router
+from machines.arduino import router as arduino_router
 from sections.factory import Factory
 from examples.factory1 import get_factory1
 
@@ -24,10 +24,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(liteplacer_router, prefix="/liteplacer")
+app.include_router(tinyg_router, prefix="/tinyg")
 app.include_router(cobot280_router, prefix="/cobot280")
-app.include_router(ws_esp32_gripper_router, prefix="/ws_esp32_gripper")
-app.include_router(tool_changer_router, prefix="/tool_changer")
+app.include_router(gripper_router, prefix="/gripper")
+app.include_router(arduino_router, prefix="/arduino")
 
 @app.get("/")
 def read_root():

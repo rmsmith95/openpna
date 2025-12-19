@@ -32,7 +32,7 @@ export const Liteplacer = (props) => {
   // Connection state
   const [connectedTinyG, setConnectedTinyG] = useState(false);
   const [connectedArduino, setConnectedArduino] = useState(false);
-  const [connectedLitePlacerGripper, setConnectedLitePlacerGripper] = useState(false);
+  const [connectedServoGripper, setConnectedServoGripper] = useState(false);
   const [tinyGPort, setTinyGPort] = useState('COM10');
   const [tinyGBaud, setTinyGBaud] = useState(115200);
   const [arduinoPort, setArduinoPort] = useState('COM3');
@@ -44,7 +44,7 @@ export const Liteplacer = (props) => {
   const handleChange = (event, newValue) => setTab(newValue);
   const handleConnectTinyG = async () => {
     try {
-      const res = await fetch("/api/liteplacer/connect", {
+      const res = await fetch("/api/tinyg/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ port: tinyGPort, baud: tinyGBaud }),
@@ -59,41 +59,27 @@ export const Liteplacer = (props) => {
     }
   };
 
-  // Poll gantry info
-  useEffect(() => {
-    const getInfo = async () => {
-      try {
-        const res = await fetch("/api/liteplacer/get_info");
-        const data = await res.json();
-        const positions = { x: 0, y: 0, z: 0, a: 0 };
-
-        if (Array.isArray(data.status)) {
-          data.status.forEach((item) => {
-            const raw = item.raw ?? JSON.stringify(item);
-            let m;
-            if ((m = raw.match(/X position:\s*([-0-9.]+)/))) positions.x = parseFloat(m[1]);
-            if ((m = raw.match(/Y position:\s*([-0-9.]+)/))) positions.y = parseFloat(m[1]);
-            if ((m = raw.match(/Z position:\s*([-0-9.]+)/))) positions.z = parseFloat(m[1]);
-            if ((m = raw.match(/A position:\s*([-0-9.]+)/))) positions.a = parseFloat(m[1]);
-          });
-        }
-
-        setPosition(positions);
-        setGantryPosition(positions);
-      } catch (err) {
-        console.error("Error getting gantry position:", err);
-      }
-    };
-
-    getInfo();
-    const interval = setInterval(getInfo, 1000);
-    return () => clearInterval(interval);
-  }, [setGantryPosition]);
-
-
-  const handleConnectArduino = async () => {
+  const handleConnectGripperServo = async () => {
     try {
-      const res = await fetch("/api/tool_changer/connect", {
+      const res = await fetch("/api/gripper/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ servo_id: 1 }),
+      });
+
+      const data = await res.json();
+      console.log("Gripper status:", data);
+
+      setConnectedServoGripper(!!data.connected);
+    } catch (err) {
+      console.error("LitePlacer connect failed:", err);
+      setConnectedServoGripper(false);
+    }
+  };
+
+    const handleConnectArduino = async () => {
+    try {
+      const res = await fetch("/api/arduino/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ port: arduinoPort, baud: arduinoBaud }),
@@ -108,17 +94,38 @@ export const Liteplacer = (props) => {
     }
   };
 
-  async function handleUnlockToolChanger(time_s) {
-    await fetch("/api/tool_changer/unlock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({time_s}),
-    });
-  }
+  useEffect(() => {
+    const getInfo = async () => {
+      try {
+        const res = await fetch("/api/tinyg/get_info");
+        const data = await res.json();
+        const positions = { x: 0, y: 0, z: 0, a: 0 };
+
+        if (Array.isArray(data.status)) {
+          data.status.forEach((item) => {
+            const raw = item.raw ?? JSON.stringify(item);
+            let m;
+            if ((m = raw.match(/X position:\s*([-0-9.]+)/))) positions.x = parseFloat(m[1]);
+            if ((m = raw.match(/Y position:\s*([-0-9.]+)/))) positions.y = parseFloat(m[1]);
+            if ((m = raw.match(/Z position:\s*([-0-9.]+)/))) positions.z = parseFloat(m[1]);
+            if ((m = raw.match(/A position:\s*([-0-9.]+)/))) positions.a = parseFloat(m[1]);
+          });
+        }
+        setPosition(positions);
+        setGantryPosition(positions);
+      } catch (err) {
+        console.error("Error getting gantry position:", err);
+      }
+    };
+
+    getInfo();
+    const interval = setInterval(getInfo, 10000);
+    return () => clearInterval(interval);
+  }, [10000]);
 
   const goto = async (gotoPosition, speed) => {
     try {
-      const res = await fetch("/api/liteplacer/goto", {
+      const res = await fetch("/api/tinyg/goto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...gotoPosition, speed }),
@@ -129,7 +136,14 @@ export const Liteplacer = (props) => {
     }
   };
 
-  // --- Send open/close commands ---
+  async function handleUnlockToolChanger(time = 5) {
+    await fetch("/api/tinyg/unlock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ time_s:time }),
+    });
+  }
+
   async function stepOpenGripper(time = 1, speed) {
     await fetch("/api/gripper/open", {
       method: "POST",
@@ -145,6 +159,23 @@ export const Liteplacer = (props) => {
       body: JSON.stringify({ time, speed }),
     });
   }
+
+  async function speedGripperUp () {
+      await fetch("/api/gripper/speed_up", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+      });
+  }
+
+  async function speedGripperDown () {
+      await fetch("/api/gripper/speed_down", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+      });
+  }
+
 
   return (
     <Card sx={sx}>
@@ -174,7 +205,7 @@ export const Liteplacer = (props) => {
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <span>Gripper</span>
-                  {connectedLitePlacerGripper ? (
+                  {connectedServoGripper ? (
                     <SvgIcon fontSize="small" color="success">
                       <CheckCircleIcon />
                     </SvgIcon>
@@ -276,7 +307,12 @@ export const Liteplacer = (props) => {
 
           {tab === 3 && (
             <GripperControls
-              connected={connectedLitePlacerGripper}
+              connected={connectedServoGripper}
+              handleConnect={handleConnectGripperServo}
+              stepOpenGripper={stepOpenGripper}
+              stepCloseGripper={stepCloseGripper}
+              speedGripperUp={speedGripperUp}
+              speedGripperDown={speedGripperDown}
             />
           )}
         </Box>

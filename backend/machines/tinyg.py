@@ -1,4 +1,4 @@
-# machine/liteplacer.py
+# machine/tinyg.py
 import logging
 from pydantic import BaseModel
 from fastapi import APIRouter
@@ -20,6 +20,12 @@ class ConnectRequest(BaseModel):
 
 @router.post("/connect")
 def connect(request: ConnectRequest):
+    """
+curl -X POST http://localhost:8000/connect -H "Content-Type: application/json" -d '{"port": "/dev/ttyUSB0", "baud": 115200}'
+import serial
+connection = serial.Serial('COM10', 115200, timeout=1)
+# connection.write(b"M8\n") # M9
+"""
     global connection
     try:
         # Close existing connection if it's open
@@ -218,3 +224,13 @@ def step(req: MoveXYZRequest):
         logging.error(f"LitePlacer move_xyz error: {e}")
         return {"error": str(e)}
 
+class UnlockRequest(BaseModel):
+    time_s: float  # seconds to unlock
+
+@router.post("/unlock")
+def unlock(req: UnlockRequest):
+    tinyg_send(TinyGCommand(command="M8"))
+    time.sleep(req.time_s)
+    tinyg_send(TinyGCommand(command="M9"))
+    time.sleep(1)
+    return {"status": "completed"}

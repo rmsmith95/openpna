@@ -1,6 +1,6 @@
 // pages/api/gantry/set_position.js
 export default async function handler(req, res) {
-  console.log("Received request to /api/gantry/set_position", req.body);
+  console.log("Received request to /api/tinyg/set_position", req.body);
 
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
@@ -21,10 +21,10 @@ export default async function handler(req, res) {
     });
   }
 
-  console.log("Forwarding to LitePlacer:", { x, y, z, a });
+  console.log("Forwarding to tinyg:", { x, y, z, a });
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/liteplacer/set_position", {
+    const response = await fetch("http://127.0.0.1:8000/tinyg/set_position", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ x, y, z, a }),

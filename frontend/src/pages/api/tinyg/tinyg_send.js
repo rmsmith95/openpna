@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     }
 
     // Forward the command to FastAPI
-    const response = await fetch("http://127.0.0.1:8000/liteplacer/tinyg_send", {
+    const response = await fetch("http://127.0.0.1:8000/tinyg/tinyg_send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ command }), // send the actual command

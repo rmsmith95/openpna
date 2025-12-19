@@ -22,7 +22,7 @@ const LiteplacerControls = ({ goto, position, gotoPosition, setGotoPosition }) =
   // --- RESET (Ctrl+X Soft Reset, RED BUTTON) ---
   const reset = async () => {
     try {
-      const res = await fetch("/api/liteplacer/reset", { method: "POST" });
+      const res = await fetch("/api/tinyg/reset", { method: "POST" });
       console.log("Reset response:", await res.json());
     } catch (err) {
       console.error("Reset error:", err);
@@ -32,7 +32,7 @@ const LiteplacerControls = ({ goto, position, gotoPosition, setGotoPosition }) =
   // --- ZERO (G92 X0 Y0 Z0 A0) ---
   const zero = async () => {
     try {
-      const res = await fetch("/api/liteplacer/set_position", {
+      const res = await fetch("/api/tinyg/set_position", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ x: 0, y: 0, z: 0, a: 0 }),
@@ -45,7 +45,7 @@ const LiteplacerControls = ({ goto, position, gotoPosition, setGotoPosition }) =
 
   const setCurrentPosition = async () => {
     try {
-      const res = await fetch("/api/liteplacer/set_position", {
+      const res = await fetch("/api/tinyg/set_position", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(gotoPosition),
@@ -61,7 +61,7 @@ const LiteplacerControls = ({ goto, position, gotoPosition, setGotoPosition }) =
     const move = { x: 0, y: 0, z: 0, a: 0, [axis]: direction * delta };
 
     try {
-      const res = await fetch("/api/liteplacer/step", {
+      const res = await fetch("/api/tinyg/step", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...move, speed }),

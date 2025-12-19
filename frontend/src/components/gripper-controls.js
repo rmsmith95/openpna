@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { ArrowsPointingInIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/solid'
 
-export default function GripperControls({ connected, stepOpenGripper, stepCloseGripper }) {
+export default function GripperControls({ connected, handleConnect, stepOpenGripper, stepCloseGripper, speedGripperUp, speedGripperDown }) {
     const [port, setPort] = useState('COM4');
     const [servoId, setServoId] = useState(1);
 
@@ -37,33 +37,17 @@ export default function GripperControls({ connected, stepOpenGripper, stepCloseG
                 const data = await res.json();
 
                 if (data.raw) {
-                    console.log(data.raw)
+                    // console.log(data.raw)
                     setStatus(data.raw);
                 }
 
             } catch (err) {
                 console.error("Error fetching gripper status:", err);
             }
-        }, 200);
+        }, 10000);
 
         return () => clearInterval(interval);
     }, []);
-
-    async function speedUp () {
-        await fetch("/api/gripper/speed_up", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({}),
-        });
-    }
-
-    async function speedDown () {
-        await fetch("/api/gripper/speed_down", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({}),
-        });
-    }
 
     async function setSpeed(speed) {
         // Update UI instantly
@@ -81,15 +65,9 @@ export default function GripperControls({ connected, stepOpenGripper, stepCloseG
 
             {/* Connection controls */}
             <Stack spacing={2} direction="row" alignItems="center">
-                <Button variant="contained" color="success" disabled={connected}>
+                <Button variant="contained" color="success" disabled={connected} onClick={handleConnect}>
                     Connect
                 </Button>
-
-                <TextField
-                    label="Port"
-                    value={port}
-                    onChange={(e) => setPort(e.target.value)}
-                />
 
                 <TextField
                     label="Servo Id"
@@ -125,7 +103,7 @@ export default function GripperControls({ connected, stepOpenGripper, stepCloseG
                                     variant="outlined"
                                     sx={{ minWidth: 30, padding: 0 }}
                                     onClick={() => {
-                                        speedDown();
+                                        speedGripperDown();
                                     }}
                                 >
                                     -
@@ -137,7 +115,7 @@ export default function GripperControls({ connected, stepOpenGripper, stepCloseG
                                     variant="outlined"
                                     sx={{ minWidth: 30, padding: 0 }}
                                     onClick={() => {
-                                        speedUp();
+                                        speedGripperUp();
                                     }}
                                 >
                                     +

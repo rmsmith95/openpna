@@ -23,35 +23,31 @@ r.text
         self.ip = ip
         self.status	= {}
 
-    def connect(self, servo_index=1, mode="motor", retries=2, delay=1.0):
+    def connect(self, servo_index=1, mode="motor", delay=1.0):
         """
         Connect to the servo, select ID and set mode.
-        Retries if it fails.
         Returns True if successful, False otherwise.
         """
-        for attempt in range(1, retries + 1):
-            try:
-                print(f"Attempt {attempt} to connect to servo...")
-                self.select_id(servo_index)
-                time.sleep(0.2)
+        try:
+            self.select_id(servo_index)
+            time.sleep(0.2)
 
-                self.set_mode(mode)
-                time.sleep(0.2)
+            self.set_mode(mode)
+            time.sleep(0.2)
 
-                status = self.get_status()
-                logging.warning(f"status:{status}")
-                current_mode = status.get("mode", "").strip().lower()
-                if current_mode == mode.lower():
-                    print(f"Servo connected. Mode: {current_mode}")
-                    return True
-                else:
-                    print(f"Mode not set yet: {current_mode}")
-            except Exception as e:
-                print("Connect attempt error:", e)
+            status = self.get_status()
+            logging.warning(f"status:{status}")
+            current_mode = status.get("mode", "").strip().lower()
+            if status:
+                print(f"Servo connected. Mode: {current_mode}")
+                return True
+            else:
+                print(f"Mode not set yet: {current_mode}")
+        except Exception as e:
+            print("Connect attempt error:", e)
 
-            time.sleep(delay)
-
-        print("Failed to connect to servo after retries.")
+        time.sleep(delay)
+        print("Failed to connect to gripper servo")
         return False
 
     def send_command(self, cmd_type, cmd_value, extra1=0, extra2=0):
@@ -108,7 +104,7 @@ r.text
             return parsed
         except requests.RequestException as e:
             print("Error reading status:", e)
-            return {}
+            return None
 
 
 # --- SETUP SERVO ---
@@ -120,7 +116,7 @@ async def connect(req: Request):
     """ Connect to the servo gripper """
     body = await req.json()
     servo_index = body.get("servo_index", 1)
-    success = servo.connect(servo_index=servo_index, mode='motor', retries=0, delay=1)
+    success = servo.connect(servo_index=servo_index, mode='motor', delay=1)
     status = servo.get_status()
     return {"connected": success, "status": status}
 

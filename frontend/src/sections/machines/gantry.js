@@ -144,6 +144,14 @@ export const Gantry = (props) => {
     });
   }
 
+  async function gripperGoTo(position=1000, load_limit=100, speed=1000) {
+    await fetch("/api/gripper/gripper_goto", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ position, load_limit, speed }),
+    });
+  }
+
   async function stepOpenGripper(time_s = 1, speed=1000) {
     await fetch("/api/gripper/gripper_open", {
       method: "POST",
@@ -199,7 +207,7 @@ export const Gantry = (props) => {
                 )}
               </Stack>
             } />
-            <Tab label="Step" />
+            <Tab label="Control" />
             <Tab label="Actions" />
             <Tab
               label={
@@ -259,9 +267,6 @@ export const Gantry = (props) => {
                 // disabled={connectedLitePlacer}
                 >Connect
                 </Button>
-                <Button variant="contained" onClick={() => handleUnlockToolChanger(5)}>
-                  Unlock
-                </Button>
               </Stack>
 
               {/* Machine table */}
@@ -289,6 +294,7 @@ export const Gantry = (props) => {
           {tab === 1 && (
             <GantryControls
               position={position}
+              handleUnlockToolChanger={handleUnlockToolChanger}
               goto={goto}
               gotoPosition={gotoPosition}
               setGotoPosition={setGotoPosition}
@@ -298,6 +304,7 @@ export const Gantry = (props) => {
           {tab === 2 && (
             <GantryActions
               connectedTinyG={connectedTinyG}
+              gripperGoTo={gripperGoTo}
               openGripper={stepOpenGripper}
               closeGripper={stepCloseGripper}
               handleUnlockToolChanger={handleUnlockToolChanger}
@@ -309,6 +316,7 @@ export const Gantry = (props) => {
             <GripperControls
               connected={connectedServoGripper}
               handleConnect={handleConnectGripperServo}
+              gripperGoTo={gripperGoTo}
               stepOpenGripper={stepOpenGripper}
               stepCloseGripper={stepCloseGripper}
               speedGripperUp={speedGripperUp}

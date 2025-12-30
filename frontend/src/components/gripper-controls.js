@@ -12,9 +12,10 @@ import {
 } from "@mui/material";
 import { ArrowsPointingInIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/solid'
 
-export default function GripperControls({ connected, handleConnect, stepOpenGripper, stepCloseGripper, speedGripperUp, speedGripperDown }) {
+export default function GripperControls({ connected, handleConnect, gripperGoTo, stepOpenGripper, stepCloseGripper, speedGripperUp, speedGripperDown }) {
     const [port, setPort] = useState('COM4');
     const [servoId, setServoId] = useState(1);
+    const [moveTime, setMoveTime] = useState(1);
 
     const [status, setStatus] = useState({
         "active_id": "",
@@ -77,41 +78,22 @@ export default function GripperControls({ connected, handleConnect, stepOpenGrip
                 />
             </Stack>
 
-            {/* Always visible status table */}
             <Table size="small" sx={{ minWidth: 900 }}>
                 <TableHead>
                     <TableRow>
-                        <TableCell>Voltage</TableCell>
-                        <TableCell>Position</TableCell>
-                        <TableCell>Load</TableCell>
-                        <TableCell>Temp</TableCell>
+                        <TableCell>
+                          Speed
+                        </TableCell>
+                        <TableCell direction="row" spacing={0.5} alignItems="center" justifyContent="center">
+                          Step
+                        </TableCell>
+                        <TableCell>
+                          Control
+                        </TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     <TableRow>
-                        <TableCell>{status.voltage}</TableCell>
-                        <TableCell>{status.position}</TableCell>
-                        <TableCell>{status.load}</TableCell>
-                        <TableCell>{status.temper}</TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
-
-
-
-
-
-                        {/* Always visible status table */}
-            <Table size="small" sx={{ minWidth: 900 }}>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>Speed</TableCell>
-                        <TableCell>Controls</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    <TableRow>
-
                         <TableCell>
                             <Stack direction="row" alignItems="center" spacing={1}>
                                 <Button
@@ -135,29 +117,57 @@ export default function GripperControls({ connected, handleConnect, stepOpenGrip
                                 </Button>
                             </Stack>
                         </TableCell>
-                        <TableCell>
-                            <Stack direction="row" spacing={1}>
-                                <Button
-                                    variant="contained"
-                                    sx={{ width: 40, height: 35 }}
-                                    onClick={() => stepCloseGripper(1, status.speed_set)}
-                                >
-                                    <SvgIcon component={ArrowsPointingInIcon} />
-                                </Button>
+                        <TableCell sx={{ p: 0.5 }} align="center">
+                          <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
+                            <Button variant="contained" size="small" sx={{ minWidth: 28 }} onClick={() => stepCloseGripper(moveTime, status.speed_set)}>
+                              Tighter
+                            </Button>
+                            <TextField
+                              value={moveTime}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                setMoveTime(Number.isNaN(val) ? 0 : val);
+                              }}
+                              size="small"
+                              sx={{
+                                width: 60,
+                                "& .MuiInputBase-input": {
+                                  p: "4px 6px",
+                                  fontSize: 15,
+                                  textAlign: "center",
+                                },
+                              }}
+                              type="number"
+                              inputProps={{ step: "any" }}
+                            />
+                            <Button variant="contained" size="small" sx={{ minWidth: 28 }} onClick={() => stepOpenGripper(moveTime, status.speed_set)}>
+                              Wider
+                            </Button>
+                          </Stack>
+                        </TableCell>
 
-                                <Button
-                                    variant="contained"
-                                    sx={{ width: 40, height: 35 }}
-                                    onClick={() => stepOpenGripper(1, status.speed_set)}
-                                >
-                                    <SvgIcon component={ArrowsPointingOutIcon} />
-                                </Button>
-                            </Stack>
+                        <TableCell>
+                          <Button variant="contained" size="small" sx={{ minWidth: 28 }} onClick={() => gripperGoTo(0, 200, 100)}>
+                              Open
+                            </Button>
+                            <Button variant="contained" size="small" sx={{ minWidth: 28 }} onClick={() => gripperGoTo(0, 200, 100)}>
+                              Close
+                            </Button>
                         </TableCell>
                     </TableRow>
                 </TableBody>
             </Table>
 
+            <Table size="small" sx={{ minWidth: 900 }}>
+              <TableBody>
+                  <TableRow>
+                      <TableCell>Voltage: {status.voltage}</TableCell>
+                      <TableCell>Position: {status.position}</TableCell>
+                      <TableCell>Load: {status.load}</TableCell>
+                      <TableCell>Temp: {status.temper}</TableCell>
+                  </TableRow>
+              </TableBody>
+          </Table>
         </Stack>
     );
 }

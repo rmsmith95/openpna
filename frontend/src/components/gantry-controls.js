@@ -15,7 +15,7 @@ import {
   TextField,
 } from "@mui/material";
 
-const GantryControls = ({ goto, position, gotoPosition, setGotoPosition }) => {
+const GantryControls = ({ goto, position, gotoPosition, setGotoPosition, handleUnlockToolChanger }) => {
   const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 10 });
   const [speed, setSpeed] = useState(3000);
 
@@ -186,6 +186,9 @@ const GantryControls = ({ goto, position, gotoPosition, setGotoPosition }) => {
               inputProps={{ min: 0 }}
             />
           </Stack>
+          <Button variant="contained" onClick={() => handleUnlockToolChanger(5)}>
+            Unlock
+          </Button>
 
           {/* RESET BUTTON (RED, MOVED RIGHT) */}
           <Box sx={{ flexGrow: 1 }} /> {/* pushes reset fully to the right */}

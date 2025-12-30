@@ -14,6 +14,7 @@ export const Cobot280 = (props) => {
   const [tab, setTab] = useState(0);
 
   const [connectionType, setConnectionType] = useState("serial");
+  const [connectedCobot280, setConnectedCobot280] = useState(false);
   const [port, setPort] = useState("COM4");
   const [baud, setBaud] = useState(115200);
   const [ipAddress, setIpAddress] = useState("10.194.92.60");
@@ -24,7 +25,24 @@ export const Cobot280 = (props) => {
   const handleChange = (_, newValue) => setTab(newValue);
 
   const handleConnectCobot280 = async () => {
-    fetchPositions()
+    try {
+      const res = await fetch("/api/cobot280/connect_network", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ipAddress: ipAddress }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.status === "ok" && Array.isArray(data.angles)) {
+        setConnectedCobot280(true);
+        setJoints(data.angles.map(Number)); // ensure numeric
+      }
+      else {
+        setConnectedCobot280(false);
+      }
+    } catch (err) {
+      console.error("❌ Error fetching joint positions:", err);
+    }
   };
 
   const fetchPositions = async () => {
@@ -103,8 +121,8 @@ export const Cobot280 = (props) => {
             <Tab
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <span>Cobot280</span>
-                  {/* {connectedCobot280 ? (
+                  <span>Connection</span>
+                  {connectedCobot280 ? (
                     <SvgIcon fontSize="small" color="success">
                       <CheckCircleIcon />
                     </SvgIcon>
@@ -112,7 +130,7 @@ export const Cobot280 = (props) => {
                     <SvgIcon fontSize="small" color="error">
                       <XCircleIcon />
                     </SvgIcon>
-                  )} */}
+                  )}
                 </Stack>
               }
             />

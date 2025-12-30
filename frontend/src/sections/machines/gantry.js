@@ -199,7 +199,7 @@ export const Gantry = (props) => {
           >
             <Tab label={
               <Stack direction="row" alignItems="center" spacing={1}>
-                <span>Gantry-1</span>
+                <span>Connection</span>
                 {connectedTinyG ? (
                   <SvgIcon fontSize="small" color="success"><CheckCircleIcon /></SvgIcon>
                 ) : (

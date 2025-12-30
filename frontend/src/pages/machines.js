@@ -49,11 +49,11 @@ const Page = () => {
             </Stack>
 
             <Stack spacing={2}>
-              <CollapsibleCard title="Gantry-1" color="secondary.main">
+              <CollapsibleCard title="Gantry" color="secondary.main">
                 <Gantry difference={12} positive sx={{ height: "100%" }} value="Gantry-1" />
               </CollapsibleCard>
 
-              <CollapsibleCard title="Cobot280-1" color="success.main">
+              <CollapsibleCard title="Cobot280" color="success.main">
                 <Cobot280 difference={12} positive sx={{ height: "100%" }} value="Cobot280-1" />
               </CollapsibleCard>
             </Stack>

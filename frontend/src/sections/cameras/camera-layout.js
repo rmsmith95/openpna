@@ -1,17 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  Box,
-  Container,
-  Tabs,
-  Tab,
-  Typography,
-  Checkbox,
-  FormGroup,
-  FormControlLabel,
-  Paper,
-} from "@mui/material";
+import { Box, Tabs, Tab, Typography } from "@mui/material";
 import CameraModel from "./camera-model";
 
 const CAMERA_METADATA = [
@@ -22,161 +12,122 @@ const CAMERA_METADATA = [
 
 export default function CameraDashboard() {
   const [devices, setDevices] = useState([]);
-  const [selectedCameras, setSelectedCameras] = useState({});
   const [selectedTab, setSelectedTab] = useState(0);
-  const [machines, setMachines] = useState({});
-  const [parts, setParts] = useState({});
-  const [workspace, setWorkspace] = useState({ width: 600, height: 400 });
 
-  const videoRefs = useRef({});
+  const videoRef = useRef(null);
+  const activeStreamRef = useRef(null);
+  const activeDeviceIdRef = useRef(null);
 
-  // Load machines & parts
-  useEffect(() => {
-    async function loadBackendData() {
-      try {
-        const [machinesRes, partsRes] = await Promise.all([
-          fetch("/api/get_machines"),
-          fetch("/api/get_parts"),
-        ]);
-        const machinesData = await machinesRes.json();
-        const partsData = await partsRes.json();
-        setMachines(machinesData);
-        setParts(partsData);
-
-        const firstMachine = Object.values(machinesData)[0];
-        if (firstMachine?.workingArea) {
-          setWorkspace({
-            width: firstMachine.workingArea[0],
-            height: firstMachine.workingArea[1],
-          });
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    loadBackendData();
-  }, []);
-
-  // Load video devices
+  /* ------------------ Load camera devices ------------------ */
   useEffect(() => {
     async function loadDevices() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach((track) => track.stop());
+        const temp = await navigator.mediaDevices.getUserMedia({ video: true });
+        temp.getTracks().forEach(t => t.stop());
 
-        const allDevices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = allDevices.filter((d) => d.kind === "videoinput");
+        const all = await navigator.mediaDevices.enumerateDevices();
+        const cams = all.filter(d => d.kind === "videoinput");
 
-        const digitalModel = { deviceId: "DigitalModel", label: "Digital Model" };
-        const devicesWithFake = [...videoDevices, digitalModel];
-
-        setDevices(devicesWithFake);
-
-        // initialize selection
-        const selected = {};
-        devicesWithFake.forEach((d) => (selected[d.deviceId] = true)); // show all by default
-        setSelectedCameras(selected);
+        const digital = { deviceId: "DigitalModel", label: "Digital Model" };
+        setDevices([...cams, digital]);
       } catch (err) {
-        console.error(err);
+        console.error("Device enumeration failed:", err);
       }
     }
     loadDevices();
   }, []);
 
-  // Start / stop real cameras
+  /* ------------------ Switch camera on tab change ------------------ */
   useEffect(() => {
-    Object.keys(selectedCameras).forEach((deviceId) => {
-      if (deviceId === "DigitalModel") return;
+    const device = devices[selectedTab];
+    if (!device) return;
 
-      if (selectedCameras[deviceId]) startCamera(deviceId);
-      else if (videoRefs.current[deviceId]) {
-        const stream = videoRefs.current[deviceId].srcObject;
-        if (stream) stream.getTracks().forEach((track) => track.stop());
-        videoRefs.current[deviceId].srcObject = null;
-      }
-    });
-  }, [selectedCameras]);
+    // Stop previous stream
+    if (activeStreamRef.current) {
+      activeStreamRef.current.getTracks().forEach(t => t.stop());
+      activeStreamRef.current = null;
+      activeDeviceIdRef.current = null;
+    }
+
+    // Digital model does not use camera
+    if (device.deviceId === "DigitalModel") {
+      if (videoRef.current) videoRef.current.srcObject = null;
+      return;
+    }
+
+    startCamera(device.deviceId);
+  }, [selectedTab, devices]);
 
   async function startCamera(deviceId) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: deviceId } },
+        video: {
+          deviceId: { exact: deviceId },
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          frameRate: { ideal: 30 },
+        },
       });
-      if (videoRefs.current[deviceId]) videoRefs.current[deviceId].srcObject = stream;
+
+      activeStreamRef.current = stream;
+      activeDeviceIdRef.current = deviceId;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Camera start failed:", deviceId, err);
     }
   }
 
   return (
-    <Box
-      sx={{
-        mt: 0,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        width: "100%",
-      }}
-    >
+    <Box sx={{ width: "100%", height: "100vh", display: "flex", flexDirection: "column" }}>
+      
+      {/* ------------------ TABS ------------------ */}
       <Tabs
         value={selectedTab}
-        onChange={(_, newVal) => setSelectedTab(newVal)}
+        onChange={(_, v) => setSelectedTab(v)}
         variant="scrollable"
         scrollButtons="auto"
-        sx={{ mb: 0 }}
+        sx={{ borderBottom: "1px solid #333" }}
       >
-        {devices.filter(d => selectedCameras[d.deviceId]).map((device, idx) => {
+        {devices.map((device) => {
           const meta = CAMERA_METADATA.find(m => m.label === device.label) || { name: device.label };
           return <Tab key={device.deviceId} label={meta.name} />;
         })}
       </Tabs>
 
-      {/* Camera Panels */}
-      {devices.filter(d => selectedCameras[d.deviceId]).map((device, idx) => {
-        const meta = CAMERA_METADATA.find(m => m.label === device.label) || { name: device.label };
-        return (
-          <Box
-            key={device.deviceId}
-            sx={{
-          display: selectedTab === idx ? "block" : "none",
-          maxHeight: "100vh",
-          maxWidth: "100vw",
-          width: "95vw",
-          mx: "auto",
-          position: "relative",
-          bgcolor: "black",
-          overflow: "hidden",
-            }}
-          >
-            {device.deviceId === "DigitalModel" ? (
-              <CameraModel active parts={parts} workspace={workspace} />
-            ) : (
-              <video
-                ref={el => (videoRefs.current[device.deviceId] = el)}
-                autoPlay
-                playsInline
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            )}
-            {/* Overlay metadata */}
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                bgcolor: "rgba(0,0,0,0.5)",
-                color: "white",
-                p: 1,
-              }}
-            >
-              <Typography variant="subtitle2">
-                {meta.name} | {meta.location} | {meta.direction}
-              </Typography>
-            </Box>
-          </Box>
-        );
-      })}
+      {/* ------------------ VIEW ------------------ */}
+      <Box sx={{ flex: 1, position: "relative", bgcolor: "black" }}>
+        {devices[selectedTab]?.deviceId === "DigitalModel" ? (
+          <CameraModel active />
+        ) : (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        )}
+
+        {/* Overlay */}
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            bgcolor: "rgba(0,0,0,0.6)",
+            color: "white",
+            p: 1,
+          }}
+        >
+          <Typography variant="subtitle2">
+            {CAMERA_METADATA[selectedTab]?.name || "Camera"}
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
 }

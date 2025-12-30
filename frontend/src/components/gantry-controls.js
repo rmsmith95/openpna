@@ -15,8 +15,8 @@ import {
   TextField,
 } from "@mui/material";
 
-const LiteplacerControls = ({ goto, position, gotoPosition, setGotoPosition }) => {
-  const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 45 });
+const GantryControls = ({ goto, position, gotoPosition, setGotoPosition }) => {
+  const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 10 });
   const [speed, setSpeed] = useState(3000);
 
   // --- RESET (Ctrl+X Soft Reset, RED BUTTON) ---
@@ -165,7 +165,7 @@ const LiteplacerControls = ({ goto, position, gotoPosition, setGotoPosition }) =
           <Button variant="contained" color="warning" onClick={zero}>
             Zero
           </Button>
-                    <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} alignItems="center">
             <Typography sx={{ fontWeight: 500 }}>Speed:</Typography>
             <TextField
               value={speed}
@@ -198,8 +198,8 @@ const LiteplacerControls = ({ goto, position, gotoPosition, setGotoPosition }) =
   );
 };
 
-LiteplacerControls.propTypes = {
-  connectedLitePlacer: PropTypes.bool,
+GantryControls.propTypes = {
+  connectedGantry: PropTypes.bool,
 };
 
-export default LiteplacerControls;
+export default GantryControls;

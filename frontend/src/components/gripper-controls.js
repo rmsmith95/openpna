@@ -84,10 +84,7 @@ export default function GripperControls({ connected, handleConnect, stepOpenGrip
                         <TableCell>Voltage</TableCell>
                         <TableCell>Position</TableCell>
                         <TableCell>Load</TableCell>
-                        <TableCell>Speed</TableCell>
-                        <TableCell>Est. Gap</TableCell>
                         <TableCell>Temp</TableCell>
-                        <TableCell>Controls</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -95,8 +92,26 @@ export default function GripperControls({ connected, handleConnect, stepOpenGrip
                         <TableCell>{status.voltage}</TableCell>
                         <TableCell>{status.position}</TableCell>
                         <TableCell>{status.load}</TableCell>
+                        <TableCell>{status.temper}</TableCell>
+                    </TableRow>
+                </TableBody>
+            </Table>
 
-                        {/* ------- UPDATED SPEED COLUMN WITH +/- BUTTONS ------- */}
+
+
+
+
+                        {/* Always visible status table */}
+            <Table size="small" sx={{ minWidth: 900 }}>
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Speed</TableCell>
+                        <TableCell>Controls</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    <TableRow>
+
                         <TableCell>
                             <Stack direction="row" alignItems="center" spacing={1}>
                                 <Button
@@ -108,9 +123,7 @@ export default function GripperControls({ connected, handleConnect, stepOpenGrip
                                 >
                                     -
                                 </Button>
-
                                 <strong>{status.speed_set}</strong>
-
                                 <Button
                                     variant="outlined"
                                     sx={{ minWidth: 30, padding: 0 }}
@@ -122,16 +135,6 @@ export default function GripperControls({ connected, handleConnect, stepOpenGrip
                                 </Button>
                             </Stack>
                         </TableCell>
-                        {/* ----------------------------------------------------- */}
-
-                        <TableCell>
-                            {status.position
-                                ? (status.position / 4095 * 60).toFixed(1)
-                                : ""}
-                        </TableCell>
-
-                        <TableCell>{status.temper}</TableCell>
-
                         <TableCell>
                             <Stack direction="row" spacing={1}>
                                 <Button
@@ -154,6 +157,7 @@ export default function GripperControls({ connected, handleConnect, stepOpenGrip
                     </TableRow>
                 </TableBody>
             </Table>
+
         </Stack>
     );
 }

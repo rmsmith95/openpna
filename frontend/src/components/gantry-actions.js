@@ -19,8 +19,8 @@ import {
 import { TrashIcon } from '@heroicons/react/24/solid';
 
 
-const LiteplacerActions = ({
-  connected,
+const GantryActions = ({
+  connectedTinyG,
   goto,
   openGripper,
   closeGripper,
@@ -36,7 +36,7 @@ const LiteplacerActions = ({
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "liteplacer-actions.json";
+    a.download = "gantry-actions.json";
     a.click();
 
     URL.revokeObjectURL(url);
@@ -253,11 +253,11 @@ const LiteplacerActions = ({
   );
 };
 
-LiteplacerActions.propTypes = {
+GantryActions.propTypes = {
   onGoto: PropTypes.func,
   onOpen: PropTypes.func,
   onClose: PropTypes.func,
   onUnlock: PropTypes.func,
 };
 
-export default LiteplacerActions;
+export default GantryActions;

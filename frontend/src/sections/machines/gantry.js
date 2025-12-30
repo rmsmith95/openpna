@@ -19,13 +19,13 @@ import {
 } from '@mui/material';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
-import LiteplacerControls from '../../components/liteplacer-controls';
-import LiteplacerActions from '../../components/liteplacer-actions';
+import GantryControls from '../../components/gantry-controls';
+import GantryActions from '../../components/gantry-actions';
 import GripperControls from '../../components/gripper-controls';
 import { useFactory } from "src/utils/factory-context";
 
 
-export const Liteplacer = (props) => {
+export const Gantry = (props) => {
   const { difference, positive = false, sx, value } = props;
   const [tab, setTab] = useState(0);
 
@@ -54,7 +54,7 @@ export const Liteplacer = (props) => {
       if (data.status === "connected") setConnectedTinyG(true);
       else setConnectedTinyG(false);
     } catch (err) {
-      console.error("LitePlacer connect failed:", err);
+      console.error("Gantry connect failed:", err);
       setConnectedTinyG(false);
     }
   };
@@ -72,7 +72,7 @@ export const Liteplacer = (props) => {
 
       setConnectedServoGripper(!!data.connected);
     } catch (err) {
-      console.error("LitePlacer connect failed:", err);
+      console.error("Gantry connect failed:", err);
       setConnectedServoGripper(false);
     }
   };
@@ -144,19 +144,19 @@ export const Liteplacer = (props) => {
     });
   }
 
-  async function stepOpenGripper(time = 1, speed) {
-    await fetch("/api/gripper/open", {
+  async function stepOpenGripper(time_s = 1, speed=1000) {
+    await fetch("/api/gripper/gripper_open", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ time, speed }),
+      body: JSON.stringify({ time_s, speed }),
     });
   }
 
-  async function stepCloseGripper(time = 1, speed) {
-    await fetch("/api/gripper/close", {
+  async function stepCloseGripper(time_s = 1, speed=1000) {
+    await fetch("/api/gripper/gripper_close", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ time, speed }),
+      body: JSON.stringify({ time_s, speed }),
     });
   }
 
@@ -191,7 +191,7 @@ export const Liteplacer = (props) => {
           >
             <Tab label={
               <Stack direction="row" alignItems="center" spacing={1}>
-                <span>LitePlacer1</span>
+                <span>Gantry-1</span>
                 {connectedTinyG ? (
                   <SvgIcon fontSize="small" color="success"><CheckCircleIcon /></SvgIcon>
                 ) : (
@@ -279,7 +279,7 @@ export const Liteplacer = (props) => {
                     <TableCell>700x500x300</TableCell>
                     <TableCell>560x360x80xinfdeg</TableCell>
                     <TableCell>3kg</TableCell>
-                    <TableCell>liteplacer.stl</TableCell>
+                    <TableCell>gantry.stl</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
@@ -287,7 +287,7 @@ export const Liteplacer = (props) => {
           )}
 
           {tab === 1 && (
-            <LiteplacerControls
+            <GantryControls
               position={position}
               goto={goto}
               gotoPosition={gotoPosition}
@@ -296,8 +296,8 @@ export const Liteplacer = (props) => {
           )}
 
           {tab === 2 && (
-            <LiteplacerActions
-              connectedLitePlacer={connectedTinyG}
+            <GantryActions
+              connectedTinyG={connectedTinyG}
               openGripper={stepOpenGripper}
               closeGripper={stepCloseGripper}
               handleUnlockToolChanger={handleUnlockToolChanger}
@@ -321,7 +321,7 @@ export const Liteplacer = (props) => {
   );
 };
 
-Liteplacer.propTypes = {
+Gantry.propTypes = {
   difference: PropTypes.number,
   positive: PropTypes.bool,
   sx: PropTypes.object,

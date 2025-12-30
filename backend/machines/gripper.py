@@ -1,226 +1,18 @@
-from fastapi import APIRouter
-from fastapi import Request
+from fastapi import APIRouter, Request
 import requests
 import threading
 import logging
 import time
 import serial
+from pydantic import BaseModel
 
-# --- CONFIG ---
+
 router = APIRouter()
 
+# ============================================================
+# SHARED STATUS PARSER
+# ============================================================
 
-# class ST3020Servo:
-#     """ arg2 = 1, 2, 7, 8
-# requests.get("http://192.168.4.1/cmd",params={"arg0": 1, "arg1": 2, "arg2": 0, "arg3": 0}, timeout=2) 
-# r=requests.get("http://192.168.4.1/readSTS")
-# # r.raise_for_status()
-# r.text
-#     """
-#     def __init__(self, ssid="ESP32_DEV", password="12345678", ip="192.168.4.1"):
-#         self.ssid = ssid
-#         self.password = password
-#         self.ip = ip
-#         self.status	= {}
-
-#     def connect(self, servo_index=1, mode="motor", delay=1.0):
-#         """
-#         Connect to the servo, select ID and set mode.
-#         Returns True if successful, False otherwise.
-#         """
-#         try:
-#             self.select_id(servo_index)
-#             time.sleep(0.2)
-
-#             self.set_mode(mode)
-#             time.sleep(0.2)
-
-#             status = self.get_status()
-#             logging.warning(f"status:{status}")
-#             current_mode = status.get("mode", "").strip().lower()
-#             if status:
-#                 print(f"Servo connected. Mode: {current_mode}")
-#                 return True
-#             else:
-#                 print(f"Mode not set yet: {current_mode}")
-#         except Exception as e:
-#             print("Connect attempt error:", e)
-
-#         time.sleep(delay)
-#         print("Failed to connect to gripper servo")
-#         return False
-
-#     def send_command(self, cmd_type, cmd_value, extra1=0, extra2=0):
-#         """Send a command to the ESP32 via HTTP GET."""
-#         url = f"http://{self.ip}/cmd"
-#         params = {
-#             "arg0": cmd_type,
-#             "arg1": cmd_value,
-#             "arg2": extra1,
-#             "arg3": extra2
-#         }
-#         try:
-#             r = requests.get(url, params=params, timeout=5)
-#             r.raise_for_status()
-#             return r.text
-#         except requests.RequestException as e:
-#             print("Error sending command:", e)
-#             return None
-
-#     def get_status(self):
-#         url = f"http://{self.ip}/readSTS"
-#         try:
-#             r = requests.get(url, timeout=2)
-#             raw = r.text
-#             parsed = parse_status(raw)
-#             self.status = parsed
-#             return parsed
-#         except requests.RequestException as e:
-#             print("Error reading status:", e)
-#             return None
-
-class ST3020ServoSerial:
-    def __init__(self, port="COM4", baud=115200):
-        self.port = port
-        self.baud = baud
-        self.ser: serial.Serial | None = None
-        self.status = {}
-
-    # -----------------------------
-    # CONNECT
-    # -----------------------------
-    def connect(self, servo_index=1, mode="motor"):
-        """
-        Open serial port, select servo ID, set mode.
-        Returns True if successful.
-        """
-        try:
-            self.ser = serial.Serial(self.port, self.baud, timeout=0.2)
-            time.sleep(2)  # ESP32 reset delay
-
-            self.send_command(0, servo_index)   # select ID
-            time.sleep(0.1)
-
-            mode_case = 12 if mode == "servo" else 13
-            self.send_command(1, mode_case)     # set mode
-            time.sleep(0.1)
-
-            status = self.get_status()
-            logging.warning(f"status: {status}")
-
-            return bool(status)
-
-        except Exception as e:
-            logging.error(f"Serial connect failed: {e}")
-            return False
-
-    # -----------------------------
-    # SEND COMMAND
-    # -----------------------------
-    def send_command(self, arg0, arg1, arg2=0, arg3=0):
-        """
-        Send command over serial.
-        Format mirrors Wi-Fi args.
-        """
-        if not self.ser or not self.ser.is_open:
-            raise RuntimeError("Serial not connected")
-
-        cmd = f"C:{arg0},{arg1},{arg2},{arg3}\n"
-        self.ser.write(cmd.encode())
-        self.ser.flush()
-
-        return True
-
-    # -----------------------------
-    # GET STATUS
-    # -----------------------------
-    def get_status(self):
-        """
-        Request and read servo status text.
-        """
-        if not self.ser or not self.ser.is_open:
-            raise RuntimeError("Serial not connected")
-
-        self.ser.write(b"STATUS\n")
-        self.ser.flush()
-
-        raw = self.ser.readline().decode(errors="ignore").strip()
-        if not raw:
-            return {}
-
-        parsed = parse_status(raw)
-        self.status = parsed
-        return parsed
-
-    def select_id(self, servo_index):
-        """Select active servo by index (arg0=0)."""
-        return self.send_command(0, servo_index)
-
-    def set_mode(self, mode):
-        """Set mode: 'servo' or 'motor'"""
-        mode_case = 12 if mode == "servo" else 13  # 12=servo, 13=motor
-        return self.send_command(1, mode_case)
-
-    def set_speed(self, target_speed):
-        """Set speed (steps/sec) by stepping +100/-100 until target"""
-        # Read current speed
-        status = self.get_status()
-        print("status:", status)
-        speed = status['set_speed']
-        if not speed:
-            print("Cannot read speed")
-            return
-
-        if target_speed == speed:
-            return
-
-        case = 7 if target_speed > speed else 8
-        # while speed != target_speed:
-        self.send_command(1, case)
-        time.sleep(0.1)
-
-
-# --- SETUP SERVO ---
-servo = ST3020Servo()
-
-
-@router.post("/connect")
-async def connect(req: Request):
-    """ Connect to the servo gripper """
-    body = await req.json()
-    servo_index = body.get("servo_index", 1)
-    success = servo.connect(servo_index=servo_index, mode='motor', delay=1)
-    status = servo.get_status()
-    return {"connected": success, "status": status}
-
-
-@router.post("/set_speed")
-def set_speed(speed):
-    # print("Set speed: ", speed)
-    result = servo.send_command(1, 7)
-    return result
-
-
-@router.post("/speed_up")
-def speed_up():
-    result = servo.send_command(1, 7)
-    return result
-
-
-@router.post("/speed_down")
-def speed_down():
-    result = servo.send_command(1, 8)
-    return result
-
-
-def run_motor_for(duration, command):
-    """Run motor for duration (s), then stop"""
-    servo.send_command(1, command)
-    time.sleep(duration)
-    servo.send_command(1, 2)
-
-
-# --- STATUS PARSER ---
 def parse_status(raw: str):
     if not raw:
         return {}
@@ -240,54 +32,235 @@ def parse_status(raw: str):
     ]
     numeric_keys = ["Position", "Voltage", "Load", "Speed", "Temper", "Speed Set"]
 
-    status_dict = {}
+    status = {}
     text = raw.replace("<p>", " ")
 
-    for i, key in enumerate(keys):
-        start = text.find(key)
-        if start == -1:
+    for key in keys:
+        if key not in text:
             continue
 
+        start = text.find(key) + len(key)
         end = len(text)
-        for j in range(i + 1, len(keys)):
-            next_idx = text.find(keys[j], start + len(key))
-            if next_idx != -1:
-                end = next_idx
-                break
+        for next_key in keys:
+            if next_key == key:
+                continue
+            idx = text.find(next_key, start)
+            if idx != -1:
+                end = min(end, idx)
 
-        value = text[start + len(key):end].strip()
+        value = text[start:end].strip()
         clean_key = key.replace(":", "").replace(" ", "_").lower()
-        if key.split(":")[0] in numeric_keys:
-            try:
-                status_dict[clean_key] = float(value)
-            except:
-                status_dict[clean_key] = value
-        else:
-            status_dict[clean_key] = value
 
-        # Remove parsed section
-        text = text[:start] + text[end:]
+        try:
+            status[clean_key] = float(value) if key.replace(":", "") in numeric_keys else value
+        except:
+            status[clean_key] = value
 
-    return status_dict
+    return status
+
+
+# ============================================================
+# BASE CLASS (LOGIC ONLY)
+# ============================================================
+
+class ST3020Base:
+    def __init__(self):
+        self.status = {}
+
+    def select_id(self, servo_index):
+        return self.send_command(0, servo_index)
+
+    def set_mode(self, mode):
+        mode_case = 12 if mode == "servo" else 13
+        return self.send_command(1, mode_case)
+
+    def connect(self, servo_index=1, mode="motor"):
+        try:
+            self.select_id(servo_index)
+            time.sleep(0.1)
+            self.set_mode(mode)
+            time.sleep(0.1)
+            self.status = self.get_status() or {}
+            return True
+        except Exception as e:
+            logging.error(f"Connect failed: {e}")
+            return False
+
+    # MUST be implemented by subclasses
+    def send_command(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def get_status(self):
+        raise NotImplementedError
+
+
+# ============================================================
+# WIFI IMPLEMENTATION
+# ============================================================
+
+class ST3020WiFi(ST3020Base):
+    def __init__(self, ip="192.168.4.1"):
+        super().__init__()
+        self.ip = ip
+
+    def send_command(self, arg0, arg1, arg2=0, arg3=0):
+        r = requests.get(
+            f"http://{self.ip}/cmd",
+            params={"arg0": arg0, "arg1": arg1, "arg2": arg2, "arg3": arg3},
+            timeout=2
+        )
+        r.raise_for_status()
+        return r.text
+
+    def get_status(self):
+        r = requests.get(f"http://{self.ip}/readSTS", timeout=2)
+        self.status = parse_status(r.text)
+        return self.status
+
+
+# ============================================================
+# SERIAL IMPLEMENTATION
+# ============================================================
+
+class ST3020Serial(ST3020Base):
+    def __init__(self, port="COM4", baud=115200):
+        super().__init__()
+        self.port = port
+        self.baud = baud
+        self.ser = None
+
+    def connect(self, servo_index=1, mode="motor"):
+        self.ser = serial.Serial(self.port, self.baud, timeout=0.5)
+        time.sleep(2)  # ESP32 reset
+        return super().connect(servo_index, mode)
+
+    def send_command(self, arg0, arg1, arg2=0, arg3=0):
+        if not self.ser or not self.ser.is_open:
+            raise RuntimeError("Serial not connected")
+
+        cmd = f"C:{arg0},{arg1},{arg2},{arg3}\n"
+        self.ser.write(cmd.encode())
+        self.ser.flush()
+
+    def get_status(self):
+        if not self.ser or not self.ser.is_open:
+            return {}
+
+        self.ser.reset_input_buffer()
+        self.ser.write(b"STATUS\n")
+        time.sleep(0.2)
+
+        raw = ""
+        while self.ser.in_waiting:
+            raw += self.ser.read(self.ser.in_waiting).decode(errors="ignore")
+
+        self.status = parse_status(raw)
+        return self.status
+
+
+# ============================================================
+# ACTIVE SERVO (CHOSEN AT RUNTIME)
+# ============================================================
+
+servo: ST3020Base | None = None
+
+
+@router.post("/connect")
+async def connect(req: Request):
+    global servo
+    body = await req.json()
+
+    # method = body.get("method", "wifi")  # "wifi" or "serial"
+    method = "serial"
+
+    if method == "wifi":
+        servo = ST3020WiFi(ip=body.get("ip", "192.168.4.1"))
+    elif method == "serial":
+        servo = ST3020Serial(
+            port=body.get("port", "COM4"),
+            baud=body.get("baud", 115200)
+        )
+    else:
+        return {"connected": False, "error": "Invalid method"}
+
+    connected = servo.connect(
+        servo_index=body.get("servo_index", 1),
+        mode=body.get("mode", "motor")
+    )
+
+    return {
+        "connected": connected,
+        "method": method,
+        "status": servo.get_status()
+    }
+
+
+# ============================================================
+# CONTROL ENDPOINTS
+# ============================================================
+
+def run_motor_for(duration_s: float, command: int):
+    """
+    Run motor command for duration, then stop.
+    """
+    try:
+        servo.send_command(1, command)
+        time.sleep(duration_s)
+        servo.send_command(1, 2)  # stop
+    except Exception as e:
+        logging.error(f"Motor run failed: {e}")
+
+
+class GripperCommand(BaseModel):
+    time_s: float = 2.0
+    speed: int = 1000
 
 
 @router.post("/gripper_open")
-def open_gripper(time_s: float = 2, speed: int = 1000):
-    # servo.set_speed(speed)
-    threading.Thread(target=run_motor_for, args=(time_s, 1), daemon=True).start()
-    return {"status": "ok", "action": "open", "time_s": time_s, "speed": speed}
+def gripper_open(cmd: GripperCommand):
+    print('gripper_open()')
+    threading.Thread(
+        target=run_motor_for,
+        args=(cmd.time_s, 1),
+        daemon=True
+    ).start()
+
+    return {
+        "ok": True,
+        "action": "open",
+        "time_s": cmd.time_s,
+        "speed": cmd.speed
+    }
 
 
 @router.post("/gripper_close")
-def close_gripper(time_s: float = 2, speed: int = 1000):
-    # servo.set_speed(speed)
-    threading.Thread(target=run_motor_for, args=(time_s, 6), daemon=True).start()
-    return {"status": "ok", "action": "close", "time_s": time_s, "speed": speed}
+def gripper_close(cmd: GripperCommand):
+    threading.Thread(
+        target=run_motor_for,
+        args=(cmd.time_s, 6),
+        daemon=True
+    ).start()
+
+    return {
+        "ok": True,
+        "action": "close",
+        "time_s": cmd.time_s,
+        "speed": cmd.speed
+    }
 
 
-# --- STATUS ENDPOINT ---
+@router.post("/speed_up")
+def speed_up():
+    servo.send_command(1, 7)
+    return {"ok": True}
+
+
+@router.post("/speed_down")
+def speed_down():
+    servo.send_command(1, 8)
+    return {"ok": True}
+
+
 @router.get("/get_status")
 def get_status():
-    """Return cleaned servo status as JSON"""
-    status = servo.get_status()
-    return status
+    return servo.get_status() if servo else {}

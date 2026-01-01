@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
 import {
   Stack,
+  SvgIcon,
   Table,
   TableBody,
   TableCell,

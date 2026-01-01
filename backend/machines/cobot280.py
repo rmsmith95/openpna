@@ -9,7 +9,7 @@ router = APIRouter()
 
 # --- Models ---
 class ConnectRequest(BaseModel):
-    ip: str
+    ip: str = '10.163.187.60'
     port: int = 8000
     timeout: float = 3.0  # seconds
 

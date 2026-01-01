@@ -1,0 +1,133 @@
+"use client";
+
+import PropTypes from "prop-types";
+import { useState, useEffect } from "react";
+import {
+  ArrowLeft, 
+  ArrowRight,
+  Stack,
+  SvgIcon,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  TableHead,
+  Typography,
+  Box,
+  Button,
+  TextField,
+} from "@mui/material";
+
+const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed, joints, moveJoint, moveJoints }) => {
+  const [gotoJoints, setGotoJoints] = useState([0, 0, 0, 0, 0, 0]);
+  
+  return (
+    <Stack spacing={2}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Joint</TableCell>
+            <TableCell>Angle (deg)</TableCell>
+            <TableCell>Max (deg)</TableCell>
+            <TableCell>Goto</TableCell>
+            <TableCell>Step (deg)</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {axisData.map((row, index) => (
+            <TableRow key={row.joint}>
+              <TableCell>{row.joint}</TableCell>
+              <TableCell>{joints[index]}</TableCell>
+              <TableCell>{row.max}</TableCell>
+              <TableCell>
+                <TextField
+                  value={gotoJoints[index]}
+                  size="small"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^-?\d*\.?\d*$/.test(val)) {
+                      const newGotoJoints = [...gotoJoints];
+                      newGotoJoints[index] = Number(val);
+                      setGotoJoints(newGotoJoints);
+                    }
+                  }}
+                  sx={{ width: 80, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
+                  />
+              </TableCell>
+              <TableCell>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => moveJoint(index, -step[index])}
+                  >
+                      <SvgIcon component={ArrowRight} />
+                  </Button>
+                  <TextField
+                  value={step[index]}
+                  size="small"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^-?\d*\.?\d*$/.test(val)) {
+                      const newStep = [...step];
+                      newStep[index] = Number(val);
+                      setStep(newStep);
+                    }
+                  }}
+                  sx={{ width: 60, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
+                />
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => moveJoint(index, step[index])}
+                  >
+                    <SvgIcon component={ArrowRight} />
+                  </Button>
+                </Stack>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <Stack
+        direction="row"
+        spacing={3}
+        justifyContent="center"
+        alignItems="center"
+        sx={{ mt: 3 }}
+        flexWrap="wrap"
+      >
+        <Button variant="contained" onClick={() => moveJoints(gotoJoints)}>
+          GoTo
+        </Button>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography sx={{ fontWeight: 500 }}>Speed:</Typography>
+          <TextField
+            value={speed}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSpeed(val === "" ? 0 : parseFloat(val));
+            }}
+            size="small"
+            sx={{
+              width: 100,
+              "& .MuiInputBase-input": {
+                textAlign: "center",
+                p: "6px 8px",
+                fontSize: 14,
+              },
+            }}
+            type="number"
+            inputProps={{ min: 0 }}
+          />
+        </Stack>
+      </Stack>
+    </Stack>
+  );
+};
+
+Cobot280Controls.propTypes = {
+  connectedCobot280: PropTypes.bool,
+};
+
+export default Cobot280Controls;

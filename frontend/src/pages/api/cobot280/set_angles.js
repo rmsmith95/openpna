@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  console.log("📨 Received request to /api/arm6dof/set_angles", req.body);
+  console.log("📨 Received request to /api/cobot280/set_angles", req.body);
 
   // --- Only allow POST ---
   if (req.method !== "POST") {

@@ -50,11 +50,11 @@ const Page = () => {
 
             <Stack spacing={2}>
               <CollapsibleCard title="Gantry" color="secondary.main">
-                <Gantry difference={12} positive sx={{ height: "100%" }} value="Gantry-1" />
+                <Gantry difference={12} positive sx={{ height: "100%" }} value="Gantry" />
               </CollapsibleCard>
 
               <CollapsibleCard title="Cobot280" color="success.main">
-                <Cobot280 difference={12} positive sx={{ height: "100%" }} value="Cobot280-1" />
+                <Cobot280 difference={12} positive sx={{ height: "100%" }} value="Cobot280" />
               </CollapsibleCard>
             </Stack>
           </Stack>

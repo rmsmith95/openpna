@@ -5,26 +5,25 @@ import ArrowPathIcon from '@heroicons/react/24/solid/ArrowPathIcon';
 import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
 import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
 import { Box, Button, Container, Stack, SvgIcon, Typography } from '@mui/material';
-import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { JobsTable } from 'src/sections/jobs/job-table';
-import { JobSearch } from 'src/sections/jobs/job-search';
-import { applyPagination } from 'src/utils/apply-pagination';
+import { useFactory } from 'src/utils/factory-context';
 
-const usePaginated = (items, page, rowsPerPage) =>
-  useMemo(() => applyPagination(items, page, rowsPerPage), [items, page, rowsPerPage]);
 
 const JobsPage = () => {
-  const [jobs, setJobs] = useState({}); // dict of jobId -> job
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchFilter, setSearchFilter] = useState('');
+  const { parts } = useFactory(); // <-- global parts
+  const partsArray = useMemo(() => Object.values(parts), [parts]);
+  const partsIds = useMemo(() => Object.keys(parts), [parts]);
+  const machines = ["Gantry", "Cobot280"];
+  const [jobs, setJobs] = useState([]);
+  const currentJobId = null;
 
   const fetchJobs = useCallback(async () => {
     try {
       const res = await fetch(`http://127.0.0.1:8000/get_jobs`);
       const data = await res.json();
-      setJobs(data || {});
+      console.log(data)
+      setJobs(Object.values(data || {}));
     } catch (err) {
       console.error('Error fetching jobs:', err);
     }
@@ -34,23 +33,40 @@ const JobsPage = () => {
     fetchJobs();
   }, [fetchJobs]);
 
-  const jobsArray = useMemo(() => 
-    Object.values(jobs).filter(job =>
-      job.part.toLowerCase().includes(searchFilter.toLowerCase())
-    ), [jobs, searchFilter]
-  );
+  const saveToFile = () => {
+    const json = JSON.stringify(jobs, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
 
-  const jobsIds = useMemo(() => jobsArray.map(j => j.id), [jobsArray]);
-  const jobsSelection = useSelection(jobsIds);
-  const paginatedJobs = usePaginated(jobsArray, page, rowsPerPage);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'jobs.json';
+    a.click();
 
-  const handlePageChange = (event, newPage) => setPage(newPage);
-  const handleRowsChange = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    URL.revokeObjectURL(url);
   };
 
-  const currentJobId = null;
+  const loadFromFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (Array.isArray(data)) {
+          setJobs(data);
+        } else {
+          alert("Invalid JSON format");
+        }
+      } catch (err) {
+        alert("Failed to read JSON file");
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
 
   return (
     <>
@@ -67,24 +83,39 @@ const JobsPage = () => {
               <Button variant="contained" color="warning">Stop</Button>
               <Button variant="contained" color="success" startIcon={<SvgIcon fontSize="small"><PlayIcon /></SvgIcon>}>Step</Button>
               <Button variant="outlined" color="primary" startIcon={<SvgIcon fontSize="small"><ArrowPathIcon /></SvgIcon>}>Reset</Button>
-              <JobSearch value={searchFilter} onChange={(e) => { setSearchFilter(e.target.value); setPage(0); }} />
-              <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowUpOnSquareIcon /></SvgIcon>}>Import</Button>
-              <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowDownOnSquareIcon /></SvgIcon>}>Export</Button>
+              <Button color="inherit"
+                startIcon={
+                  <SvgIcon fontSize="small">
+                    <ArrowUpOnSquareIcon />
+                  </SvgIcon>
+                }>
+                Import
+              </Button>
+              <input
+                type="file"
+                accept=".json"
+                hidden
+                onChange={loadFromFile}
+              />
+              <Button
+                color="inherit"
+                startIcon={
+                  <SvgIcon fontSize="small">
+                    <ArrowDownOnSquareIcon />
+                  </SvgIcon>
+                }
+                onClick={saveToFile}
+              >
+                Export
+              </Button>
             </Stack>
 
             <JobsTable
-              count={jobsArray.length}
-              items={paginatedJobs}
+              rows={jobs}
+              setRows = {setJobs}
               currentJobId={currentJobId}
-              onDeselectAll={jobsSelection.handleDeselectAll}
-              onDeselectOne={jobsSelection.handleDeselectOne}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsChange}
-              onSelectAll={jobsSelection.handleSelectAll}
-              onSelectOne={jobsSelection.handleSelectOne}
-              page={page}
-              rowsPerPage={rowsPerPage}
-              selected={jobsSelection.selected}
+              machines={machines}
+              parts={parts}
             />
           </Stack>
         </Container>

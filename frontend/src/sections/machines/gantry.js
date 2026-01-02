@@ -20,7 +20,7 @@ import {
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import GantryControls from '../../components/gantry-controls';
-import GantryActions from '../../components/gantry-actions';
+// import GantryActions from '../../components/gantry-actions';
 import GripperControls from '../../components/gripper-controls';
 import { useFactory } from "src/utils/factory-context";
 
@@ -123,68 +123,6 @@ export const Gantry = (props) => {
     return () => clearInterval(interval);
   }, [10000]);
 
-  const goto = async (gotoPosition, speed) => {
-    try {
-      const res = await fetch("/api/tinyg/goto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...gotoPosition, speed }),
-      });
-      console.log("GoTo response:", await res.json());
-    } catch (err) {
-      console.error("GoTo error:", err);
-    }
-  };
-
-  async function handleUnlockToolChanger(time = 5) {
-    await fetch("/api/tinyg/unlock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ time_s:time }),
-    });
-  }
-
-  async function gripperGoTo(position=1000, load_limit=100, speed=1000) {
-    await fetch("/api/gripper/gripper_goto", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ position, load_limit, speed }),
-    });
-  }
-
-  async function stepOpenGripper(time_s = 1, speed=1000) {
-    await fetch("/api/gripper/gripper_open", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ time_s, speed }),
-    });
-  }
-
-  async function stepCloseGripper(time_s = 1, speed=1000) {
-    await fetch("/api/gripper/gripper_close", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ time_s, speed }),
-    });
-  }
-
-  async function speedGripperUp () {
-      await fetch("/api/gripper/speed_up", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-      });
-  }
-
-  async function speedGripperDown () {
-      await fetch("/api/gripper/speed_down", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-      });
-  }
-
-
   return (
     <Card sx={sx}>
       <CardContent sx={{ pt: 0 }}>
@@ -208,7 +146,7 @@ export const Gantry = (props) => {
               </Stack>
             } />
             <Tab label="Control" />
-            <Tab label="Actions" />
+            {/* <Tab label="Actions" /> */}
             <Tab
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
@@ -301,7 +239,7 @@ export const Gantry = (props) => {
             />
           )}
 
-          {tab === 2 && (
+          {/* {tab === 2 && (
             <GantryActions
               connectedTinyG={connectedTinyG}
               gripperGoTo={gripperGoTo}
@@ -310,7 +248,7 @@ export const Gantry = (props) => {
               handleUnlockToolChanger={handleUnlockToolChanger}
               goto={goto}
             />
-          )}
+          )} */}
 
           {tab === 3 && (
             <GripperControls

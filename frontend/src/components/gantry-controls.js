@@ -15,8 +15,9 @@ import {
   Button,
   TextField,
 } from "@mui/material";
+import {goto, getInfo, handleUnlockToolChanger, stepMove} from './gantry-actions';
 
-const GantryControls = ({ goto, position, gotoPosition, setGotoPosition, handleUnlockToolChanger }) => {
+const GantryControls = ({ position, gotoPosition, setGotoPosition }) => {
   const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 10 });
   const [speed, setSpeed] = useState(3000);
 
@@ -57,22 +58,6 @@ const GantryControls = ({ goto, position, gotoPosition, setGotoPosition, handleU
     }
   };
 
-  const stepMove = async (axis, direction) => {
-    const delta = Number(step[axis]) || 0;
-    const move = { x: 0, y: 0, z: 0, a: 0, [axis]: direction * delta };
-
-    try {
-      const res = await fetch("/api/tinyg/step", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...move, speed }),
-      });
-      console.log("Step response:", await res.json());
-    } catch (err) {
-      console.error("Error moving gantry:", err);
-    }
-  };
-
   return (
     <Stack direction="row" spacing={4} alignItems="flex-start" sx={{ width: "100%" }}>
       {/* --- Full Width Table --- */}
@@ -100,7 +85,7 @@ const GantryControls = ({ goto, position, gotoPosition, setGotoPosition, handleU
                 </TableCell>
 
                 <TableCell sx={{ width: 60, p: 0.5 }} align="center">
-                  {position[axis].toFixed(2)}
+                  {/* {position[axis].toFixed(2)} */}
                 </TableCell>
 
                 <TableCell sx={{ width: 80, p: 0.5 }} align="center">

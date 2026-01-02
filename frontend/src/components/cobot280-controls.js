@@ -17,8 +17,10 @@ import {
   Button,
   TextField,
 } from "@mui/material";
+import {moveJoint, moveJoints} from './cobot280-actions';
 
-const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed, joints, moveJoint, moveJoints }) => {
+
+const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed, joints }) => {
   const [gotoJoints, setGotoJoints] = useState([0, 0, 0, 0, 0, 0]);
   
   return (

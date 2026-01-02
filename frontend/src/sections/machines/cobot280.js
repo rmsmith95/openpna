@@ -9,90 +9,16 @@ import ArrowRightIcon from '@heroicons/react/24/solid/ArrowRightIcon';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import Cobot280Controls from '../../components/cobot280-controls';
+import {fetchPositions} from '../../components/cobot280-actions';
 
 export const Cobot280 = (props) => {
-  const { sx, value } = props;
+  const { connectedCobot280 } = props;
   const [tab, setTab] = useState(0);
-
-  const [connectionType, setConnectionType] = useState("network");
-  const [connectedCobot280, setConnectedCobot280] = useState(false);
-  const [port, setPort] = useState("COM4");
-  const [baud, setBaud] = useState(115200);
-  const [ipAddress, setIpAddress] = useState("10.163.187.60");
 
   const [joints, setJoints] = useState([0, 0, 0, 0, 0, 0]);
   const [step, setStep] = useState([5, 5, 5, 5, 5, 5]);
   const [speed, setSpeed] = useState(50);
   const handleChange = (_, newValue) => setTab(newValue);
-
-  const handleConnectCobot280 = async () => {
-    try {
-      const res = await fetch("/api/cobot280/connect_network", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ip: ipAddress }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data.status === "ok" && Array.isArray(data.angles)) {
-        setConnectedCobot280(true);
-        setJoints(data.angles.map(Number)); // ensure numeric
-      }
-      else {
-        setConnectedCobot280(false);
-      }
-    } catch (err) {
-      console.error("❌ Error fetching joint positions:", err);
-    }
-  };
-
-  const fetchPositions = async () => {
-    try {
-      const res = await fetch("/api/cobot280/get_position", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ipAddress: ipAddress }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data.status === "ok" && Array.isArray(data.angles)) {
-        setJoints(data.angles.map(Number)); // ensure numeric
-      }
-    } catch (err) {
-      console.error("❌ Error fetching joint positions:", err);
-    }
-  };
-
-  const moveJoint = async (jointIndex, deltaValue) => {
-    const newAngles = [...joints];
-    newAngles[jointIndex] += deltaValue;
-    await moveJoints(newAngles);
-  };
-  
-  const moveJoints = async (newAngles) => {
-    try {
-      const response = await fetch("/api/cobot280/set_angles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ipAddress: ipAddress,
-          angles: newAngles,
-          speed: speed,
-        }),
-      });
-
-      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-      const data = await response.json();
-      console.log("✅ SetAngles response:", data);
-
-      if (data.status === "ok" || data.status === "sent") {
-        // fetch updated positions from backend to avoid drift
-        fetchPositions();
-      }
-    } catch (err) {
-      console.error("❌ Error setting angles:", err);
-    }
-  };
 
   // fetch positions once on mount
   useEffect(() => {
@@ -109,7 +35,7 @@ export const Cobot280 = (props) => {
   ];
 
   return (
-    <Card sx={sx}>
+    <Card>
       <CardContent sx={{ pt: 0 }}>
         {/* Tabs */}
         <Box sx={{ mt: 3 }}>
@@ -123,7 +49,7 @@ export const Cobot280 = (props) => {
             <Tab
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <span>Connection</span>
+                  <span>Cobot280</span>
                   {connectedCobot280 ? (
                     <SvgIcon fontSize="small" color="success">
                       <CheckCircleIcon />
@@ -145,7 +71,7 @@ export const Cobot280 = (props) => {
           {/* Connection Tab */}
           {tab === 0 && (
             <Stack spacing={3}>
-              <Stack spacing={2} direction="row" alignItems="center">
+              {/* <Stack spacing={2} direction="row" alignItems="center">
                 <FormControl size="small" sx={{ minWidth: 120 }}>
                   <InputLabel>Type</InputLabel>
                   <Select
@@ -188,7 +114,7 @@ export const Cobot280 = (props) => {
                 >
                   Connect
                 </Button>
-              </Stack>
+              </Stack> */}
 
               <Table size="small">
                 <TableHead>
@@ -218,8 +144,8 @@ export const Cobot280 = (props) => {
               speed={speed}
               setSpeed={setSpeed}
               joints={joints}
-              moveJoint={moveJoint}
-              moveJoints={moveJoints}
+              // moveJoint={moveJoint}
+              // moveJoints={moveJoints}
             />
           )}
         </Box>

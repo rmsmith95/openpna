@@ -20,7 +20,7 @@ import { goto, gripperGoTo, stepCloseGripper, stepOpenGripper, speedGripperDown,
 
 export const JobsTable = (props) => {
   const {
-    rows,
+    rows = [],
     setRows,
     currentJobId = null,
     machines,
@@ -180,7 +180,7 @@ export const JobsTable = (props) => {
                       >
                         <TrashIcon width={20} height={20} color="red" />
                       </IconButton>
-                      <Button variant="outlined" onClick={addRow}>
+                      <Button onClick={addRow}>
                         +
                       </Button>
                     </TableCell>

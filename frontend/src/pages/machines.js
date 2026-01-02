@@ -6,11 +6,18 @@ import ArrowUpOnSquareIcon from "@heroicons/react/24/solid/ArrowUpOnSquareIcon";
 import { Layout as DashboardLayout } from "src/layouts/dashboard/layout";
 import { Gantry } from "src/sections/machines/gantry";
 import { Cobot280 } from "src/sections/machines/cobot280";
+import { Gripper } from "src/sections/machines/gripper";
+import { Connections } from "src/components/connections";
 import CollapsibleCard from "src/components/collapsible-card";
 
 const Page = () => {
+  // Connection state
   const [serverStatus, setServerStatus] = useState("stopped"); // stopped | loading | connected
-
+  const [connectedTinyG, setConnectedTinyG] = useState(false);
+  const [connectedArduino, setConnectedArduino] = useState(false);
+  const [connectedCobot280, setConnectedCobot280] = useState(false);
+  const [connectedServoGripper, setConnectedServoGripper] = useState(false);
+  
   const checkServer = useCallback(async () => {
     try {
       const res = await fetch("http://127.0.0.1:8000/health");
@@ -42,19 +49,36 @@ const Page = () => {
                     {serverStatus === "loading" && <CircularProgress size={12} color="inherit" />}
                     {serverStatus === "connected" ? "Connected" : serverStatus === "loading" ? "Loading" : "Stopped"}
                   </Box>
-                  <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowUpOnSquareIcon /></SvgIcon>}>Import</Button>
-                  <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowDownOnSquareIcon /></SvgIcon>}>Export</Button>
+                  {/* <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowUpOnSquareIcon /></SvgIcon>}>Import</Button>
+                  <Button color="inherit" startIcon={<SvgIcon fontSize="small"><ArrowDownOnSquareIcon /></SvgIcon>}>Export</Button> */}
                 </Stack>
               </Stack>
             </Stack>
 
             <Stack spacing={2}>
-              <CollapsibleCard title="Gantry" color="secondary.main">
-                <Gantry difference={12} positive sx={{ height: "100%" }} value="Gantry" />
+              <CollapsibleCard title="Connections" color="black">
+                <Connections 
+                  connectedTinyG={connectedTinyG}
+                  setConnectedTinyG={setConnectedTinyG}
+                  connectedArduino={connectedArduino} 
+                  setConnectedArduino={setConnectedArduino} 
+                  connectedCobot280={connectedCobot280} 
+                  setConnectedCobot280={setConnectedCobot280} 
+                  connectedServoGripper={connectedServoGripper}
+                  setConnectedServoGripper={setConnectedServoGripper}
+                />
               </CollapsibleCard>
 
-              <CollapsibleCard title="Cobot280" color="success.main">
-                <Cobot280 difference={12} positive sx={{ height: "100%" }} value="Cobot280" />
+              <CollapsibleCard title="Gantry" color="blue">
+                <Gantry connectedTinyG={connectedTinyG} />
+              </CollapsibleCard>
+
+              <CollapsibleCard title="Cobot280" color="blue">
+                <Cobot280 />
+              </CollapsibleCard>
+
+              <CollapsibleCard title="Gripper" color="purple">
+                <Gripper connectedServoGripper={connectedServoGripper} />
               </CollapsibleCard>
             </Stack>
           </Stack>

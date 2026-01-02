@@ -11,6 +11,29 @@ export const goto = async (gotoPosition, speed) => {
   }
 };
 
+export const getInfo = async () => {
+  try {
+    const res = await fetch("/api/tinyg/get_info");
+    const data = await res.json();
+    const positions = { x: 0, y: 0, z: 0, a: 0 };
+
+    if (Array.isArray(data.status)) {
+      data.status.forEach((item) => {
+        const raw = item.raw ?? JSON.stringify(item);
+        let m;
+        if ((m = raw.match(/X position:\s*([-0-9.]+)/))) positions.x = parseFloat(m[1]);
+        if ((m = raw.match(/Y position:\s*([-0-9.]+)/))) positions.y = parseFloat(m[1]);
+        if ((m = raw.match(/Z position:\s*([-0-9.]+)/))) positions.z = parseFloat(m[1]);
+        if ((m = raw.match(/A position:\s*([-0-9.]+)/))) positions.a = parseFloat(m[1]);
+      });
+    }
+    setPosition(positions);
+    setGantryPosition(positions);
+  } catch (err) {
+    console.error("Error getting gantry position:", err);
+  }
+};
+
 export async function handleUnlockToolChanger(time = 5) {
   await fetch("/api/tinyg/unlock", {
     method: "POST",
@@ -19,45 +42,22 @@ export async function handleUnlockToolChanger(time = 5) {
   });
 }
 
-export async function gripperGoTo(position=1000, load_limit=100, speed=1000) {
-  await fetch("/api/gripper/gripper_goto", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ position, load_limit, speed }),
-  });
-}
+export const stepMove = async (axis, direction) => {
+  const delta = Number(step[axis]) || 0;
+  const move = { x: 0, y: 0, z: 0, a: 0, [axis]: direction * delta };
 
-export async function stepOpenGripper(time_s = 1, speed=1000) {
-  await fetch("/api/gripper/gripper_open", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ time_s, speed }),
-  });
-}
-
-export async function stepCloseGripper(time_s = 1, speed=1000) {
-  await fetch("/api/gripper/gripper_close", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ time_s, speed }),
-  });
-}
-
-export async function speedGripperUp () {
-    await fetch("/api/gripper/speed_up", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+  try {
+    const res = await fetch("/api/tinyg/step", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...move, speed }),
     });
-}
+    console.log("Step response:", await res.json());
+  } catch (err) {
+    console.error("Error moving gantry:", err);
+  }
+};
 
-export async function speedGripperDown () {
-    await fetch("/api/gripper/speed_down", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-    });
-}
 
 // "use client";
 

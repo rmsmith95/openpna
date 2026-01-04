@@ -118,14 +118,19 @@ export const JobsTable = (props) => {
                         size="small"
                         fullWidth
                       >
-                        {(job.machines === "Gantry"
+                      {(
+                        job.machines === "Gantry"
                           ? ["Goto", "Step", "Unlock"]
-                          : ["Goto", "Step"]
-                        ).map((act) => (
-                          <MenuItem key={act} value={act}>
-                            {act}
-                          </MenuItem>
-                        ))}
+                          : job.machines === "Cobot280"
+                          ? ["Goto", "Step"]
+                          : job.machines === "Gripper"
+                          ? ["Open", "Close"]
+                          : []
+                      ).map((act) => (
+                        <MenuItem key={act} value={act}>
+                          {act}
+                        </MenuItem>
+                      ))}
                       </Select>
 
                       {/* Conditional Inputs */}

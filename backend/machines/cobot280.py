@@ -19,6 +19,13 @@ class SetAnglesRequest(BaseModel):
     ip: str       # Pi IP
     port: int = 8000  # optional override
 
+class SetAngleRequest(BaseModel):
+    jointIndex: int
+    deltaValue: float
+    speed: int = 50
+    ip: str       # Pi IP
+    port: int = 8000  # optional override
+
 # --- Helper to send command to Pi ---
 def send_command_to_pi(cmd: dict, ip: str, port: int, timeout: float = 3.0):
     print(f'cmd: {cmd}, ip: {ip}:{port}')
@@ -38,6 +45,12 @@ def send_command_to_pi(cmd: dict, ip: str, port: int, timeout: float = 3.0):
 def connect_network(req: ConnectRequest):
     test_cmd = {"command": "get_position"}
     return send_command_to_pi(test_cmd, req.ip, req.port, req.timeout)
+
+# --- Set angles ---
+@router.post("/set_angle")
+def set_angles(req: SetAngleRequest):
+    cmd = {"command": "set_angle", "jointIndex": req.jointIndex, "deltaValue": req.deltaValue, "speed": req.speed}
+    return send_command_to_pi(cmd, req.ip, req.port)
 
 # --- Set angles ---
 @router.post("/set_angles")

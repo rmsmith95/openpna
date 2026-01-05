@@ -20,6 +20,98 @@ export const Cobot280 = (props) => {
   const [speed, setSpeed] = useState(50);
   const handleChange = (_, newValue) => setTab(newValue);
 
+<<<<<<< Updated upstream
+=======
+  const handleConnectCobot280 = async () => {
+    try {
+      const res = await fetch("/api/cobot280/connect_network", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ip: ipAddress }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.status === "ok" && Array.isArray(data.angles)) {
+        setConnectedCobot280(true);
+        setJoints(data.angles.map(Number)); // ensure numeric
+      }
+      else {
+        setConnectedCobot280(false);
+      }
+    } catch (err) {
+      console.error("❌ Error fetching joint positions:", err);
+    }
+  };
+
+  const fetchPositions = async () => {
+    try {
+      const res = await fetch("/api/cobot280/get_position", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ipAddress: ipAddress }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.status === "ok" && Array.isArray(data.angles)) {
+        setJoints(data.angles.map(Number)); // ensure numeric
+      }
+    } catch (err) {
+      console.error("❌ Error fetching joint positions:", err);
+    }
+  };
+
+  const moveJoint = async (jointIndex, deltaValue) => {
+    try {
+      const response = await fetch("/api/cobot280/set_angle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ipAddress: ipAddress,
+          jointIndex: jointIndex,
+          deltaValue: deltaValue,
+          speed: speed,
+        }),
+      });
+
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      const data = await response.json();
+      console.log("✅ SetAngles response:", data);
+
+      if (data.status === "ok" || data.status === "sent") {
+        // fetch updated positions from backend to avoid drift
+        fetchPositions();
+      }
+    } catch (err) {
+      console.error("❌ Error setting angles:", err);
+    }
+  };
+  
+  const moveJoints = async (newAngles) => {
+    try {
+      const response = await fetch("/api/cobot280/set_angles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ipAddress: ipAddress,
+          angles: newAngles,
+          speed: speed,
+        }),
+      });
+
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      const data = await response.json();
+      console.log("✅ SetAngles response:", data);
+
+      if (data.status === "ok" || data.status === "sent") {
+        // fetch updated positions from backend to avoid drift
+        fetchPositions();
+      }
+    } catch (err) {
+      console.error("❌ Error setting angles:", err);
+    }
+  };
+
+>>>>>>> Stashed changes
   // fetch positions once on mount
   useEffect(() => {
     fetchPositions();

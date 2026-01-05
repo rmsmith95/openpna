@@ -32,6 +32,15 @@ def handle_client(conn, addr):
                     speed = int(cmd.get("speed", 50))
                     mc.send_angles(angles, speed)
                     resp = {"status": "ok", "angles": angles}
+                
+                elif command == "set_angle":
+                    jointIndex = cmd.get("jointIndex")
+                    deltaValue = cmd.get("deltaValue")
+                    angles = mc.get_angles()
+                    angles[jointIndex] += deltaValue
+                    speed = int(cmd.get("speed", 50))
+                    mc.send_angles(angles, speed)
+                    resp = {"status": "ok", "angles": angles}
 
                 elif command == "get_position":
                     angles = mc.get_angles()

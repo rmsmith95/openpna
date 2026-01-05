@@ -3,8 +3,10 @@ const char* AP_SSID = "ESP32_DEV";
 const char* AP_PWD  = "12345678";
 
 // WIFI_STA settings.
-const char* STA_SSID = "Smart-5G-Hub-GF59";
-const char* STA_PWD  = "ugRe9KrXDeHb";
+// const char* STA_SSID = "Smart-5G-Hub-GF59";
+// const char* STA_PWD  = "ugRe9KrXDeHb";
+const char* STA_SSID = "Galaxy S24fe";
+const char* STA_PWD  = "eibz1588";
 
 // the MAC address of the device you want to ctrl.
 uint8_t broadcastAddress[] = {0x08, 0x3A, 0xF2, 0x93, 0x5F, 0xA8};

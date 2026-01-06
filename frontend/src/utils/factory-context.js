@@ -5,6 +5,7 @@ const FactoryContext = createContext();
 export const FactoryProvider = ({ children }) => {
   const [parts, setParts] = useState({});
   const [jobs, setJobs] = useState({});
+  const [tools, setTools] = useState({});
   const [machines, setMachines] = useState({});
   const [loading, setLoading] = useState({ parts: false, jobs: false, machines: false });
   const [gantryPosition, setGantryPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
@@ -26,6 +27,9 @@ export const FactoryProvider = ({ children }) => {
         case 'machines':
           setMachines(data || {});
           break;
+        case 'tools':
+          setJobs(data || {});
+          break;
         default:
           console.warn(`Unknown state key: ${setStateKey}`);
       }
@@ -41,6 +45,7 @@ export const FactoryProvider = ({ children }) => {
     fetchData('get_parts', 'parts');
     fetchData('get_jobs', 'jobs');
     fetchData('get_machines', 'machines');
+    fetchData('get_tools', 'tools');
   }, [fetchData]);
 
   return (
@@ -49,6 +54,7 @@ export const FactoryProvider = ({ children }) => {
         parts,
         jobs,
         machines,
+        tools,
         loading,
         fetchData,
         gantryPosition,

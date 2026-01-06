@@ -20,9 +20,8 @@ import {
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import GantryControls from '../../components/gantry-controls';
-import { getInfo } from '../../components/gantry-actions';
+import { getInfo, goto } from '../../components/gantry-actions';
 import { useFactory } from "src/utils/factory-context";
-import { setDate } from 'date-fns';
 
 
 export const Gantry = (props) => {
@@ -32,7 +31,10 @@ export const Gantry = (props) => {
   const [data, setData] = useState(null);
   const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
-  // const { setGantryPosition } = useFactory();
+  const { machines, } = useFactory();
+  // const gantry = machines["m1"];
+  // const gantryLocations = gantry["locations"]
+  const gantry = Object.values(machines || {}).find(m => m.name === "gantry");
 
   const handleChange = (event, newValue) => setTab(newValue);
 
@@ -74,6 +76,7 @@ export const Gantry = (props) => {
               </Stack>
             } />
             <Tab label="Control" />
+            <Tab label="Locations" />
           </Tabs>
         </Box>
 
@@ -110,6 +113,42 @@ export const Gantry = (props) => {
               gotoPosition={gotoPosition}
               setGotoPosition={setGotoPosition}
             />
+          )}
+
+          {tab === 2 && (
+            <Stack>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Position</TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {gantry?.locations
+                    ? Object.values(gantry.locations).map((loc) => (
+                      <TableRow key={loc.id}>
+                        <TableCell>{loc.name}</TableCell>
+                        <TableCell>
+                          {loc.location.x}, {loc.location.y}, {loc.location.z}, {loc.location.a}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="contained" onClick={() => goto({...loc.location, speed:1000})}>
+                            GoTo
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                    : (
+                      <TableRow>
+                        <TableCell colSpan={2}>Loading locations...</TableCell>
+                      </TableRow>
+                    )
+                  }
+                </TableBody>
+              </Table>
+            </Stack>
           )}
 
         </Box>

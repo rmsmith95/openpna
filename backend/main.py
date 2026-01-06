@@ -80,21 +80,21 @@ def update_jobs(req: UpdateJobsRequest):
 
 @app.get("/get_jobs")
 def get_jobs():
-    """
-    Return all jobs as a dict: jobId -> job
-    """
+    """Return all jobs as a dict: jobId -> job"""
     global factory
     return factory.jobs
 
-# --- Machines ---
-
 @app.get("/get_machines")
 def get_machines():
-    """
-    Return all machines as a dict: machineId -> machine
-    """
+    """Return all machines as a dict: machineId -> machine"""
     global factory
     return factory.machines
+
+@app.get("/get_tools")
+def get_tools():
+    """Return all tools as a dict: toolId -> tool"""
+    global factory
+    return factory.tools
 
 # --- Run Job ---
 

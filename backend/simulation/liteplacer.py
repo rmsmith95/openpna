@@ -20,7 +20,7 @@ def sim(command: str):
     command = command.strip()
     _sim_state["last_command"] = command
 
-    print(command)
+    # print(command)
 
     # Simulate basic responses
     response_lines = []

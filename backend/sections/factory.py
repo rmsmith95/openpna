@@ -12,6 +12,7 @@ class Factory:
         self.machines: Dict[str, dict] = {}
         self.parts: Dict[str, dict] = {}
         self.jobs: Dict[str, dict] = {}
+        self.tools: Dict[str, dict] = {}
     
     def plot_path(self, machine, target_part):
         workspace = machine['bounds']  # ((0, 300), (0, 200))  # XY bounds

@@ -6,17 +6,21 @@ import {
   IconButton,
   MenuItem,
   Select,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
+  TextField,
   Typography,
   LinearProgress
 } from '@mui/material';
 import { TrashIcon } from '@heroicons/react/24/solid';
 import { Scrollbar } from 'src/components/scrollbar';
-import { goto, gripperGoTo, stepCloseGripper, stepOpenGripper, speedGripperDown, speedGripperUp, handleUnlockToolChanger} from '../../components/gantry-actions';
+import { goto, stepMove, handleUnlockToolChanger } from '../../components/gantry-actions';
+import { stepCloseGripper, stepOpenGripper, speedGripperDown, speedGripperUp } from '../../components/gripper-actions';
+import { fetchPositions, moveJoint, moveJoints } from '../../components/cobot280-actions';
 
 export const JobsTable = (props) => {
   const {
@@ -27,20 +31,52 @@ export const JobsTable = (props) => {
     parts,
   } = props;
 
+  const PARAM_TEMPLATES = {
+    gantry: {
+      goto: { x: 0, y: 0, z: 0, a: 0, speed: 2000 },
+      step: { x: 0, y: 0, z: 0, r: 0, speed: 1000 },
+      unlock: {}
+    },
+    cobot280: {
+      goto: { j1: 0, j2: 0, j3: 0, j4: 0, j5: 0, j6: 0 },
+      step: { j1: 0, j2: 0, j3: 0, j4: 0, j5: 0, j6: 0 }
+    },
+    gripper: {
+      open: {},
+      close: {},
+      speedUp: {},
+      speedDown: {}
+    }
+  };
+
   // Compute progress
   const count = rows.length
   const completedCount = rows.filter(j => j.status === 'Done').length;
   const progressPercent = (completedCount / count) * 100;
 
-  const updateRow = (id, key, value) => {
-    const updated = rows.map((row) => row.id === id ? { ...row, [key]: value } : row);
-    setRows(updated);
+  const getDefaultParams = (machine, action) =>
+    PARAM_TEMPLATES?.[machine]?.[action] ? { ...PARAM_TEMPLATES[machine][action] } : {};
+
+  const updateRow = (jobId, machine, action, params) => {
+    setRows(rows.map(row => {
+      if (row.id !== jobId) return row;
+
+      const finalMachine = machine ?? row.machine;
+      const finalAction = action ?? row.action;
+
+      return {
+        ...row,
+        machine: finalMachine,
+        action: finalAction,
+        params: params ?? getDefaultParams(finalMachine, finalAction)
+      };
+    }));
   };
 
   const addRow = () => {
     setRows([
       ...rows,
-      { machines: "Gantry", action: "" },
+      { id: "j", machine: "gantry", action: "unlock", params: {} },
     ]);
   };
 
@@ -49,22 +85,36 @@ export const JobsTable = (props) => {
     setRows(updated);
   };
 
-  const runAction = (id) => {
-    const row = rows.find(row => row.id === id);
-    switch (row.action) {
-      case "Goto":
-        goto?.({ x: row.x, y: row.y, z: row.z, a: row.a ?? 0 }, 2000);
-        break;
+  const runAction = (job_id) => {
+    const job = rows.find((row) => row.id === job_id);
+    if (!job) return;
+    const { machine, action, params } = job;
+    console.log("Running job:", machine, action, params);
 
-      case "step":
+    switch (machine) {
+      case "gantry":
+        switch (action) {
+          case "goto": return goto?.(params);
+          case "step": return stepMove?.(params);
+          case "unlock": return handleUnlockToolChanger?.(5);
+        }
         break;
-
-      case "unlock":
-        handleUnlockToolChanger?.(5);
+      case "cobot280":
+        switch (action) {
+          case "goto": return moveJoints?.(params);
+          case "step": return moveJoint?.(params);
+        }
         break;
-
+      case "gripper":
+        switch (action) {
+          case "open": return stepOpenGripper?.();
+          case "close": return stepCloseGripper?.();
+          case "speedUp": return speedGripperUp?.();
+          case "speedDown": return speedGripperDown?.();
+        }
+        break;
       default:
-        console.warn("Unknown action:", row.change);
+        console.warn("Unknown machine/action:", machine, action);
     }
   };
 
@@ -78,12 +128,13 @@ export const JobsTable = (props) => {
                 <TableCell>Job</TableCell>
                 <TableCell>Machine</TableCell>
                 <TableCell>Action</TableCell>
+                <TableCell>Parameters</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((job, index) => {
+              {rows.map((job) => {
                 const isCurrent = job.id === currentJobId;
                 return (
                   <TableRow
@@ -95,8 +146,10 @@ export const JobsTable = (props) => {
                     {/* Machines Dropdown */}
                     <TableCell>
                       <Select
-                        value={job.machines} // show current machine
-                        onChange={(e) => updateRow(job.id, 'machines', e.target.value)} // update 'machine' field
+                        value={job.machine}
+                        onChange={(e) =>
+                          updateRow(job.id, e.target.value, "")
+                        }
                         size="small"
                         fullWidth
                       >
@@ -108,63 +161,33 @@ export const JobsTable = (props) => {
                       </Select>
                     </TableCell>
 
-
-                    {/* Action */}
                     {/* Action Dropdown */}
                     <TableCell>
                       <Select
                         value={job.action || ""}
-                        onChange={(e) => updateRow(job.id, 'action', e.target.value)}
+                        onChange={(e) => updateRow(job.id, job.machine, e.target.value)}
                         size="small"
                         fullWidth
                       >
-                      {(
-                        job.machines === "Gantry"
-                          ? ["Goto", "Step", "Unlock"]
-                          : job.machines === "Cobot280"
-                          ? ["Goto", "Step"]
-                          : job.machines === "Gripper"
-                          ? ["Open", "Close"]
-                          : []
-                      ).map((act) => (
-                        <MenuItem key={act} value={act}>
-                          {act}
-                        </MenuItem>
-                      ))}
+                        {(
+                          job.machine === "gantry" ? ["goto", "step", "unlock"] :
+                            job.machine === "cobot280" ? ["goto", "step"] :
+                              job.machine === "gripper" ? ["open", "close"] : []
+                        ).map((act) => (
+                          <MenuItem key={act} value={act}>
+                            {act}
+                          </MenuItem>
+                        ))}
                       </Select>
-
-                      {/* Conditional Inputs */}
-                      {job.action === "Goto" && job.machines === "Gantry" && (
-                        <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                          {["x", "y", "z", "r"].map((axis) => (
-                            <input
-                              key={axis}
-                              type="number"
-                              placeholder={axis.toUpperCase()}
-                              value={job[axis] || ""}
-                              onChange={(e) => updateRow(job.id, axis, Number(e.target.value))}
-                              style={{ width: 50 }}
-                            />
-                          ))}
-                        </Box>
-                      )}
-
-                      {job.action === "Goto" && job.machines === "Cobot280" && (
-                        <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                          {["j1", "j2", "j3", "j4", "j5", "j6"].map((joint) => (
-                            <input
-                              key={joint}
-                              type="number"
-                              placeholder={joint.toUpperCase()}
-                              value={job[joint] || ""}
-                              onChange={(e) => updateRow(job.id, joint, Number(e.target.value))}
-                              style={{ width: 50 }}
-                            />
-                          ))}
-                        </Box>
-                      )}
                     </TableCell>
 
+                    <TableCell>
+                        <TextField
+                          fullWidth
+                          value={JSON.stringify(job.params)} // single-line JSON
+                          // sx={{ fontFamily: 'monospace' }}
+                        />
+                    </TableCell>
 
                     {/* Job Status */}
                     <TableCell>{job.status}</TableCell>

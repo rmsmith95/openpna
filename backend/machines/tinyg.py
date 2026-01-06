@@ -165,7 +165,7 @@ def get_info():
             except Exception:
                 status_list.append({"raw": line})
         
-        logging.info(f"status: {status_list}")
+        # logging.info(f"status: {status_list}")
         return {"status": status_list}
 
     except Exception as e:

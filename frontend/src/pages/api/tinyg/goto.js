@@ -1,4 +1,4 @@
-// pages/api/gantry/move.js
+// pages/api/gantry/goto.js
 export default async function handler(req, res) {
   console.log("Received request to /api/tinyg/goto", req.body);
 
@@ -14,15 +14,16 @@ export default async function handler(req, res) {
     typeof y !== "number" ||
     typeof z !== "number" ||
     typeof a !== "number" ||
-    typeof speed !== "number"
+    typeof speed !== "number" ||
+    [x, y, z, a, speed].some((v) => Number.isNaN(v))
   ) {
     return res.status(400).json({
       status: "error",
-      message: "x, y, z, and speed must all be numbers",
+      message: "x, y, z, a and speed must all be numbers",
     });
   }
 
-  console.log("body:", { x, y, z, a, speed });
+  console.log("gantry goto:", { x, y, z, a, speed });
   try {
     const response = await fetch("http://127.0.0.1:8000/tinyg/goto", {
       method: "POST",

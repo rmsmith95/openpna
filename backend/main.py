@@ -38,6 +38,7 @@ def read_root():
 def health():
     return {"status": "ok"}
 
+
 @app.on_event("startup")
 def startup():
     logging.info("===== Initialise Factory1 =====")
@@ -65,6 +66,17 @@ def get_parts():
     return factory.parts
 
 # --- Jobs ---
+
+class UpdateJobsRequest(BaseModel):
+    job_id: int
+    job: dict
+
+@app.post("/update_jobs")
+def update_jobs(req: UpdateJobsRequest):
+    global factory
+    factory.update_jobs(req.job_id, req.job)
+    resp = {"status": "ok"}
+    return resp
 
 @app.get("/get_jobs")
 def get_jobs():

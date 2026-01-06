@@ -1,3 +1,4 @@
+
 // WIFI_AP settings.
 const char* AP_SSID = "ESP32_DEV";
 const char* AP_PWD  = "12345678";
@@ -33,7 +34,7 @@ struct_message myData;
 // set the default wifi mode here.
 // 1 as [AP] mode, it will not connect other wifi.
 // 2 as [STA] mode, it will connect to know wifi.
-#define DEFAULT_WIFI_MODE 1
+#define DEFAULT_WIFI_MODE 2
 
 // the uart used to control servos.
 // GPIO 18 - S_RXD, GPIO 19 - S_TXD, as default.

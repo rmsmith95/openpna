@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import {goto, getInfo, handleUnlockToolChanger, stepMove} from './gantry-actions';
 
-const GantryControls = ({ position, gotoPosition, setGotoPosition }) => {
+const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
   const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 10 });
   const [speed, setSpeed] = useState(3000);
 
@@ -85,7 +85,7 @@ const GantryControls = ({ position, gotoPosition, setGotoPosition }) => {
                 </TableCell>
 
                 <TableCell sx={{ width: 60, p: 0.5 }} align="center">
-                  {/* {position[axis].toFixed(2)} */}
+                  {position[axis]}
                 </TableCell>
 
                 <TableCell sx={{ width: 80, p: 0.5 }} align="center">
@@ -104,10 +104,13 @@ const GantryControls = ({ position, gotoPosition, setGotoPosition }) => {
 
                 <TableCell sx={{ p: 0.5 }} align="center">
                   <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
-                    <Button size="small" sx={{ minWidth: 28 }} onClick={() => stepMove(axis, -1)}>
+                    <Button size="small" sx={{ minWidth: 28 }} 
+                        onClick={() => {
+                          const axisStep = { x: 0, y: 0, z: 0, a: 0, speed: speed, [axis]: -step[axis] || 0 };
+                          stepMove(axisStep);
+                        }}>           
                       -
                     </Button>
-
                     <TextField
                       value={step[axis]}
                       onChange={(e) => {
@@ -122,8 +125,11 @@ const GantryControls = ({ position, gotoPosition, setGotoPosition }) => {
                       type="number"
                       inputProps={{ step: "any" }}
                     />
-
-                    <Button size="small" sx={{ minWidth: 28 }} onClick={() => stepMove(axis, 1)}>
+                    <Button size="small" sx={{ minWidth: 28 }} 
+                        onClick={() => {
+                          const axisStep = { x: 0, y: 0, z: 0, a: 0, speed: speed, [axis]: step[axis] || 0 };
+                          stepMove(axisStep);
+                        }}>           
                       +
                     </Button>
                   </Stack>
@@ -142,7 +148,7 @@ const GantryControls = ({ position, gotoPosition, setGotoPosition }) => {
           sx={{ mt: 3 }}
           flexWrap="wrap"
         >
-          <Button variant="contained" onClick={() => goto(gotoPosition, speed)}>
+          <Button variant="contained" onClick={() => goto({...gotoPosition, speed})}>
             GoTo
           </Button>
           <Button variant="contained" onClick={setCurrentPosition}>

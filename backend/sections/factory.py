@@ -28,6 +28,9 @@ class Factory:
         for p in path:
             print(p)
         pass
+
+    def update_jobs(self, job_id, job):
+        self.jobs[job_id] = job
     
     def run_job(self, job_id):
         """machine with effector will move part to target part"""

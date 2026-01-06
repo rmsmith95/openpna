@@ -22,23 +22,34 @@ import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import GantryControls from '../../components/gantry-controls';
 import { getInfo } from '../../components/gantry-actions';
 import { useFactory } from "src/utils/factory-context";
+import { setDate } from 'date-fns';
 
 
 export const Gantry = (props) => {
   const { connectedTinyG } = props;
   const [tab, setTab] = useState(0);
 
-  const [position, setPosition] = useState({ X: 0, Y: 0, Z: 0, A: 0 });
+  const [data, setData] = useState(null);
+  const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
-  const { setGantryPosition } = useFactory();
+  // const { setGantryPosition } = useFactory();
 
   const handleChange = (event, newValue) => setTab(newValue);
 
   useEffect(() => {
-    getInfo();
-    const interval = setInterval(getInfo, 10000);
+    // function to fetch and update state
+    const fetchInfo = async () => {
+      const result = await getInfo();
+      if (result) {
+        setData(result.data);
+        setPosition(result.position);
+      }
+    };
+
+    fetchInfo();
+    const interval = setInterval(fetchInfo, 100);
     return () => clearInterval(interval);
-  }, [10000]);
+  }, []);
 
   return (
     <Card>
@@ -95,6 +106,7 @@ export const Gantry = (props) => {
           {tab === 1 && (
             <GantryControls
               position={position}
+              data={data}
               gotoPosition={gotoPosition}
               setGotoPosition={setGotoPosition}
             />

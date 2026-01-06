@@ -19,12 +19,11 @@ export default async function handler(req, res) {
   ) {
     return res.status(400).json({
       status: "error",
-      message: "x, y, z, a, and speed must all be valid numbers",
+      message: "x, y, z, a and speed must all be valid numbers",
     });
   }
 
-  console.log("Forwarding to FastAPI:", { x, y, z, a, speed });
-
+  console.log("Gantry step:", { x, y, z, a, speed });
   try {
     const response = await fetch("http://127.0.0.1:8000/tinyg/step", {
       method: "POST",

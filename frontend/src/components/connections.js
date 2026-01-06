@@ -18,9 +18,11 @@ export const Connections = (props) => {
   const [arduinoBaud, setArduinoBaud] = useState(9600);
   // cobot
   const [cobotConnectionType, setCobotConnectionType] = useState("network");
-  const [cobotPort, setCobotPort] = useState("COM4");
-  const [cobotBaud, setCobotBaud] = useState(115200);
+  // const [cobotPort, setCobotPort] = useState("COM4");
+  // const [cobotBaud, setCobotBaud] = useState(115200);
   const [cobotIpAddress, setCobotIpAddress] = useState("10.163.187.60");  //rpi
+
+  const [esp32IpAddress, setEsp32IpAddress] = useState("10.163.187.219");
 
   const handleChange = (_, newValue) => setTab(newValue);
   
@@ -221,28 +223,11 @@ export const Connections = (props) => {
                   </Select>
                 </FormControl>
 
-                {cobotConnectionType === "serial" ? (
-                  <>
-                    <TextField
-                      label="Port"
-                      value={cobotPort}
-                      onChange={(e) => setCobotPort(e.target.value)}
-                    />
-                    <TextField
-                      label="Baud Rate"
-                      type="number"
-                      value={cobotBaud}
-                      onChange={(e) => setCobotBaud(Number(e.target.value))}
-                    />
-                  </>
-                ) : (
-                  <TextField
-                    label="IP Address"
-                    value={cobotIpAddress}
-                    onChange={(e) => setCobotIpAddress(e.target.value)}
-                  />
-                )}
-
+                <TextField
+                  label="IP Address"
+                  value={cobotIpAddress}
+                  onChange={(e) => setCobotIpAddress(e.target.value)}
+                />
                 <Button
                   variant="contained"
                   color="success"
@@ -252,19 +237,24 @@ export const Connections = (props) => {
                   Connect
                 </Button>
               </Stack>
-
             </Stack>
           )}
 
           {/* Connect ESP32 */}
           {tab === 3 && (
-            <Stack spacing={2} alignItems="flex-start">
-              <Stack direction="row" spacing={2} alignItems="center">
-                <TextField label="Port" value={arduinoPort} onChange={(e) => setArduinoPort(e.target.value)} />
-                <TextField label="Baud Rate" type="number" value={arduinoBaud} onChange={(e) => setArduinoBaud(Number(e.target.value))} />
-                <Button variant="contained" color="success"
+            <Stack spacing={2}>
+              <Stack spacing={2} direction="row" alignItems="center">
+                <TextField
+                  label="IP Address"
+                  value={esp32IpAddress}
+                  onChange={(e) => setEsp32IpAddress(e.target.value)}
+                />
+                <Button
+                  variant="contained"
+                  color="success"
                   onClick={handleConnectGripperServo}
-                >Connect
+                >
+                  Connect
                 </Button>
               </Stack>
             </Stack>

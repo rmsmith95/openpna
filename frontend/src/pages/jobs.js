@@ -14,7 +14,7 @@ const JobsPage = () => {
   const { parts } = useFactory(); // <-- global parts
   const partsArray = useMemo(() => Object.values(parts), [parts]);
   const partsIds = useMemo(() => Object.keys(parts), [parts]);
-  const machines = ["Gantry", "Cobot280", "Gripper"];
+  const machines = ["gantry", "cobot280", "gripper"];
   const [jobs, setJobs] = useState([]);
   const currentJobId = null;
 

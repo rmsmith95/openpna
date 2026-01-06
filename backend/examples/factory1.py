@@ -31,14 +31,19 @@ def get_factory1() -> Factory:
         # "p9": {"id": "p9", "name": "Flight Controller", "class": "part", "mass": 0.3, "description": "SpeedyBee", "cad": "/home/fc.stl", "assembly_id": False, "bbox": [tray_x+0, tray_y+0, 150, 150],  },
     }
 
+    # initial_jobs = {
+    #     "j1": {"id": "j1", "part": "Body", "target": "Body Jig", "machines": "Gantry", "status": "To Do", "description": "" },
+    #     "j2": {"id": "j2", "part": "Arm1", "target": "Body", "machines": "Gantry", "status": "To Do", "description": "" },
+    #     "j3": {"id": "j3", "part": "Arm2", "target": "Body", "machines": "Gantry", "status": "To Do", "description": "" },
+    #     "j4": {"id": "j4", "part": "Arm3", "target": "Body", "machines": "Gantry", "status": "To Do", "description": "" },
+    #     "j5": {"id": "j5", "part": "Arm4", "target": "Body", "machines": "Gantry", "status": "To Do", "description": "" },
+    #     "j6": {"id": "j6", "part": "Electric Speed Controller", "target": "Body", "machines": "Gantry", "status": "To Do", "description": "" },
+    #     "j7": {"id": "j7", "part": "Flight Controller", "target": "Electric Speed Controller", "machines": "Gantry", "status": "To Do", "description": "" },
+    # }
+
     initial_jobs = {
-        "j1": {"id": "j1", "part": "Body", "target": "Body Jig", "machines": "Gantry", "status": "To Do", "description": "" },
-        "j2": {"id": "j2", "part": "Arm1", "target": "Body", "machines": "Gantry", "status": "To Do", "description": "" },
-        "j3": {"id": "j3", "part": "Arm2", "target": "Body", "machines": "Gantry", "status": "To Do", "description": "" },
-        "j4": {"id": "j4", "part": "Arm3", "target": "Body", "machines": "Gantry", "status": "To Do", "description": "" },
-        "j5": {"id": "j5", "part": "Arm4", "target": "Body", "machines": "Gantry", "status": "To Do", "description": "" },
-        "j6": {"id": "j6", "part": "Electric Speed Controller", "target": "Body", "machines": "Gantry", "status": "To Do", "description": "" },
-        "j7": {"id": "j7", "part": "Flight Controller", "target": "Electric Speed Controller", "machines": "Gantry", "status": "To Do", "description": "" },
+        "j1": {"id": "j1", "machine": "gantry", "action": "step", "params": {"x": 1, "y": 0, "z": 0, "a":0, "speed": 2000}, "status": "To Do", "description": "" },
+        "j2": {"id": "j2", "machine": "gantry", "action": "unlock", "params": {}, "status": "To Do", "description": "" },
     }
 
     logging.info("Initializing factory")

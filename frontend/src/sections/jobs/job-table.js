@@ -221,15 +221,7 @@ export const JobsTable = (props) => {
       </Scrollbar>
 
       {/* Pagination with progress bar to the left and x/y jobs to the right */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 2,
-          py: 1
-        }}
-      >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1}}>
         {/* Progress bar fills remaining space */}
         <Box sx={{ flex: 1, mr: 1 }}>
           <LinearProgress variant="determinate" value={progressPercent} sx={{ height: 10, borderRadius: 5 }} />

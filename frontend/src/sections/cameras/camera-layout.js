@@ -81,8 +81,7 @@ export default function CameraDashboard() {
   }
 
   return (
-    <Box sx={{ width: "100%", height: "100vh", display: "flex", flexDirection: "column" }}>
-      
+    <Box sx={{ width: "100%", display: "flex", flexDirection: "column", height: "100%" }}>
       {/* ------------------ TABS ------------------ */}
       <Tabs
         value={selectedTab}
@@ -98,7 +97,7 @@ export default function CameraDashboard() {
       </Tabs>
 
       {/* ------------------ VIEW ------------------ */}
-      <Box sx={{ flex: 1, position: "relative", bgcolor: "black" }}>
+      <Box sx={{ flex: 1, position: "relative", bgcolor: "black", maxHeight: '100vh' }}>
         {devices[selectedTab]?.deviceId === "DigitalModel" ? (
           <CameraModel active />
         ) : (

@@ -1,43 +1,17 @@
-import { useCallback, useMemo, useState } from 'react';
 import Head from 'next/head';
-import {
-  Box,
-  Container,
-  Grid,
-  Paper,
-  Typography,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  Divider,
-} from '@mui/material';
+import { Box, Container, Grid, Paper, Typography, Table, TableHead, TableBody, TableRow, TableCell, Divider } from '@mui/material';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
-import { JobsTable } from 'src/sections/jobs/job-table';
-import { applyPagination } from 'src/utils/apply-pagination';
-import { initialJobs } from 'src/utils/jobs-set1';
+import { JobsPanel } from 'src/sections/jobs/jobs-panel';
+import CameraDashboard from 'src/sections/cameras/camera-layout';
 
 // --- Example machine list ---
 const machines = [
-  { name: 'LitePlacer1', attachments: 'gripper1, soldering iron1' },
-  { name: 'Cobot 6DOF Arm', attachments: 'gripper2' },
-  { name: 'Linear Actuator', attachments: '' },
+  { name: 'gantry', size: '700x500x300', attachments: 'gripper' },
+  { name: 'cobot280', size: '600x400x300', attachments: 'screwdriver' },
+  { name: 'gripper', size: '75x50x50', attachments: null },
 ];
 
-// --- Pagination helpers ---
-const useJobs = (page, rowsPerPage) =>
-  useMemo(() => applyPagination(initialJobs, page, rowsPerPage), [page, rowsPerPage]);
-
 const Page = () => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  const pagedJobs = useJobs(page, rowsPerPage);
-
-  const handlePageChange = useCallback((event, value) => setPage(value), []);
-  const handleRowsPerPageChange = useCallback((event) => setRowsPerPage(event.target.value), []);
-
   return (
     <>
       <Head>
@@ -47,7 +21,7 @@ const Page = () => {
       <Box component="main" sx={{ flexGrow: 1, mt: 2, py: 4 }}>
         <Container maxWidth="xl">
           <Grid container spacing={3}>
-            
+
             {/* Top Left: Machine list */}
             <Grid item xs={12} md={6}>
               <Paper
@@ -70,9 +44,7 @@ const Page = () => {
                     {machines.map((machine, idx) => (
                       <TableRow
                         key={idx}
-                        sx={{
-                          '&:nth-of-type(odd)': { backgroundColor: 'action.hover' },
-                        }}
+                        sx={{ '&:nth-of-type(odd)': { backgroundColor: 'action.hover' } }}
                       >
                         <TableCell>{machine.name}</TableCell>
                         <TableCell>{machine.size}</TableCell>
@@ -89,43 +61,30 @@ const Page = () => {
               <Paper
                 elevation={3}
                 sx={{
-                  p: 2,
+                  // p: 2,
                   borderRadius: 2,
-                  height: 360,
+                  height: '50vh',          // <-- limit height to half the screen
+                  minHeight: 200,          // optional: ensure a minimum height
                   backgroundColor: 'grey.900',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'grey.300',
-                  fontSize: 18,
-                  fontWeight: 500,
-                  letterSpacing: 1,
-                  border: '2px grey',
+                  overflow: 'hidden',      // optional: prevent overflow
                 }}
               >
-                Camera 1
+                <CameraDashboard />
               </Paper>
             </Grid>
 
-            {/* Bottom: Jobs list */}
+            {/* Bottom: Jobs panel */}
             <Grid item xs={12}>
-              <Paper
-                elevation={3}
-                sx={{ p: 2, borderRadius: 2 }}
-              >
+              <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
                 <Typography variant="h6" gutterBottom>
                   Jobs
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
-                <JobsTable
-                  count={initialJobs.length}
-                  items={pagedJobs}
-                  page={page}
-                  rowsPerPage={rowsPerPage}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
-                  selected={[]} // selection state if needed
-                />
+                <JobsPanel /> {/* <-- use JobsPanel instead of JobsTable */}
               </Paper>
             </Grid>
 

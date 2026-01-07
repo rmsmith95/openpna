@@ -8,7 +8,7 @@ export const fetchPositions = async () => {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (data.status === "ok" && Array.isArray(data.angles)) {
-      setJoints(data.angles.map(Number)); // ensure numeric
+      return (data.angles.map(Number)); // ensure numeric
     }
   } catch (err) {
     console.error("❌ Error fetching joint positions:", err);

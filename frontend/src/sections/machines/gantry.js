@@ -24,16 +24,13 @@ import { getInfo, goto } from '../../components/gantry-actions';
 import { useFactory } from "src/utils/factory-context";
 
 
-export const Gantry = (props) => {
-  const { connectedTinyG } = props;
+export const Gantry = () => {
   const [tab, setTab] = useState(0);
 
   const [data, setData] = useState(null);
   const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const { machines, } = useFactory();
-  // const gantry = machines["m1"];
-  // const gantryLocations = gantry["locations"]
   const gantry = Object.values(machines || {}).find(m => m.name === "gantry");
 
   const handleChange = (event, newValue) => setTab(newValue);
@@ -57,7 +54,7 @@ export const Gantry = (props) => {
     <Card>
       <CardContent sx={{ pt: 0 }}>
         {/* Tabs */}
-        <Box sx={{ mt: 3 }}>
+        <Box>
           <Tabs
             value={tab}
             onChange={handleChange}
@@ -68,11 +65,6 @@ export const Gantry = (props) => {
             <Tab label={
               <Stack direction="row" alignItems="center" spacing={1}>
                 <span>Gantry</span>
-                {connectedTinyG ? (
-                  <SvgIcon fontSize="small" color="success"><CheckCircleIcon /></SvgIcon>
-                ) : (
-                  <SvgIcon fontSize="small" color="error"><XCircleIcon /></SvgIcon>
-                )}
               </Stack>
             } />
             <Tab label="Control" />
@@ -81,7 +73,7 @@ export const Gantry = (props) => {
         </Box>
 
         {/* Tab Panels */}
-        <Box sx={{ mt: 2 }}>
+        <Box>
           {tab === 0 && (
             <Stack spacing={2} alignItems="flex-start">
               {/* Machine table */}

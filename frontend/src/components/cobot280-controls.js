@@ -3,7 +3,7 @@
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
 import {
-  ArrowLeft, 
+  ArrowLeft,
   ArrowRight,
   Stack,
   SvgIcon,
@@ -17,12 +17,26 @@ import {
   Button,
   TextField,
 } from "@mui/material";
-import {moveJoint, moveJoints} from './cobot280-actions';
+import { moveJoint, moveJoints } from './cobot280-actions';
 
 
-const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed, joints }) => {
+const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed }) => {
+  const [joints, setJoints] = useState([0, 0, 0, 0, 0, 0]);
   const [gotoJoints, setGotoJoints] = useState([0, 0, 0, 0, 0, 0]);
-  
+
+  useEffect(() => {
+    const loadPositions = async () => {
+      const js = await fetchPositions(); // wait for Promise to resolve
+      if (js) setJoints(js);
+    };
+
+    loadPositions();
+
+    // optional: refresh periodically
+    const interval = setInterval(loadPositions, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <Stack spacing={2}>
       <Table size="small">
@@ -54,39 +68,41 @@ const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed, joints }) 
                     }
                   }}
                   sx={{ width: 80, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
-                  />
+                />
               </TableCell>
-              <TableCell>
-                <Stack direction="row" spacing={1}>
+              <TableCell sx={{ verticalAlign: 'middle', textAlign: 'left' }}>
+                <Stack direction="row" spacing={1} alignItems="center">
                   <Button
-                    variant="contained"
                     size="small"
                     onClick={() => moveJoint(index, -step[index])}
                   >
-                      <SvgIcon component={ArrowRight} />
+                    -
                   </Button>
                   <TextField
-                  value={step[index]}
-                  size="small"
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^-?\d*\.?\d*$/.test(val)) {
-                      const newStep = [...step];
-                      newStep[index] = Number(val);
-                      setStep(newStep);
-                    }
-                  }}
-                  sx={{ width: 60, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
-                />
+                    value={step[index]}
+                    size="small"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^-?\d*\.?\d*$/.test(val)) {
+                        const newStep = [...step];
+                        newStep[index] = Number(val);
+                        setStep(newStep);
+                      }
+                    }}
+                    sx={{
+                      width: 60,
+                      '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 }
+                    }}
+                  />
                   <Button
-                    variant="contained"
                     size="small"
                     onClick={() => moveJoint(index, step[index])}
                   >
-                    <SvgIcon component={ArrowRight} />
+                    +
                   </Button>
                 </Stack>
               </TableCell>
+
             </TableRow>
           ))}
         </TableBody>

@@ -11,11 +11,9 @@ import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import Cobot280Controls from '../../components/cobot280-controls';
 import {fetchPositions} from '../../components/cobot280-actions';
 
-export const Cobot280 = (props) => {
-  const { connectedCobot280 } = props;
+export const Cobot280 = () => {
   const [tab, setTab] = useState(0);
 
-  const [joints, setJoints] = useState([0, 0, 0, 0, 0, 0]);
   const [step, setStep] = useState([5, 5, 5, 5, 5, 5]);
   const [speed, setSpeed] = useState(50);
   const handleChange = (_, newValue) => setTab(newValue);
@@ -37,8 +35,7 @@ export const Cobot280 = (props) => {
   return (
     <Card>
       <CardContent sx={{ pt: 0 }}>
-        {/* Tabs */}
-        <Box sx={{ mt: 3 }}>
+        <Box>
           <Tabs
             value={tab}
             onChange={handleChange}
@@ -50,15 +47,6 @@ export const Cobot280 = (props) => {
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <span>Cobot280</span>
-                  {connectedCobot280 ? (
-                    <SvgIcon fontSize="small" color="success">
-                      <CheckCircleIcon />
-                    </SvgIcon>
-                  ) : (
-                    <SvgIcon fontSize="small" color="error">
-                      <XCircleIcon />
-                    </SvgIcon>
-                  )}
                 </Stack>
               }
             />
@@ -67,7 +55,7 @@ export const Cobot280 = (props) => {
         </Box>
 
         {/* Panels */}
-        <Box sx={{ mt: 2 }}>
+        <Box>
           {/* Connection Tab */}
           {tab === 0 && (
             <Stack spacing={3}>
@@ -98,7 +86,6 @@ export const Cobot280 = (props) => {
               setStep={setStep}
               speed={speed}
               setSpeed={setSpeed}
-              joints={joints}
             />
           )}
         </Box>

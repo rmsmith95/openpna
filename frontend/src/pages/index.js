@@ -3,6 +3,7 @@ import { Box, Container, Grid, Paper, Typography, Table, TableHead, TableBody, T
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { JobsPanel } from 'src/sections/jobs/jobs-panel';
 import CameraDashboard from 'src/sections/cameras/camera-layout';
+import { MachinePanel } from 'src/sections/machines/machines-panel';
 
 // --- Example machine list ---
 const machines = [
@@ -26,33 +27,20 @@ const Page = () => {
             <Grid item xs={12} md={6}>
               <Paper
                 elevation={3}
-                sx={{ p: 2, borderRadius: 2, display: 'flex', flexDirection: 'column', height: '100%' }}
+                sx={{
+                  borderRadius: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  maxHeight: '50vh',  // limit the Paper height
+                  overflow: 'auto',   // enable scroll when content overflows
+                  p: 1,
+                }}
               >
-                <Typography variant="h6" gutterBottom>
-                  Machines
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Size</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Attachments</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {machines.map((machine, idx) => (
-                      <TableRow
-                        key={idx}
-                        sx={{ '&:nth-of-type(odd)': { backgroundColor: 'action.hover' } }}
-                      >
-                        <TableCell>{machine.name}</TableCell>
-                        <TableCell>{machine.size}</TableCell>
-                        <TableCell>{machine.attachments || '—'}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <MachinePanel
+                  sx={{
+                    flexShrink: 0,   // prevent MachinePanel from shrinking inside the Paper
+                  }}
+                />
               </Paper>
             </Grid>
 
@@ -70,7 +58,7 @@ const Page = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'grey.300',
-                  overflow: 'hidden',      // optional: prevent overflow
+                  // overflow: 'hidden',      // optional: prevent overflow
                 }}
               >
                 <CameraDashboard />

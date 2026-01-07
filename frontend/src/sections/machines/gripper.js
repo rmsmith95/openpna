@@ -24,17 +24,14 @@ import GripperControls from '../../components/gripper-controls';
 import { useFactory } from "src/utils/factory-context";
 
 
-export const Gripper = (props) => {
-  const { connectedServoGripper } = props;
-
+export const Gripper = () => {
   const [tab, setTab] = useState(0);
   const handleChange = (event, newValue) => setTab(newValue);
 
   return (
-    <Card >
+    <Card>
       <CardContent sx={{ pt: 0 }}>
-        {/* Tabs */}
-        <Box sx={{ mt: 3 }}>
+        <Box>
           <Tabs
             value={tab}
             onChange={handleChange}
@@ -46,15 +43,6 @@ export const Gripper = (props) => {
               label={
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <span>Gripper</span>
-                  {connectedServoGripper ? (
-                    <SvgIcon fontSize="small" color="success">
-                      <CheckCircleIcon />
-                    </SvgIcon>
-                  ) : (
-                    <SvgIcon fontSize="small" color="error">
-                      <XCircleIcon />
-                    </SvgIcon>
-                  )}
                 </Stack>
               }
             />
@@ -64,15 +52,13 @@ export const Gripper = (props) => {
                 width: 220,
                 textAlign: "center",
                 py: 1.5
-              }}
-            >
+              }}>
             </Box>
-
           </Tabs>
         </Box>
 
         {/* Tab Panels */}
-        <Box sx={{ mt: 2 }}>
+        <Box>
           {tab === 0 && (
             <GripperControls/>
           )}

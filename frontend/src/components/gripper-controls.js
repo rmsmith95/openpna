@@ -14,10 +14,8 @@ import { ArrowsPointingInIcon, ArrowsPointingOutIcon } from '@heroicons/react/24
 import {stepOpenGripper, stepCloseGripper, speedGripperDown, speedGripperUp, gripperGoTo} from './gripper-actions';
 
 export default function GripperControls({  }) {
-  // const [port, setPort] = useState('COM4');
   const [servoId, setServoId] = useState(1);
   const [moveTime, setMoveTime] = useState(1);
-
   const [status, setStatus] = useState({
     "active_id": "",
     "position": "",
@@ -51,34 +49,8 @@ export default function GripperControls({  }) {
     return () => clearInterval(interval);
   }, []);
 
-  // async function setSpeed(speed) {
-  //     // Update UI instantly
-  //     setStatus((prev) => ({ ...prev, speed_set: speed }));
-
-  //     await fetch("/api/gripper/set_speed", {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({ speed }),
-  //     });
-  // }
-
   return (
     <Stack spacing={2}>
-
-      {/* Connection controls */}
-      {/* <Stack spacing={2} direction="row" alignItems="center">
-        <Button variant="contained" color="success" disabled={connected} onClick={handleConnect}>
-          Connect
-        </Button>
-
-        <TextField
-          label="Servo Id"
-          type="number"
-          value={servoId}
-          onChange={(e) => setServoId(Number(e.target.value))}
-        />
-      </Stack> */}
-
       <Table size="small" sx={{ minWidth: 900 }}>
         <TableHead>
           <TableRow>

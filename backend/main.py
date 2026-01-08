@@ -8,7 +8,6 @@ from machines.cobot280 import router as cobot280_router
 from machines.gripper import router as gripper_router
 from machines.arduino import router as arduino_router
 from sections.factory import Factory
-from examples.factory1 import get_factory1
 
 logging.basicConfig(level=logging.INFO)
 
@@ -42,8 +41,8 @@ def health():
 @app.on_event("startup")
 def startup():
     logging.info("===== Initialise Factory1 =====")
-    global factory
-    factory = get_factory1()
+    factory = Factory().load_factory('examples/factory1.json')
+    app.state.factory = factory 
     print(f"factory has {len(factory.jobs)} jobs")
     print(f"factory has {len(factory.parts)} parts")
     print(f"factory has {len(factory.machines)} machines")
@@ -52,18 +51,14 @@ def startup():
 
 @app.get("/factory_status")
 def factory_status():
-    global factory
-    return {"factory_initialized": factory is not None}
+    return {"factory_initialized": app.state.factory is not None}
 
 # --- Parts ---
 
 @app.get("/get_parts")
 def get_parts():
-    """
-    Return all parts as a dict: partId -> part
-    """
-    global factory
-    return factory.parts
+    """ Return all parts as a dict: partId -> part """
+    return app.state.factory.parts
 
 # --- Jobs ---
 
@@ -73,33 +68,28 @@ class UpdateJobsRequest(BaseModel):
 
 @app.post("/update_jobs")
 def update_jobs(req: UpdateJobsRequest):
-    global factory
-    factory.update_jobs(req.job_id, req.job)
+    app.state.factory.update_jobs(req.job_id, req.job)
     resp = {"status": "ok"}
     return resp
 
 @app.get("/get_jobs")
 def get_jobs():
     """Return all jobs as a dict: jobId -> job"""
-    global factory
-    return factory.jobs
+    return app.state.factory.jobs
 
 @app.get("/get_machines")
 def get_machines():
     """Return all machines as a dict: machineId -> machine"""
-    global factory
-    return factory.machines
+    return app.state.factory.machines
 
 @app.get("/get_tools")
 def get_tools():
     """Return all tools as a dict: toolId -> tool"""
-    global factory
-    return factory.tools
+    return app.state.factory.tools
 
 # --- Run Job ---
 
 @app.get("/run_job")
 def run_job(job_id: str):
-    global factory
-    factory.run_job(job_id)
+    app.state.factory.run_job(job_id)
     return {"status": "ok"}

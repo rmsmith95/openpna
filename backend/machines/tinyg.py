@@ -1,7 +1,7 @@
 # machine/tinyg.py
 import logging
 from pydantic import BaseModel
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 import serial
 import time
 import re
@@ -134,42 +134,63 @@ def set_position(req: SetPositionRequest):
 
 
 @router.get("/get_info")
-def get_info():
+def get_info(request: Request):
     if not connection or not connection.is_open:
         return sim("?")
 
     try:
         connection.reset_input_buffer()
-        connection.write(b"?\n")
+        connection.write(b"?\n")  # TinyG status request
 
         lines = []
-        timeout = time.time() + 1.0  # wait up to 1 second
+        timeout = time.time() + 1.0  # 1-second timeout
         while time.time() < timeout:
             while connection.in_waiting:
                 line = connection.readline().decode(errors="ignore").strip()
                 if line:
                     lines.append(line)
-            if lines:  # got something, break early
+            if lines:
                 break
             time.sleep(0.01)
 
         if not lines:
             return {"error": "No response from TinyG"}
 
-        # Parse JSON lines if possible
-        status_list = []
+        # Initialize parsed values
+        info = {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "a": 0.0,
+            "feedrate": 0.0,
+            "machine_state": None,
+            "planner_state": None,
+            "raw_status": [],
+        }
+
         for line in lines:
+            info["raw_status"].append(line)
             try:
-                import json
-                status_list.append(json.loads(line))
+                data = json.loads(line)
             except Exception:
-                status_list.append({"raw": line})
-        
-        # logging.info(f"status: {status_list}")
-        return {"status": status_list}
+                continue
+
+            # Extract current positions
+            if "sr" in data:  # status report
+                sr = data["sr"]
+                info["machine_state"] = sr.get("stat")
+                info["planner_state"] = sr.get("pstat")
+                if "posx" in sr: info["x"] = sr["posx"]
+                if "posy" in sr: info["y"] = sr["posy"]
+                if "posz" in sr: info["z"] = sr["posz"]
+                if "posa" in sr: info["a"] = sr["posa"]
+                if "feedrate" in sr: info["feedrate"] = sr["feedrate"]
+
+        request.app.state.factory.machines['m1'].objects['toolend'].position = {'x':info['x'], 'y': info['y'], 'z': info['z'], 'a': info['a']}
+        return info
 
     except Exception as e:
-        logging.error(f"LitePlacer get_positions error: {e}")
+        logging.error(f"LitePlacer get_info error: {e}")
         return {"error": str(e)}
 
 
@@ -182,7 +203,7 @@ class MoveXYZRequest(BaseModel):
     speed: float  # mm/min
 
 @router.post("/goto")
-def goto(req: MoveXYZRequest):
+def goto(req: MoveXYZRequest, request: Request):
     gcode = f"G1 X{req.x} Y{req.y} Z{req.z} A{req.a} F{req.speed}\n"
     if not connection or not connection.is_open:
         sim("G90")
@@ -192,11 +213,14 @@ def goto(req: MoveXYZRequest):
         tinyg_send(TinyGCommand(command="G90"))
         connection.write(gcode.encode())
         logging.info(f"Sent G-code: {gcode.strip()}")
-
+        te = request.app.state.factory.machines['m1'].objects['toolend']
+        te.location = {"x": req.x, "y": req.y, "z": req.z, "a": req.a}
+        te.speed = req.speed
         return {
             "status": "ok",
             "target": {"x": req.x, "y": req.y, "z": req.z, "a": req.a, "speed": req.speed}
         }
+
     except Exception as e:
         logging.error(f"LitePlacer move_xyz error: {e}")
         return {"error": str(e)}

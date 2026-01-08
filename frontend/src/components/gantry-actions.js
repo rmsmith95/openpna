@@ -32,22 +32,11 @@ export const getInfo = async () => {
   try {
     const res = await fetch("/api/tinyg/get_info");
     const data = await res.json();
-    const position = { x: 0, y: 0, z: 0, a: 0 };
-
-    if (Array.isArray(data.status)) {
-      data.status.forEach((item) => {
-        const raw = item.raw ?? JSON.stringify(item);
-        let m;
-        if ((m = raw.match(/X position:\s*([-0-9.]+)/))) position.x = parseFloat(m[1]);
-        if ((m = raw.match(/Y position:\s*([-0-9.]+)/))) position.y = parseFloat(m[1]);
-        if ((m = raw.match(/Z position:\s*([-0-9.]+)/))) position.z = parseFloat(m[1]);
-        if ((m = raw.match(/A position:\s*([-0-9.]+)/))) position.a = parseFloat(m[1]);
-      });
-    }
-    // console.log(data)
-    return {data, position}
+    const { x, y, z, a, feedrate, machine_state } = data;
+    return { x, y, z, a, feedrate, machine_state, raw_status: data.raw_status };
   } catch (err) {
-    console.error("Error getting gantry position:", err);
+    console.error("Error getting TinyG info:", err);
+    return null;
   }
 };
 

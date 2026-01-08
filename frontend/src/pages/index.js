@@ -19,65 +19,69 @@ const Page = () => {
         <title>MicroFactory Dashboard</title>
       </Head>
 
-      <Box component="main" sx={{ flexGrow: 1, mt: 2, py: 4 }}>
-        <Container maxWidth="xl">
-          <Grid container spacing={3}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          mt: 2,
+          p: 'clamp(8px, 4vw, 80px)'
+        }}
+      >
+        <Grid container spacing={3}>
 
-            {/* Top Left: Machine list */}
-            <Grid item xs={12} md={6}>
-              <Paper
-                elevation={3}
+          {/* Top Left: Machine list */}
+          <Grid item xs={12} md={6}>
+            <Paper
+              elevation={3}
+              sx={{
+                borderRadius: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                maxHeight: '50vh',
+                overflow: 'auto',
+                p: 1,
+              }}
+            >
+              <MachinePanel
                 sx={{
-                  borderRadius: 2,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  maxHeight: '50vh',  // limit the Paper height
-                  overflow: 'auto',   // enable scroll when content overflows
-                  p: 1,
+                  flexShrink: 0,
                 }}
-              >
-                <MachinePanel
-                  sx={{
-                    flexShrink: 0,   // prevent MachinePanel from shrinking inside the Paper
-                  }}
-                />
-              </Paper>
-            </Grid>
-
-            {/* Top Right: Camera feed placeholder */}
-            <Grid item xs={12} md={6}>
-              <Paper
-                elevation={3}
-                sx={{
-                  // p: 2,
-                  borderRadius: 2,
-                  height: '50vh',          // <-- limit height to half the screen
-                  minHeight: 200,          // optional: ensure a minimum height
-                  backgroundColor: 'grey.900',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'grey.300',
-                  // overflow: 'hidden',      // optional: prevent overflow
-                }}
-              >
-                <CameraDashboard />
-              </Paper>
-            </Grid>
-
-            {/* Bottom: Jobs panel */}
-            <Grid item xs={12}>
-              <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                  Jobs
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                <JobsPanel /> {/* <-- use JobsPanel instead of JobsTable */}
-              </Paper>
-            </Grid>
-
+              />
+            </Paper>
           </Grid>
-        </Container>
+
+          {/* Top Right: Camera feed placeholder */}
+          <Grid item xs={12} md={6}>
+            <Paper
+              elevation={3}
+              sx={{
+                // p: 2,
+                borderRadius: 2,
+                height: '50vh',
+                minHeight: 200,
+                backgroundColor: 'grey.900',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'grey.300',
+              }}
+            >
+              <CameraDashboard />
+            </Paper>
+          </Grid>
+
+          {/* Bottom: Jobs panel */}
+          <Grid item xs={12}>
+            <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Jobs
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <JobsPanel />
+            </Paper>
+          </Grid>
+
+        </Grid>
       </Box>
     </>
   );

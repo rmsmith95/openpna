@@ -29,57 +29,57 @@ export const MachinePanel = ({ machines = defaultMachines, connectionsProps }) =
   const [selectedTab, setSelectedTab] = useState(0);
   const handleTabChange = (_, newValue) => setSelectedTab(newValue);
 
-  const tabColors = ["black", ...machines.map((m) => m.color)];
+  const tabSx = {
+    justifyContent: "flex-start",
+    textAlign: "left",
+    fontWeight: "bold",
+    px: 2,
+    py: 1.5,
+    mb: 1,
+    borderRadius: 1,
+    "&.Mui-selected": {
+      boxShadow: "inset 4px 0 0", color: "white",
+    },
+    "&:hover": {
+      filter: "brightness(1.1)",
+    },
+    color: "white",
+  };
 
   return (
-    <Card sx={{ display: "flex", borderRadius: 2, boxShadow: 3, bgcolor: "#fafafa" }}>
-      {/* Tabs */}
+    <Card sx={{ display: "flex", borderRadius: 2, boxShadow: 3, }}>
       <Tabs
         orientation="vertical"
         value={selectedTab}
         onChange={handleTabChange}
         sx={{
-          minWidth: 150,
           flexShrink: 0,
-          bgcolor: "#f0f0f0",
+          pt: 2,
           "& .MuiTabs-flexContainer": { alignItems: "stretch" },
+          "& .MuiTabs-indicator": { display: "none" },
+          flex: "0 0 clamp(120px, 18%, 220px)",
         }}
       >
         <Tab
           label="Connections"
-          sx={{
-            bgcolor: "black",
-            color: "white",
-            fontWeight: "bold",
-            textAlign: "left",
-            justifyContent: "flex-start",
-            px: 2,
-            py: 1.5,
-            mb: 1,
-            borderRadius: 1,
-            "&.Mui-selected": { boxShadow: "inset 4px 0 0 white" },
-            "&:hover": { filter: "brightness(1.1)" },
-          }}
+          sx={{ ...tabSx, bgcolor: "black" }}
         />
-        {machines.map((machine, idx) => (
-          <Tab
-            key={machine.name}
-            label={machine.name}
-            sx={{
-              bgcolor: machine.color,
-              color: "white",
-              fontWeight: "bold",
-              textAlign: "left",
+        <Tab
+          label="Gantry"
+          sx={{ ...tabSx, bgcolor: "#1976d2" }}
+        />
+        <Tab
+          label="Cobot280"
+          sx={{ ...tabSx, bgcolor: "#1976d2", 
+            "& .MuiTab-wrapper": {
               justifyContent: "flex-start",
-              px: 2,
-              py: 1.5,
-              mb: 1,
-              borderRadius: 1,
-              "&.Mui-selected": { boxShadow: "inset 4px 0 0 white" },
-              "&:hover": { filter: "brightness(1.1)" },
-            }}
-          />
-        ))}
+              textAlign: "left",
+            }, }}
+        />
+        <Tab
+          label="Gripper"
+          sx={{ ...tabSx, bgcolor: "purple" }}
+        />
       </Tabs>
 
       {/* Tab Content */}
@@ -87,7 +87,8 @@ export const MachinePanel = ({ machines = defaultMachines, connectionsProps }) =
         sx={{
           flexGrow: 1,
           p: 1,
-          borderLeft: `6px solid ${tabColors[selectedTab]}`,
+          borderLeft: `2px solid #dbdbdbff`,
+          ml: 1,
           minHeight: 200,
         }}
       >

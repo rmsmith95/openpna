@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 import {
   Card,
@@ -13,35 +12,29 @@ import {
   Tab,
   Box,
   Button,
-  SvgIcon,
-  Typography,
-  TextField
 } from '@mui/material';
-import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
-import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import GantryControls from '../../components/gantry-controls';
 import { getInfo, goto } from '../../components/gantry-actions';
-import { useFactory } from "src/utils/factory-context";
 
 
 export const Gantry = () => {
   const [tab, setTab] = useState(0);
-
   const [data, setData] = useState(null);
   const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
-  const { machines, } = useFactory();
-  const gantry = Object.values(machines || {}).find(m => m.name === "gantry");
-
-  const handleChange = (event, newValue) => setTab(newValue);
 
   useEffect(() => {
     // function to fetch and update state
     const fetchInfo = async () => {
       const result = await getInfo();
       if (result) {
-        setData(result.data);
-        setPosition(result.position);
+        setData(result);
+        setPosition({
+          x: result.x ?? 0,
+          y: result.y ?? 0,
+          z: result.z ?? 0,
+          a: result.a ?? 0,
+        });
       }
     };
 
@@ -57,7 +50,7 @@ export const Gantry = () => {
         <Box>
           <Tabs
             value={tab}
-            onChange={handleChange}
+            onChange={(_, newValue) => setTab(newValue)}
             textColor="primary"
             indicatorColor="primary"
             sx={{ borderBottom: 1, borderColor: 'divider' }}
@@ -126,7 +119,7 @@ export const Gantry = () => {
                           {loc.location.x}, {loc.location.y}, {loc.location.z}, {loc.location.a}
                         </TableCell>
                         <TableCell>
-                          <Button variant="contained" onClick={() => goto({...loc.location, speed:1000})}>
+                          <Button variant="contained" onClick={() => goto({ ...loc.location, speed: 1000 })}>
                             GoTo
                           </Button>
                         </TableCell>
@@ -147,8 +140,4 @@ export const Gantry = () => {
       </CardContent>
     </Card>
   );
-};
-
-Gantry.propTypes = {
-  connectedTinyG: PropTypes.bool,
 };

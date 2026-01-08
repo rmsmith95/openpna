@@ -47,7 +47,7 @@ export const MachinePanel = ({ machines = defaultMachines, connectionsProps }) =
   };
 
   return (
-    <Card sx={{ display: "flex", borderRadius: 2, boxShadow: 3, }}>
+    <Box sx={{ display: "flex", }}>
       <Tabs
         orientation="vertical"
         value={selectedTab}
@@ -98,6 +98,6 @@ export const MachinePanel = ({ machines = defaultMachines, connectionsProps }) =
           return selectedTab === idx + 1 ? <MachineComponent key={machine.name} /> : null;
         })}
       </Box>
-    </Card>
+    </Box>
   );
 };

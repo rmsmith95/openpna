@@ -143,7 +143,7 @@ def get_info(request: Request):
         connection.write(b"?\n")  # TinyG status request
 
         lines = []
-        timeout = time.time() + 1.0  # 1-second timeout
+        timeout = time.time() + 1.0
         while time.time() < timeout:
             while connection.in_waiting:
                 line = connection.readline().decode(errors="ignore").strip()
@@ -156,7 +156,8 @@ def get_info(request: Request):
         if not lines:
             return {"error": "No response from TinyG"}
 
-        # Initialize parsed values
+        logging.info(lines)
+
         info = {
             "x": 0.0,
             "y": 0.0,
@@ -175,22 +176,28 @@ def get_info(request: Request):
             except Exception:
                 continue
 
-            # Extract current positions
-            if "sr" in data:  # status report
+            if "sr" in data:
                 sr = data["sr"]
                 info["machine_state"] = sr.get("stat")
                 info["planner_state"] = sr.get("pstat")
-                if "posx" in sr: info["x"] = sr["posx"]
-                if "posy" in sr: info["y"] = sr["posy"]
-                if "posz" in sr: info["z"] = sr["posz"]
-                if "posa" in sr: info["a"] = sr["posa"]
-                if "feedrate" in sr: info["feedrate"] = sr["feedrate"]
+                info["x"] = sr.get("posx", info["x"])
+                info["y"] = sr.get("posy", info["y"])
+                info["z"] = sr.get("posz", info["z"])
+                info["a"] = sr.get("posa", info["a"])
+                info["feedrate"] = sr.get("feedrate", info["feedrate"])
 
-        request.app.state.factory.machines['m1'].objects['toolend'].position = {'x':info['x'], 'y': info['y'], 'z': info['z'], 'a': info['a']}
+        request.app.state.factory.machines['m1']['objects']['toolend']['position'] = {
+            'x': info['x'],
+            'y': info['y'],
+            'z': info['z'],
+            'a': info['a'],
+        }
+
+        logging.debug("Final info: %s", info)
         return info
 
     except Exception as e:
-        logging.error(f"LitePlacer get_info error: {e}")
+        logging.error("LitePlacer get_info error: %s", e, exc_info=True)
         return {"error": str(e)}
 
 

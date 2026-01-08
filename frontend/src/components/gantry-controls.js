@@ -1,6 +1,4 @@
 "use client";
-
-import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
 import {
   Stack,
@@ -191,10 +189,6 @@ const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
       </Box>
     </Stack>
   );
-};
-
-GantryControls.propTypes = {
-  connectedGantry: PropTypes.bool,
 };
 
 export default GantryControls;

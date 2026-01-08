@@ -32,6 +32,7 @@ export const getInfo = async () => {
   try {
     const res = await fetch("/api/tinyg/get_info");
     const data = await res.json();
+    console.log(data);
     const { x, y, z, a, feedrate, machine_state } = data;
     return { x, y, z, a, feedrate, machine_state, raw_status: data.raw_status };
   } catch (err) {

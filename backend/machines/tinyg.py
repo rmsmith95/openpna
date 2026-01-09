@@ -19,32 +19,38 @@ class ConnectRequest(BaseModel):
     baud: int = 115200
 
 @router.post("/connect")
-def connect(request: ConnectRequest):
-    """
-curl -X POST http://localhost:8000/connect -H "Content-Type: application/json" -d '{"port": "/dev/ttyUSB0", "baud": 115200}'
-import serial
-connection = serial.Serial('COM10', 115200, timeout=1)
-# connection.write(b"M8\n") # M9
-"""
+def connect(connect: ConnectRequest, request: Request):
     global connection
     try:
-        # Close existing connection if it's open
+        # Close existing connection if open
         if connection and connection.is_open:
             try:
                 connection.close()
-                logging.info("Closed previous LitePlacer connection")
+                logging.info("Closed previous TinyG connection")
             except Exception as e:
                 logging.warning(f"Failed to close previous connection: {e}")
 
         # Open new connection
-        connection = serial.Serial(request.port, request.baud, timeout=1)
-        logging.info(f"Connected to LitePlacer on {request.port} at {request.baud} baud")
-        return {"status": "connected", "device": "liteplacer"}
+        connection = serial.Serial(connect.port, connect.baud, timeout=1)
+        logging.info(f"Connected to TinyG on {connect.port} at {connect.baud} baud")
+
+        # --- Set positions in TinyG from factory JSON ---
+        pos = request.app.state.factory.machines['m1']['objects']['toolend']['position']
+        gcode = f"G92 X{pos['x']} Y{pos['y']} Z{pos['z']} A{pos['a']}"
+        try:
+            cmd = TinyGCommand(command=gcode)
+            tinyg_send(cmd)
+            logging.info(f"Set TinyG toolend position to {pos}")
+        except Exception as e:
+            logging.error(f"Failed to set TinyG toolend position: {e}")
+
+        return {"status": "connected", "device": "gantry"}
 
     except Exception as e:
         logging.error(f"Failed to connect: {e}")
-        connection = None  # clear the connection so next attempt works
+        connection = None
         return {"status": "error", "message": str(e)}
+
 
 class TinyGCommand(BaseModel):
     command: str
@@ -59,7 +65,6 @@ def tinyg_send(req: TinyGCommand):
     if not connection or not connection.is_open:
         logging.info("Running simulation, TinyG not connected")
         return sim(command)
-        # return {"error": "LitePlacer not connected"}
 
     logging.info(f"tinyg_send {command}")
 
@@ -86,7 +91,7 @@ def reset():
     """Soft reset TinyG (Ctrl+X)."""
     if not connection or not connection.is_open:
         logging.warning("TinyG not connected")
-        return {"error": "LitePlacer not connected"}
+        return {"error": "Gantry not connected"}
     try:
         connection.write(b"\x18")  # Ctrl+X
         logging.info("Sent TinyG soft reset (Ctrl+X)")
@@ -136,11 +141,20 @@ def set_position(req: SetPositionRequest):
 @router.get("/get_info")
 def get_info(request: Request):
     if not connection or not connection.is_open:
-        return sim("?")
+        return {
+            "connected": False,
+            "x": 0, 
+            "y": 0,
+            "z": 0,
+            "a": 0,
+            "feedrate": 0,
+            "velocity": 0,
+            "machine_state": None,
+        }
 
     try:
         connection.reset_input_buffer()
-        connection.write(b"?\n")  # TinyG status request
+        connection.write(b"?\n")
 
         lines = []
         timeout = time.time() + 1.0
@@ -153,52 +167,47 @@ def get_info(request: Request):
                 break
             time.sleep(0.01)
 
-        if not lines:
-            return {"error": "No response from TinyG"}
-
-        logging.info(lines)
+        logging.info("tinyg getinfo: %s", lines)
 
         info = {
-            "x": 0.0,
-            "y": 0.0,
-            "z": 0.0,
+            "connected": True,
+            "x": 0.0, 
+            "y": 0.0, 
+            "z": 0.0, 
             "a": 0.0,
             "feedrate": 0.0,
+            "velocity": 0.0,
             "machine_state": None,
-            "planner_state": None,
-            "raw_status": [],
         }
 
         for line in lines:
-            info["raw_status"].append(line)
-            try:
-                data = json.loads(line)
-            except Exception:
-                continue
+            if line.startswith("X position"):
+                info["x"] = float(re.findall(r"[-\d.]+", line)[0])
+            elif line.startswith("Y position"):
+                info["y"] = float(re.findall(r"[-\d.]+", line)[0])
+            elif line.startswith("Z position"):
+                info["z"] = float(re.findall(r"[-\d.]+", line)[0])
+            elif line.startswith("A position"):
+                info["a"] = float(re.findall(r"[-\d.]+", line)[0])
+            elif line.startswith("Feed rate"):
+                info["feedrate"] = float(re.findall(r"[-\d.]+", line)[0])
+            elif line.startswith("Velocity"):
+                info["velocity"] = float(re.findall(r"[-\d.]+", line)[0])
+            elif line.startswith("Machine state"):
+                info["machine_state"] = line.split(":", 1)[1].strip()
 
-            if "sr" in data:
-                sr = data["sr"]
-                info["machine_state"] = sr.get("stat")
-                info["planner_state"] = sr.get("pstat")
-                info["x"] = sr.get("posx", info["x"])
-                info["y"] = sr.get("posy", info["y"])
-                info["z"] = sr.get("posz", info["z"])
-                info["a"] = sr.get("posa", info["a"])
-                info["feedrate"] = sr.get("feedrate", info["feedrate"])
-
-        request.app.state.factory.machines['m1']['objects']['toolend']['position'] = {
-            'x': info['x'],
-            'y': info['y'],
-            'z': info['z'],
-            'a': info['a'],
-        }
-
-        logging.debug("Final info: %s", info)
+        request.app.state.factory.machines['m1']['objects']['toolend']['position'] = \
+            {"x": info["x"], "y": info["y"], "z": info["z"], "a": info["a"]}
+        request.app.state.factory.machines['m1']['objects']['toolend']['speed'] = info['velocity']
+        request.app.state.factory.save_factory()
         return info
 
     except Exception as e:
-        logging.error("LitePlacer get_info error: %s", e, exc_info=True)
-        return {"error": str(e)}
+        logging.error("get_info error: %s", e, exc_info=True)
+        return {
+            "connected": False,
+            "error": str(e)
+        }
 
 
 # --- Move gantry ---
@@ -220,16 +229,16 @@ def goto(req: MoveXYZRequest, request: Request):
         tinyg_send(TinyGCommand(command="G90"))
         connection.write(gcode.encode())
         logging.info(f"Sent G-code: {gcode.strip()}")
-        te = request.app.state.factory.machines['m1'].objects['toolend']
-        te.location = {"x": req.x, "y": req.y, "z": req.z, "a": req.a}
-        te.speed = req.speed
+        # te = request.app.state.factory.machines['m1']['objects']['toolend']
+        # te['position'] = {"x": req.x, "y": req.y, "z": req.z, "a": req.a}
+        # te.speed = req.speed
         return {
             "status": "ok",
             "target": {"x": req.x, "y": req.y, "z": req.z, "a": req.a, "speed": req.speed}
         }
 
     except Exception as e:
-        logging.error(f"LitePlacer move_xyz error: {e}")
+        logging.error(f"TinyG move_xyz error: {e}")
         return {"error": str(e)}
 
 
@@ -252,7 +261,7 @@ def step(req: MoveXYZRequest):
             "target": {"x": req.x, "y": req.y, "z": req.z, "a": req.a, "speed": req.speed}
         }
     except Exception as e:
-        logging.error(f"LitePlacer move_xyz error: {e}")
+        logging.error(f"TinyG move_xyz error: {e}")
         return {"error": str(e)}
 
 class UnlockRequest(BaseModel):

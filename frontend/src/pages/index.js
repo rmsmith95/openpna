@@ -5,12 +5,6 @@ import { JobsPanel } from 'src/sections/jobs/jobs-panel';
 import CameraDashboard from 'src/sections/cameras/camera-layout';
 import { MachinePanel } from 'src/sections/machines/machines-panel';
 
-// --- Example machine list ---
-const machines = [
-  { name: 'gantry', size: '700x500x300', attachments: 'gripper' },
-  { name: 'cobot280', size: '600x400x300', attachments: 'screwdriver' },
-  { name: 'gripper', size: '75x50x50', attachments: null },
-];
 
 const Page = () => {
   return (
@@ -55,27 +49,32 @@ const Page = () => {
             <Paper
               elevation={3}
               sx={{
-                // p: 2,
                 borderRadius: 2,
                 height: '50vh',
                 minHeight: 200,
                 backgroundColor: 'grey.900',
+
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'grey.300',
+                overflow: 'hidden',     // ⬅️ critical
               }}
             >
-              <CameraDashboard />
+              <Box
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  minHeight: 0,
+                  display: 'flex',
+                }}
+              >
+                <CameraDashboard />
+              </Box>
             </Paper>
+
           </Grid>
 
           {/* Bottom: Jobs panel */}
           <Grid item xs={12}>
             <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Jobs
-              </Typography>
               <Divider sx={{ mb: 2 }} />
               <JobsPanel />
             </Paper>

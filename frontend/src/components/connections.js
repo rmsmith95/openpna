@@ -7,7 +7,7 @@ import {
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 
-export const Connections = ({ setConnectionsParent }) => {
+export const Connections = ({ }) => {
   // Single state for all connections
   const [connections, setConnections] = useState({
     tinyG: { port: 'COM10', baud: 115200, connected: false },

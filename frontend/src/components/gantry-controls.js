@@ -13,7 +13,7 @@ import {
   Button,
   TextField,
 } from "@mui/material";
-import {goto, getInfo, handleUnlockToolChanger, stepMove} from './gantry-actions';
+import { goto, getInfo, handleUnlockToolChanger, stepMove } from './gantry-actions';
 
 const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
   const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 10 });
@@ -65,7 +65,7 @@ const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
             <TableRow>
               <TableCell align="center">Axis</TableCell>
               <TableCell align="center">Pos</TableCell>
-              <TableCell align="center">Goto</TableCell>
+              <TableCell align="center">Goto/Set</TableCell>
               <TableCell align="center">Step</TableCell>
             </TableRow>
           </TableHead>
@@ -102,11 +102,11 @@ const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
 
                 <TableCell sx={{ p: 0.5 }} align="center">
                   <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
-                    <Button size="small" sx={{ minWidth: 28 }} 
-                        onClick={() => {
-                          const axisStep = { x: 0, y: 0, z: 0, a: 0, speed: speed, [axis]: -step[axis] || 0 };
-                          stepMove(axisStep);
-                        }}>           
+                    <Button size="small" sx={{ minWidth: 28 }}
+                      onClick={() => {
+                        const axisStep = { x: 0, y: 0, z: 0, a: 0, speed: speed, [axis]: -step[axis] || 0 };
+                        stepMove(axisStep);
+                      }}>
                       -
                     </Button>
                     <TextField
@@ -123,11 +123,11 @@ const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
                       type="number"
                       inputProps={{ step: "any" }}
                     />
-                    <Button size="small" sx={{ minWidth: 28 }} 
-                        onClick={() => {
-                          const axisStep = { x: 0, y: 0, z: 0, a: 0, speed: speed, [axis]: step[axis] || 0 };
-                          stepMove(axisStep);
-                        }}>           
+                    <Button size="small" sx={{ minWidth: 28 }}
+                      onClick={() => {
+                        const axisStep = { x: 0, y: 0, z: 0, a: 0, speed: speed, [axis]: step[axis] || 0 };
+                        stepMove(axisStep);
+                      }}>
                       +
                     </Button>
                   </Stack>
@@ -140,49 +140,60 @@ const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
         {/* --- Bottom Controls --- */}
         <Stack
           direction="row"
-          spacing={3}
+          columnGap={1}
+          rowGap={1}
           justifyContent="center"
           alignItems="center"
-          sx={{ mt: 3 }}
+          sx={{ mt: 2 }}
           flexWrap="wrap"
         >
-          <Button variant="contained" onClick={() => goto({...gotoPosition, speed})}>
-            GoTo
-          </Button>
-          <Button variant="contained" onClick={setCurrentPosition}>
+          {/* <Button variant="contained" color="warning" onClick={zero}
+            sx={{ minWidth: '30px', px: '12px' }}>
+            Zero
+          </Button> */}
+          <Button variant="contained" onClick={setCurrentPosition}
+            sx={{ minWidth: '30px', px: '12px' }}>
             Set
           </Button>
-          <Button variant="contained" color="warning" onClick={zero}>
-            Zero
+          <Button variant="contained" onClick={() => goto({ ...gotoPosition, speed })}
+            sx={{ minWidth: '30px', px: '12px' }}>
+            GoTo
           </Button>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Typography sx={{ fontWeight: 500 }}>Speed:</Typography>
-            <TextField
-              value={speed}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSpeed(val === "" ? 0 : parseFloat(val));
-              }}
-              size="small"
-              sx={{
-                width: 100,
-                "& .MuiInputBase-input": {
-                  textAlign: "center",
-                  p: "6px 8px",
-                  fontSize: 14,
-                },
-              }}
-              type="number"
-              inputProps={{ min: 0 }}
-            />
-          </Stack>
-          <Button variant="contained" onClick={() => handleUnlockToolChanger(5)}>
+          <Button variant="contained" onClick={() => handleUnlockToolChanger(5)}
+            sx={{ minWidth: '30px', px: '12px' }}>
             Unlock
           </Button>
+          <TextField
+            label="Speed"
+            value={speed}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSpeed(val === "" ? "" : parseFloat(val));
+            }}
+            type="number"
+            size="small"
+            variant="outlined"
+            inputProps={{ min: 0 }}
+            sx={{
+              width: { xs: 80, sm: 100 },
+
+              "& .MuiOutlinedInput-root": {
+                height: 36,
+              },
+
+              "& .MuiInputBase-input": {
+                textAlign: "center",
+                padding: "0 8px",
+                height: "100%",
+                fontSize: 15,
+              },
+            }}
+          />
 
           {/* RESET BUTTON (RED, MOVED RIGHT) */}
           <Box sx={{ flexGrow: 1 }} /> {/* pushes reset fully to the right */}
-          <Button variant="contained" color="error" onClick={reset}>
+          <Button variant="contained" color="error" onClick={reset}
+            sx={{ minWidth: '30px', px: '12px' }}>
             Reset
           </Button>
         </Stack>

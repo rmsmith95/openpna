@@ -72,25 +72,4 @@ class Factory:
         target_name = job['target']
         target_part = self.parts[target_name]
 
-        # skip
-        # 1a. check machine effector
-        #       If wrong one, detach current effector
-        #       Attach correct effector
-
-        # 1b. Calculate Get part
-        #       If no part move to part
-        #       Attach part
         self.plot_path(machine, part)
-
-        # 1c. Calculate Move part to target
-        # 
-        # 1d. Calculate detach part from ee to target
-        #  
-        # 2a. Move to get part
-        # machine.goto(part['position'])
-        # 
-        # 2b. Move to target part
-        # machine.goto(target_part['position'])
-        # 
-        # 2c. Detach part to targetcalculate interference
-        # machine.attach(part, target_part)   

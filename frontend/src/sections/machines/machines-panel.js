@@ -1,17 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import Head from "next/head";
 import {
   Box,
-  Card,
-  CircularProgress,
-  Container,
-  Stack,
-  SvgIcon,
   Tab,
   Tabs,
-  Typography,
 } from "@mui/material";
-import { Layout as DashboardLayout } from "src/layouts/dashboard/layout";
 import { Gantry } from "src/sections/machines/gantry";
 import { Cobot280 } from "src/sections/machines/cobot280";
 import { Gripper } from "src/sections/machines/gripper";
@@ -33,7 +25,7 @@ export const MachinePanel = ({ machines = defaultMachines, connectionsProps }) =
     justifyContent: "flex-start",
     textAlign: "left",
     fontWeight: "bold",
-    px: 2,
+    px: '22px',
     py: 1.5,
     mb: 1,
     borderRadius: 1,
@@ -57,7 +49,7 @@ export const MachinePanel = ({ machines = defaultMachines, connectionsProps }) =
           pt: 2,
           "& .MuiTabs-flexContainer": { alignItems: "stretch" },
           "& .MuiTabs-indicator": { display: "none" },
-          flex: "0 0 clamp(120px, 18%, 220px)",
+          flex: "0 0 clamp(60px, 18%, 220px)",
         }}
       >
         <Tab

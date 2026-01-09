@@ -82,7 +82,7 @@ export const Gantry = () => {
                 <TableBody>
                   <TableRow>
                     <TableCell>700x500x300</TableCell>
-                    <TableCell>560x360x80xinfdeg</TableCell>
+                    <TableCell>560x360x80x360</TableCell>
                     <TableCell>3kg</TableCell>
                     <TableCell>gantry.stl</TableCell>
                   </TableRow>

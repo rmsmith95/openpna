@@ -1,80 +1,136 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Card, CardContent, Table, TableHead, TableRow, TableCell, TableBody,
-  TextField, Button, FormControl, InputLabel, Select, MenuItem, SvgIcon
+  Table, TableHead, TableRow, TableCell, TableBody,
+  TextField, Button, SvgIcon, MenuItem, Select
 } from '@mui/material';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 
-export const Connections = ({ }) => {
-  // Single state for all connections
+export const Connections = () => {
   const [connections, setConnections] = useState({
-    tinyG: { type: 'serial', port: 'COM10', baud: 115200, connected: false },
-    arduino: { type: 'serial', port: 'COM3', baud: 9600, connected: false },
-    cobot280: { type: 'network', ip: '10.163.187.60', baud: 115200, connected: false },
-    esp32: { type: 'network', ip: '10.163.187.219', connected: false },
+    tinyG: {
+      name: 'TinyG',
+      type: 'serial',
+      serial: {
+        port: 'COM10',
+        baud: 115200,
+      },
+      network: null,
+      connected: false,
+    },
+
+    arduino: {
+      name: 'Arduino',
+      type: 'serial',
+      serial: {
+        port: 'COM3',
+        baud: 9600,
+      },
+      network: null,
+      connected: false,
+    },
+
+    cobot280: {
+      name: 'Cobot280',
+      type: 'network',
+      serial: null,
+      network: {
+        ip: '10.163.187.60',
+        port: 502,
+      },
+      connected: false,
+    },
+
+    esp32: {
+      name: 'ESP32',
+      type: 'network',
+      serial: null,
+      network: {
+        ip: '10.163.187.219',
+        port: 80,
+      },
+      connected: false,
+    },
   });
 
-  // Handlers
-  const handleConnect = async (key) => {
-    try {
-      let endpoint = '';
-      let body = {};
-      switch (key) {
-        case 'tinyG':
-          endpoint = '/api/tinyg/connect';
-          body = { port: connections.tinyG.port, baud: connections.tinyG.baud };
-          break;
-        case 'arduino':
-          endpoint = '/api/arduino/connect';
-          body = { port: connections.arduino.port, baud: connections.arduino.baud };
-          break;
-        case 'cobot280':
-          endpoint = '/api/cobot280/connect_network';
-          body = { ip: connections.cobot280.ip };
-          break;
-        case 'esp32':
-          endpoint = '/api/gripper/connect';
-          body = { ip: connections.ip, servo_id: 1 };
-          break;
-        default:
-          return;
-      }
 
+  const update = (key, field, value) => {
+    setConnections(prev => ({
+      ...prev,
+      [key]: { ...prev[key], [field]: value },
+    }));
+  };
+
+  const handleConnect = async (key) => {
+    const c = connections[key];
+
+    let endpoint = '';
+    let body = {};
+
+    if (c.type === 'serial') {
+      endpoint = `/api/${key}/connect`;
+      body = { port: c.port, baud: c.baud };
+    } else {
+      endpoint = `/api/${key}/connect_network`;
+      body = { ip: c.ip, port: c.port };
+    }
+
+    try {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+
       const data = await res.json();
-      console.log(data)
+      const connected = data.status === 'ok' || data.status === 'connected';
 
-      const isConnected =
-        key === 'esp32'
-          ? !!data.connected
-          : key === 'cobot280'
-            ? data.status === 'ok'
-            : data.status === 'connected';
-
-      setConnections((prev) => ({
+      setConnections(prev => ({
         ...prev,
-        [key]: { ...prev[key], connected: isConnected },
+        [key]: { ...prev[key], connected },
       }));
     } catch (err) {
-      console.error(`Failed to connect ${key}:`, err);
-      setConnections((prev) => ({
+      console.error(`Failed to connect ${key}`, err);
+      setConnections(prev => ({
         ...prev,
         [key]: { ...prev[key], connected: false },
       }));
     }
   };
 
-  const updateConnectionField = (key, field, value) => {
-    setConnections((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], [field]: value },
-    }));
+  const renderAddressCell = (key, c) => {
+    return c.type === 'serial' ? (
+      <TextField
+        size="small"
+        value={c.port}
+        onChange={e => update(key, 'port', e.target.value)}
+      />
+    ) : (
+      <TextField
+        size="small"
+        value={c.ip}
+        onChange={e => update(key, 'ip', e.target.value)}
+      />
+    );
+  };
+
+  const renderBaudOrPortCell = (key, c) => {
+    return c.type === 'serial' ? (
+      <TextField
+        size="small"
+        type="number"
+        value={c.baud}
+        onChange={e => update(key, 'baud', Number(e.target.value))}
+      />
+    ) : (
+      <TextField
+        size="small"
+        type="number"
+        value={c.port}
+        onChange={e => update(key, 'port', Number(e.target.value))}
+      />
+    );
   };
 
   return (
@@ -83,134 +139,54 @@ export const Connections = ({ }) => {
         <TableRow>
           <TableCell>Name</TableCell>
           <TableCell>Type</TableCell>
-          <TableCell>Port / IP</TableCell>
-          <TableCell>Baud</TableCell>
+          <TableCell>COM / IP</TableCell>
+          <TableCell>Baud / Port</TableCell>
           <TableCell>Connect</TableCell>
         </TableRow>
       </TableHead>
+
       <TableBody>
-        {/* TinyG */}
-        <TableRow>
-          <TableCell>
-            TinyG
-            <SvgIcon fontSize="small" color={connections.tinyG.connected ? 'success' : 'error'} sx={{ ml: 1 }}>
-              {connections.tinyG.connected ? <CheckCircleIcon /> : <XCircleIcon />}
-            </SvgIcon>
-          </TableCell>
-          <TableCell>
-            {connections.tinyG.type}
-          </TableCell>
-          <TableCell>
-            <TextField
-              size="small"
-              value={connections.tinyG.port}
-              onChange={(e) => updateConnectionField('tinyG', 'port', e.target.value)}
-            />
-          </TableCell>
-          <TableCell>
-            <TextField
-              size="small"
-              type="number"
-              value={connections.tinyG.baud}
-              onChange={(e) => updateConnectionField('tinyG', 'baud', Number(e.target.value))}
-            />
-          </TableCell>
-          <TableCell>
-            <Button variant="contained" color="success" onClick={() => handleConnect('tinyG')}>
-              Connect
-            </Button>
-          </TableCell>
-        </TableRow>
+        {Object.entries(connections).map(([key, c]) => (
+          <TableRow key={key}>
+            <TableCell>
+              {c.name}
+              <SvgIcon
+                fontSize="small"
+                color={c.connected ? 'success' : 'error'}
+                sx={{ ml: 1 }}
+              >
+                {c.connected ? <CheckCircleIcon /> : <XCircleIcon />}
+              </SvgIcon>
+            </TableCell>
 
-        {/* Arduino */}
-        <TableRow>
-          <TableCell>
-            Arduino
-            <SvgIcon fontSize="small" color={connections.arduino.connected ? 'success' : 'error'} sx={{ ml: 1 }}>
-              {connections.arduino.connected ? <CheckCircleIcon /> : <XCircleIcon />}
-            </SvgIcon>
-          </TableCell>
-          <TableCell>
-            {connections.arduino.type}
-          </TableCell>
-          <TableCell>
-            <TextField
-              size="small"
-              value={connections.arduino.port}
-              onChange={(e) => updateConnectionField('arduino', 'port', e.target.value)}
-            />
-          </TableCell>
-          <TableCell>
-            <TextField
-              size="small"
-              type="number"
-              value={connections.arduino.baud}
-              onChange={(e) => updateConnectionField('arduino', 'baud', Number(e.target.value))}
-            />
-          </TableCell>
-          <TableCell>
-            <Button variant="contained" color="success" onClick={() => handleConnect('arduino')}>
-              Connect
-            </Button>
-          </TableCell>
-        </TableRow>
+            <TableCell>
+              <Select
+                size="small"
+                value={c.type}
+                onChange={e => update(key, 'type', e.target.value)}
+              >
+                <MenuItem value="serial">serial</MenuItem>
+                <MenuItem value="network">network</MenuItem>
+              </Select>
+            </TableCell>
 
-        {/* Cobot280 */}
-        <TableRow>
-          <TableCell>
-            Cobot280
-            <SvgIcon fontSize="small" color={connections.cobot280.connected ? 'success' : 'error'} sx={{ ml: 1 }}>
-              {connections.cobot280.connected ? <CheckCircleIcon /> : <XCircleIcon />}
-            </SvgIcon>
-          </TableCell>
-          <TableCell>
-            {connections.cobot280.type}
-          </TableCell>
-          <TableCell>
-            <TextField
-              size="small"
-              value={connections.cobot280.ip}
-              onChange={(e) => updateConnectionField('cobot280', 'ip', e.target.value)}
-            />
-          </TableCell>
-          <TableCell>
-            -
-          </TableCell>
-          <TableCell>
-            <Button variant="contained" color="success" onClick={() => handleConnect('cobot280')}>
-              Connect
-            </Button>
-          </TableCell>
-        </TableRow>
+            <TableCell>{renderAddressCell(key, c)}</TableCell>
+            <TableCell>{renderBaudOrPortCell(key, c)}</TableCell>
 
-        {/* ESP32 / Gripper */}
-        <TableRow>
-          <TableCell>
-            ESP32
-            <SvgIcon fontSize="small" color={connections.esp32.connected ? 'success' : 'error'} sx={{ ml: 1 }}>
-              {connections.esp32.connected ? <CheckCircleIcon /> : <XCircleIcon />}
-            </SvgIcon>
-          </TableCell>
-          <TableCell>{connections.esp32.type}</TableCell>
-          <TableCell>
-            <TextField
-              size="small"
-              value={connections.esp32.ip}
-              onChange={(e) => updateConnectionField('esp32', 'ip', e.target.value)}
-            />
-          </TableCell>
-          <TableCell>-</TableCell>
-          <TableCell>
-            <Button variant="contained" color="success" onClick={() => handleConnect('esp32')}>
-              Connect
-            </Button>
-          </TableCell>
-        </TableRow>
+            <TableCell>
+              <Button
+                variant="contained"
+                color="success"
+                onClick={() => handleConnect(key)}
+              >
+                Connect
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
       </TableBody>
     </Table>
   );
 };
 
-Connections.propTypes = {
-  setConnectionsParent: PropTypes.func, // optional, in case parent needs updates
-};
+Connections.propTypes = {};

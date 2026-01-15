@@ -5,6 +5,7 @@ import logging
 import time
 import serial
 from pydantic import BaseModel
+logging.basicConfig(level=logging.INFO)
 
 
 router = APIRouter()
@@ -71,6 +72,7 @@ class ST3020Base:
         return self.send_command(0, servo_index)
 
     def set_mode(self, mode):
+        # if self.status['mode'] == mode: break
         mode_case = 12 if mode == "servo" else 13
         return self.send_command(1, mode_case)
 
@@ -91,7 +93,7 @@ class ST3020Base:
         raise NotImplementedError
 
     def get_status(self):
-        raise NotImplementedError
+        return self.status
 
 
 # ============================================================
@@ -164,34 +166,36 @@ class ST3020Serial(ST3020Base):
 
 servo: ST3020Base | None = None
 
+class Connect(BaseModel):
+    ip: str
+    servo_id: int
 
 @router.post("/connect")
-async def connect(req: Request):
+async def connect(req: Connect):
     global servo
-    body = await req.json()
+    servo = ST3020WiFi(ip=req.ip)
+    servo_id = req.servo_id
+    # connected = servo.connect(servo_id)
+    try:
+        servo.select_id(servo_id)
+        time.sleep(0.1)
+        servo.set_mode('motor')
+        time.sleep(0.1)
+        for _ in range(5):
+            status = servo.get_status()
+            if status:
+                break
+            time.sleep(0.2)
+        servo.status = servo.get_status() or {}
+    except Exception as e:
+        logging.error(f"Connect failed: {e}")
 
-    # method = body.get("method", "wifi")  # "wifi" or "serial"
-    method = "serial"
-
-    if method == "wifi":
-        servo = ST3020WiFi(ip=body.get("ip", "192.168.4.1"))
-    elif method == "serial":
-        servo = ST3020Serial(
-            port=body.get("port", "COM4"),
-            baud=body.get("baud", 115200)
-        )
-    else:
-        return {"connected": False, "error": "Invalid method"}
-
-    connected = servo.connect(
-        servo_index=body.get("servo_index", 1),
-        mode=body.get("mode", "motor")
-    )
+    connected = bool(servo.status)
+    logging.warning(f"gripper connected: {connected}")
 
     return {
         "connected": connected,
-        "method": method,
-        "status": servo.get_status()
+        "status": servo.status
     }
 
 
@@ -254,10 +258,18 @@ def speed_up():
     servo.send_command(1, 7)
     return {"ok": True}
 
-
 @router.post("/speed_down")
 def speed_down():
     servo.send_command(1, 8)
+    return {"ok": True}
+
+
+class SetSpeed(BaseModel):
+    speed: int = 1000
+
+@router.post("/set_speed")
+def set_speed():
+    servo.send_command(1, 4)
     return {"ok": True}
 
 

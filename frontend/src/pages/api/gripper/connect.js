@@ -6,24 +6,53 @@ export default async function handler(req, res) {
     return res.status(405).json({ status: "method not allowed" });
   }
 
-  const { servo_id } = req.body;
+  const { ip, servo_id } = req.body;
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   try {
+    // 1️⃣ Initial connect
     const response = await fetch("http://127.0.0.1:8000/gripper/connect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ servo_index: servo_id }),
+      body: JSON.stringify({ ip, servo_id }),
     });
 
-    const data = await response.json();
+    let data = await response.json();
+    console.log("connect data", data);
 
-    // Return FastAPI connection status directly to frontend
+    // 2️⃣ Retry status if empty
+    const timeoutMs = 3000;
+    const intervalMs = 200;
+    const start = Date.now();
+
+    while (
+      (!data.status || Object.keys(data.status).length === 0) &&
+      Date.now() - start < timeoutMs
+    ) {
+      await sleep(intervalMs);
+
+      const statusRes = await fetch(
+        "http://127.0.0.1:8000/gripper/get_status"
+      );
+      const status = await statusRes.json();
+
+      if (status && Object.keys(status).length > 0) {
+        data.status = status;
+        data.connected = true;
+        break;
+      }
+    }
+
+    // 3️⃣ Final response to frontend
     res.status(200).json({
-      connected: data.connected,
+      connected: data.connected && Object.keys(data.status || {}).length > 0,
       status: data.status || {},
     });
   } catch (err) {
     console.error("Error forwarding to FastAPI:", err);
-    res.status(500).json({ connected: false, status: {}, message: err.message });
+    res
+      .status(500)
+      .json({ connected: false, status: {}, message: err.message });
   }
 }

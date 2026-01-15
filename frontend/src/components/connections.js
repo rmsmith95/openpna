@@ -10,10 +10,10 @@ import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 export const Connections = ({ }) => {
   // Single state for all connections
   const [connections, setConnections] = useState({
-    tinyG: { port: 'COM10', baud: 115200, connected: false },
-    arduino: { port: 'COM3', baud: 9600, connected: false },
+    tinyG: { type: 'serial', port: 'COM10', baud: 115200, connected: false },
+    arduino: { type: 'serial', port: 'COM3', baud: 9600, connected: false },
     cobot280: { type: 'network', ip: '10.163.187.60', baud: 115200, connected: false },
-    esp32: { ip: '10.163.187.219', connected: false },
+    esp32: { type: 'network', ip: '10.163.187.219', connected: false },
   });
 
   // Handlers
@@ -36,7 +36,7 @@ export const Connections = ({ }) => {
           break;
         case 'esp32':
           endpoint = '/api/gripper/connect';
-          body = { servo_id: 1 };
+          body = { ip: connections.ip, servo_id: 1 };
           break;
         default:
           return;
@@ -48,6 +48,7 @@ export const Connections = ({ }) => {
         body: JSON.stringify(body),
       });
       const data = await res.json();
+      console.log(data)
 
       const isConnected =
         key === 'esp32'
@@ -97,7 +98,7 @@ export const Connections = ({ }) => {
             </SvgIcon>
           </TableCell>
           <TableCell>
-            Serial
+            {connections.tinyG.type}
           </TableCell>
           <TableCell>
             <TextField
@@ -130,7 +131,7 @@ export const Connections = ({ }) => {
             </SvgIcon>
           </TableCell>
           <TableCell>
-            Network
+            {connections.arduino.type}
           </TableCell>
           <TableCell>
             <TextField
@@ -163,7 +164,7 @@ export const Connections = ({ }) => {
             </SvgIcon>
           </TableCell>
           <TableCell>
-            Network
+            {connections.cobot280.type}
           </TableCell>
           <TableCell>
             <TextField
@@ -190,7 +191,7 @@ export const Connections = ({ }) => {
               {connections.esp32.connected ? <CheckCircleIcon /> : <XCircleIcon />}
             </SvgIcon>
           </TableCell>
-          <TableCell>Network</TableCell>
+          <TableCell>{connections.esp32.type}</TableCell>
           <TableCell>
             <TextField
               size="small"

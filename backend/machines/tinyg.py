@@ -35,7 +35,7 @@ def connect(connect: ConnectRequest, request: Request):
         logging.info(f"Connected to TinyG on {connect.port} at {connect.baud} baud")
 
         # --- Set positions in TinyG from factory JSON ---
-        pos = request.app.state.factory.machines['m1']['objects']['toolend']['position']
+        pos = request.app.state.factory.machines['gantry']['objects']['toolend']['position']
         gcode = f"G92 X{pos['x']} Y{pos['y']} Z{pos['z']} A{pos['a']}"
         try:
             cmd = TinyGCommand(command=gcode)
@@ -196,9 +196,9 @@ def get_info(request: Request):
             elif line.startswith("Machine state"):
                 info["machine_state"] = line.split(":", 1)[1].strip()
 
-        request.app.state.factory.machines['m1']['objects']['toolend']['position'] = \
+        request.app.state.factory.machines['gantry']['objects']['toolend']['position'] = \
             {"x": info["x"], "y": info["y"], "z": info["z"], "a": info["a"]}
-        request.app.state.factory.machines['m1']['objects']['toolend']['speed'] = info['velocity']
+        request.app.state.factory.machines['gantry']['objects']['toolend']['speed'] = info['velocity']
         request.app.state.factory.save_factory()
         return info
 
@@ -229,7 +229,7 @@ def goto(req: MoveXYZRequest, request: Request):
         tinyg_send(TinyGCommand(command="G90"))
         connection.write(gcode.encode())
         logging.info(f"Sent G-code: {gcode.strip()}")
-        # te = request.app.state.factory.machines['m1']['objects']['toolend']
+        # te = request.app.state.factory.machines['gantry']['objects']['toolend']
         # te['position'] = {"x": req.x, "y": req.y, "z": req.z, "a": req.a}
         # te.speed = req.speed
         return {

@@ -14,6 +14,8 @@ import {
   TextField,
 } from "@mui/material";
 import { goto, getInfo, handleUnlockToolChanger, stepMove } from './gantry-actions';
+// import LockOpenIcon from '@mui/icons-material/LockOpen';
+
 
 const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
   const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 10 });

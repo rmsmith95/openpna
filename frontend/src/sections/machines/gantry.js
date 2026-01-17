@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import GantryControls from '../../components/gantry-controls';
 import { getInfo, goto } from '../../components/gantry-actions';
-
+import { useFactory } from 'src/utils/factory-context';
 
 export const Gantry = () => {
   const [tab, setTab] = useState(0);
@@ -23,8 +23,16 @@ export const Gantry = () => {
   const [position, setPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [gotoPosition, setGotoPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
 
+  const { machines } = useFactory();
+  const gantry = machines?.gantry;
+
+  // Convert gantry objects into an array for the table
+  const gantryObjects = useMemo(() => {
+    return gantry?.objects ? Object.values(gantry.objects) : [];
+  }, [gantry]);
+
   useEffect(() => {
-    // function to fetch and update state
+    // fetch gantry info continuously
     const fetchInfo = async () => {
       const result = await getInfo();
       if (result) {
@@ -55,11 +63,7 @@ export const Gantry = () => {
             indicatorColor="primary"
             sx={{ borderBottom: 1, borderColor: 'divider' }}
           >
-            <Tab label={
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <span>Gantry</span>
-              </Stack>
-            } />
+            <Tab label={<Stack direction="row" alignItems="center" spacing={1}><span>Gantry</span></Stack>} />
             <Tab label="Control" />
             <Tab label="Locations" />
           </Tabs>
@@ -69,7 +73,6 @@ export const Gantry = () => {
         <Box>
           {tab === 0 && (
             <Stack spacing={2} alignItems="flex-start">
-              {/* Machine table */}
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -111,31 +114,32 @@ export const Gantry = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {gantry?.locations
-                    ? Object.values(gantry.locations).map((loc) => (
-                      <TableRow key={loc.id}>
-                        <TableCell>{loc.name}</TableCell>
+                  {gantryObjects.length > 0 ? (
+                    gantryObjects.map((obj) => (
+                      <TableRow key={obj.id}>
+                        <TableCell>{obj.name}</TableCell>
                         <TableCell>
-                          {loc.location.x}, {loc.location.y}, {loc.location.z}, {loc.location.a}
+                          {obj.position.x}, {obj.position.y}, {obj.position.z}, {obj.position.a}
                         </TableCell>
                         <TableCell>
-                          <Button variant="contained" onClick={() => goto({ ...loc.location, speed: 1000 })}>
+                          <Button
+                            variant="contained"
+                            onClick={() => goto({ ...obj.position, speed: 1000 })}
+                          >
                             GoTo
                           </Button>
                         </TableCell>
                       </TableRow>
                     ))
-                    : (
-                      <TableRow>
-                        <TableCell colSpan={2}>Loading locations...</TableCell>
-                      </TableRow>
-                    )
-                  }
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3}>Loading gantry objects...</TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </Stack>
           )}
-
         </Box>
       </CardContent>
     </Card>

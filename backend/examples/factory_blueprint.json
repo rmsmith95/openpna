@@ -1,6 +1,6 @@
 {
   "machines": {
-    "m1": {
+    "gantry": {
       "name": "gantry",
       "objects": {
         "toolend": {
@@ -11,8 +11,19 @@
           "description": "3d printed",
           "cad": "/home/toolend.stl",
           "assembly_id": false,
-          "bbox": [205, 308, 150, 52],
-          "location": { "x": 0, "y": 0, "z": 0, "a": 0 }
+          "bbox": [
+            205,
+            308,
+            150,
+            52
+          ],
+          "position": {
+            "x": 6.0,
+            "y": 4.0,
+            "z": 0.0,
+            "a": 0.0
+          },
+          "speed": 0.0
         },
         "holder1": {
           "id": "o2",
@@ -22,8 +33,18 @@
           "description": "3d printed",
           "cad": "/home/holder.stl",
           "assembly_id": false,
-          "bbox": [205, 308, 150, 52],
-          "location": { "x": 5, "y": 60, "z": 50, "a": 270 }
+          "bbox": [
+            205,
+            308,
+            150,
+            52
+          ],
+          "position": {
+            "x": 5,
+            "y": 60,
+            "z": 50,
+            "a": 270
+          }
         },
         "holder2": {
           "id": "o3",
@@ -33,25 +54,142 @@
           "description": "3d printed",
           "cad": "/home/holder.stl",
           "assembly_id": false,
-          "bbox": [205, 308, 150, 52],
-          "location": { "x": 5, "y": 100, "z": 50, "a": 270 }
+          "bbox": [
+            205,
+            308,
+            150,
+            52
+          ],
+          "position": {
+            "x": 5,
+            "y": 100,
+            "z": 50,
+            "a": 270
+          }
         }
       },
-      "workingArea": [600, 400, 100],
-      "dimensions": [750, 550, 400],
+      "workingArea": [
+        600,
+        400,
+        100
+      ],
+      "dimensions": [
+        750,
+        550,
+        400
+      ],
       "effector": "",
       "cad": "/home/gantry.stl"
     },
-    "m2": {
+    "cobot280": {
       "name": "cobot280",
       "locations": {},
-      "workingArea": [600, 400, 100],
-      "dimensions": [750, 550, 400],
+      "workingArea": [
+        600,
+        400,
+        100
+      ],
+      "dimensions": [
+        750,
+        550,
+        400
+      ],
       "effector": "",
       "cad": "/home/cobot280.stl"
     }
   },
-
+  "parts": {
+    "p11": {
+      "id": "p11",
+      "name": "Body",
+      "class": "part",
+      "mass": 0.3,
+      "description": "3d printed",
+      "cad": "/home/body.stl",
+      "assembly_id": false,
+      "bbox": [
+        10,
+        5,
+        120,
+        120
+      ]
+    },
+    "p12": {
+      "id": "p12",
+      "name": "Body Jig",
+      "class": "jig",
+      "mass": 0.3,
+      "description": "3d printed",
+      "cad": "/home/body_jig.stl",
+      "assembly_id": false,
+      "bbox": [
+        140,
+        5,
+        140,
+        140
+      ]
+    },
+    "p13": {
+      "id": "p13",
+      "name": "Arm1",
+      "class": "part",
+      "mass": 0.2,
+      "description": "3d printed",
+      "cad": "/home/arm.stl",
+      "assembly_id": false,
+      "bbox": [
+        10,
+        155,
+        120,
+        60
+      ]
+    },
+    "p14": {
+      "id": "p14",
+      "name": "Arm2",
+      "class": "part",
+      "mass": 0.2,
+      "description": "3d printed",
+      "cad": "/home/arm.stl",
+      "assembly_id": false,
+      "bbox": [
+        10,
+        225,
+        120,
+        60
+      ]
+    },
+    "p15": {
+      "id": "p15",
+      "name": "Arm3",
+      "class": "part",
+      "mass": 0.2,
+      "description": "3d printed",
+      "cad": "/home/arm.stl",
+      "assembly_id": false,
+      "bbox": [
+        140,
+        155,
+        120,
+        60
+      ]
+    },
+    "p16": {
+      "id": "p16",
+      "name": "Arm4",
+      "class": "part",
+      "mass": 0.2,
+      "description": "3d printed",
+      "cad": "/home/arm.stl",
+      "assembly_id": false,
+      "bbox": [
+        140,
+        225,
+        120,
+        60
+      ]
+    }
+  },
   "tools": {
     "t1": {
       "id": "t1",
@@ -61,10 +199,30 @@
       "description": "3d printed",
       "cad": "/home/gripper.stl",
       "assembly_id": false,
-      "bbox": [215, 308, 75, 58],
-      "work_offset": { "x": 0, "y": 0, "z": 0, "a": 0 },
-      "holder_offset": { "x": 0, "y": 0, "z": 0, "a": 0 },
-      "location": { "x": 0, "y": 0, "z": 0, "a": 0 },
+      "bbox": [
+        215,
+        308,
+        75,
+        58
+      ],
+      "work_offset": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "a": 0
+      },
+      "holder_offset": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "a": 0
+      },
+      "location": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "a": 0
+      },
       "machine": "gantry",
       "parent": "gantryend"
     },
@@ -76,40 +234,55 @@
       "description": "3d printed",
       "cad": "/home/screwdriver.stl",
       "assembly_id": false,
-      "bbox": [305, 308, 52, 52],
-      "work_offset": { "x": 0, "y": 0, "z": 0, "a": 0 },
-      "holder_offset": { "x": 0, "y": 0, "z": 0, "a": 0 },
-      "location": { "x": 0, "y": 0, "z": 0, "a": 0 },
+      "bbox": [
+        305,
+        308,
+        52,
+        52
+      ],
+      "work_offset": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "a": 0
+      },
+      "holder_offset": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "a": 0
+      },
+      "location": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "a": 0
+      },
       "machine": "gantry",
       "parent": "holder1"
     }
   },
-
-  "parts": {
-    "p11": { "id": "p11", "name": "Body", "class": "part", "mass": 0.3, "description": "3d printed", "cad": "/home/body.stl", "assembly_id": false, "bbox": [10, 5, 120, 120] },
-    "p12": { "id": "p12", "name": "Body Jig", "class": "jig", "mass": 0.3, "description": "3d printed", "cad": "/home/body_jig.stl", "assembly_id": false, "bbox": [140, 5, 140, 140] },
-    "p13": { "id": "p13", "name": "Arm1", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": false, "bbox": [10, 155, 120, 60] },
-    "p14": { "id": "p14", "name": "Arm2", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": false, "bbox": [10, 225, 120, 60] },
-    "p15": { "id": "p15", "name": "Arm3", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": false, "bbox": [140, 155, 120, 60] },
-    "p16": { "id": "p16", "name": "Arm4", "class": "part", "mass": 0.2, "description": "3d printed", "cad": "/home/arm.stl", "assembly_id": false, "bbox": [140, 225, 120, 60] }
-  },
-
   "jobs": {
-    "j1": {
-      "id": "j1",
-      "machine": "gantry",
-      "action": "step",
-      "params": { "x": 1, "y": 0, "z": 0, "a": 0, "speed": 2000 },
-      "status": "To Do",
-      "description": ""
-    },
-    "j2": {
-      "id": "j2",
+    "J2": {
+      "id": "J2",
       "machine": "gantry",
       "action": "unlock",
       "params": {},
-      "status": "To Do",
-      "description": ""
+      "status": "Pending"
+    },
+    "J4": {
+      "id": "J4",
+      "machine": "gantry",
+      "action": "unlock",
+      "params": {},
+      "status": "Pending"
+    },
+    "J5": {
+      "id": "J5",
+      "machine": "gantry",
+      "action": "unlock",
+      "params": {},
+      "status": "Pending"
     }
   }
 }

@@ -17,7 +17,7 @@ import {
   Button,
   TextField,
 } from "@mui/material";
-import { moveJoint, moveJoints } from './cobot280-actions';
+import { moveJoint, moveJoints, fetchPositions } from './cobot280-actions';
 
 
 const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed }) => {

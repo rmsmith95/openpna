@@ -7,6 +7,7 @@ import {
   MenuItem,
   Select,
   Stack,
+  SvgIcon,
   Table,
   TableBody,
   TableCell,
@@ -21,10 +22,12 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { goto, stepMove, handleUnlockToolChanger } from '../../components/gantry-actions';
 import { stepCloseGripper, stepOpenGripper, speedGripperDown, speedGripperUp } from '../../components/gripper-actions';
 import { fetchPositions, moveJoint, moveJoints } from '../../components/cobot280-actions';
+import ArrowPathIcon from '@heroicons/react/24/solid/ArrowPathIcon';
 
 export const JobsTable = (props) => {
   const {
     jobs,
+    fetchJobs,
     addJob,
     updateJob,
     deleteJob,
@@ -99,7 +102,17 @@ export const JobsTable = (props) => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell></TableCell>
+                <TableCell align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <IconButton
+                      color="primary"
+                      onClick={fetchJobs}
+                      size="small"
+                    >
+                      <ArrowPathIcon width={20} height={20} />
+                    </IconButton>
+                  </Box>
+                </TableCell>
                 <TableCell>Job</TableCell>
                 <TableCell>Machine</TableCell>
                 <TableCell>Action</TableCell>

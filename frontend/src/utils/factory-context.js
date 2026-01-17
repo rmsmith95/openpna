@@ -7,34 +7,42 @@ export const FactoryProvider = ({ children }) => {
   const [jobs, setJobs] = useState({});
   const [tools, setTools] = useState({});
   const [machines, setMachines] = useState({});
-  const [loading, setLoading] = useState({ parts: false, jobs: false, machines: false });
+  const [loading, setLoading] = useState({
+    parts: false,
+    jobs: false,
+    machines: false,
+    tools: false,
+  });
   const [gantryPosition, setGantryPosition] = useState({ x: 0, y: 0, z: 0, a: 0 });
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0, z: 0 });
 
+  // Map state keys to setters for cleaner fetch
+  const stateSetters = {
+    parts: setParts,
+    jobs: setJobs,
+    machines: setMachines,
+    tools: setTools,
+  };
+
   // Generic backend fetch helper
   const fetchData = useCallback(async (endpoint, setStateKey) => {
+    if (!stateSetters[setStateKey]) {
+      console.warn(`Unknown state key: ${setStateKey}`);
+      return;
+    }
+
     setLoading(prev => ({ ...prev, [setStateKey]: true }));
     try {
       const res = await fetch(`http://127.0.0.1:8000/${endpoint}`);
       const data = await res.json();
-      switch (setStateKey) {
-        case 'parts':
-          setParts(data || {});
-          break;
-        case 'jobs':
-          setJobs(data || {});
-          break;
-        case 'machines':
-          setMachines(data || {});
-          break;
-        case 'tools':
-          setJobs(data || {});
-          break;
-        default:
-          console.warn(`Unknown state key: ${setStateKey}`);
-      }
+
+      // Store the inner object if exists, else fallback to empty object
+      const innerData = data?.[setStateKey] || {};
+      stateSetters[setStateKey](innerData);
+
     } catch (err) {
       console.error(`Error fetching ${setStateKey}:`, err);
+      stateSetters[setStateKey]({});
     } finally {
       setLoading(prev => ({ ...prev, [setStateKey]: false }));
     }

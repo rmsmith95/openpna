@@ -128,6 +128,7 @@ export const JobsPanel = () => {
 
       <JobsTable
         jobs={jobs}
+        fetchJobs={fetchJobs}
         addJob={addJob}
         updateJob={updateJob}
         deleteJob={deleteJob}

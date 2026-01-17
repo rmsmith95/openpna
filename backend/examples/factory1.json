@@ -1,6 +1,6 @@
 {
   "machines": {
-    "m1": {
+    "gantry": {
       "name": "gantry",
       "objects": {
         "toolend": {
@@ -81,7 +81,7 @@
       "effector": "",
       "cad": "/home/gantry.stl"
     },
-    "m2": {
+    "cobot280": {
       "name": "cobot280",
       "locations": {},
       "workingArea": [
@@ -263,27 +263,26 @@
     }
   },
   "jobs": {
-    "j1": {
-      "id": "j1",
-      "machine": "gantry",
-      "action": "step",
-      "params": {
-        "x": 1,
-        "y": 0,
-        "z": 0,
-        "a": 0,
-        "speed": 2000
-      },
-      "status": "To Do",
-      "description": ""
-    },
-    "j2": {
-      "id": "j2",
+    "J2": {
+      "id": "J2",
       "machine": "gantry",
       "action": "unlock",
       "params": {},
-      "status": "To Do",
-      "description": ""
+      "status": "Pending"
+    },
+    "J4": {
+      "id": "J4",
+      "machine": "gantry",
+      "action": "unlock",
+      "params": {},
+      "status": "Pending"
+    },
+    "J5": {
+      "id": "J5",
+      "machine": "gantry",
+      "action": "unlock",
+      "params": {},
+      "status": "Pending"
     }
   }
 }

@@ -63,17 +63,20 @@ class Factory:
 
     def update_job(self, job_id, job):
         # Assign new ID if missing
-        if not job_id or job_id == "":  # None or 0 treated as new
+        if not job_id or job_id == "" or job_id == '':
             self._job_counter += 1
             job_id = self._job_counter
             job["id"] = f"J{job_id}"
         self.jobs[job_id] = job
+        self.save_factory()
         return job_id
     
     def delete_job(self, job_id: str) -> bool:
         if job_id in self.jobs:
             del self.jobs[job_id]
+            self.save_factory()
             return True
+        self.save_factory()
         return False
     
     def run_job(self, job_id):

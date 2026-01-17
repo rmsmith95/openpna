@@ -154,7 +154,9 @@ export const JobsTable = (props) => {
                 <TableCell>Action</TableCell>
                 <TableCell>Parameters</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell></TableCell>
+                <TableCell><Button onClick={addJob}>
+                        +
+                      </Button></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

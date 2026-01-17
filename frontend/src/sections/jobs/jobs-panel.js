@@ -17,6 +17,7 @@ export const JobsPanel = () => {
     try {
       const res = await fetch(`http://127.0.0.1:8000/get_jobs`);
       const data = await res.json();
+      console.log(data)
       setJobs(Object.values(data || {}));
     } catch (err) {
       console.error('Error fetching jobs:', err);

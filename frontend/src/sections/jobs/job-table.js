@@ -57,33 +57,57 @@ export const JobsTable = (props) => {
   const getDefaultParams = (machine, action) =>
     PARAM_TEMPLATES?.[machine]?.[action] ? { ...PARAM_TEMPLATES[machine][action] } : {};
 
-  const updateRow = (jobId, machine, action, params) => {
-    setRows(rows.map(row => {
-      if (row.id !== jobId) return row;
+  const addJob = async () => {
+    const job = { id: "", machine: "gantry", action: "unlock", params: {}, status: "Pending",};
+    const job_id = job.id
 
-      const finalMachine = machine ?? row.machine;
-      const finalAction = action ?? row.action;
+    try {
+      const res = await fetch("/api/jobs/update-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id, job }),
+      });
 
-      return {
-        ...row,
-        machine: finalMachine,
-        action: finalAction,
-        params: params ?? getDefaultParams(finalMachine, finalAction)
-      };
-    }));
+      if (!res.ok) throw new Error("Failed to update job");
+      return await res.json();
+    } catch (err) {
+      console.error("update_job error:", err);
+      throw err;
+    }
   };
 
-  const addRow = () => {
-    setRows([
-      ...rows,
-      { id: "j", machine: "gantry", action: "unlock", params: {} },
-    ]);
-  };
 
-  const removeRow = (id) => {
-    const updated = rows.filter((row) => row.id !== id);
-    setRows(updated);
-  };
+  async function updateJob(job_id, job) {
+    try {
+      const res = await fetch("/api/jobs/update-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id, job }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update job");
+      return await res.json();
+    } catch (err) {
+      console.error("update_job error:", err);
+      throw err;
+    }
+  }
+
+  async function deleteJob(job_id) {
+    try {
+      const res = await fetch("/api/jobs/delete-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id }),
+      });
+
+      if (!res.ok) throw new Error("Failed to delete job");
+      return await res.json();
+    } catch (err) {
+      console.error("delete_job error:", err);
+      throw err;
+    }
+  }
 
   const runAction = (job_id) => {
     const job = rows.find((row) => row.id === job_id);
@@ -148,7 +172,7 @@ export const JobsTable = (props) => {
                       <Select
                         value={job.machine}
                         onChange={(e) =>
-                          updateRow(job.id, e.target.value, "")
+                          updateJob(job.id, e.target.value, "")
                         }
                         size="small"
                         fullWidth
@@ -165,7 +189,7 @@ export const JobsTable = (props) => {
                     <TableCell>
                       <Select
                         value={job.action || ""}
-                        onChange={(e) => updateRow(job.id, job.machine, e.target.value)}
+                        onChange={(e) => updateJob(job.id, job.machine, e.target.value)}
                         size="small"
                         fullWidth
                       >
@@ -182,11 +206,11 @@ export const JobsTable = (props) => {
                     </TableCell>
 
                     <TableCell>
-                        <TextField
-                          fullWidth
-                          value={JSON.stringify(job.params)} // single-line JSON
-                          // sx={{ fontFamily: 'monospace' }}
-                        />
+                      <TextField
+                        fullWidth
+                        value={JSON.stringify(job.params)} // single-line JSON
+                      // sx={{ fontFamily: 'monospace' }}
+                      />
                     </TableCell>
 
                     {/* Job Status */}
@@ -204,11 +228,11 @@ export const JobsTable = (props) => {
                       {/* Delete Row */}
                       <IconButton
                         color="error"
-                        onClick={() => removeRow(job.id)}
+                        onClick={() => deleteJob(job.id)}
                       >
                         <TrashIcon width={20} height={20} color="red" />
                       </IconButton>
-                      <Button onClick={addRow}>
+                      <Button onClick={addJob}>
                         +
                       </Button>
                     </TableCell>
@@ -221,7 +245,7 @@ export const JobsTable = (props) => {
       </Scrollbar>
 
       {/* Pagination with progress bar to the left and x/y jobs to the right */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1}}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1 }}>
         {/* Progress bar fills remaining space */}
         <Box sx={{ flex: 1, mr: 1 }}>
           <LinearProgress variant="determinate" value={progressPercent} sx={{ height: 10, borderRadius: 5 }} />

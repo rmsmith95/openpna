@@ -61,16 +61,23 @@ def get_parts():
     return app.state.factory.parts
 
 # --- Jobs ---
-
-class UpdateJobsRequest(BaseModel):
-    job_id: int
+class UpdateJobRequest(BaseModel):
+    job_id: str
     job: dict
 
-@app.post("/update_jobs")
-def update_jobs(req: UpdateJobsRequest):
-    app.state.factory.update_jobs(req.job_id, req.job)
-    resp = {"status": "ok"}
-    return resp
+@app.post("/update_job")
+def update_job(req: UpdateJobRequest):
+    job_id = app.state.factory.update_job(req.job_id, req.job)
+    return {"status": "ok", "job_id": job_id}
+
+class DeleteJobRequest(BaseModel):
+    job_id: str
+
+@app.post("/delete_job")
+def delete_job(req: DeleteJobRequest):
+    deleted = app.state.factory.delete_job(req.job_id)
+    return {"status": "ok", "deleted": deleted}
+    
 
 @app.get("/get_jobs")
 def get_jobs():

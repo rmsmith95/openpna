@@ -14,6 +14,7 @@ class Factory:
         self.machines: Dict[str, dict] = {}
         self.parts: Dict[str, dict] = {}
         self.jobs: Dict[str, dict] = {}
+        self._job_counter = 0
         self.tools: Dict[str, dict] = {}
         self.save_file = ""
 
@@ -26,6 +27,7 @@ class Factory:
         self.parts = data.get("parts", {})
         self.tools = data.get("tools", {})
         self.jobs = data.get("jobs", {})
+        self._job_counter = len(self.jobs)
         return self
 
     def save_factory(self):
@@ -59,8 +61,20 @@ class Factory:
             print(p)
         pass
 
-    def update_jobs(self, job_id, job):
+    def update_job(self, job_id, job):
+        # Assign new ID if missing
+        if not job_id or job_id == "":  # None or 0 treated as new
+            self._job_counter += 1
+            job_id = self._job_counter
+            job["id"] = f"J{job_id}"
         self.jobs[job_id] = job
+        return job_id
+    
+    def delete_job(self, job_id: str) -> bool:
+        if job_id in self.jobs:
+            del self.jobs[job_id]
+            return True
+        return False
     
     def run_job(self, job_id):
         """machine with effector will move part to target part"""

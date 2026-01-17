@@ -10,11 +10,7 @@ import { JobsTable } from 'src/sections/jobs/job-table';
 export const JobsPanel = () => {
   const { parts, machines: factoryMachines } = useFactory();
   const machines = useMemo(() => Object.values(factoryMachines).map(m => m.name), [factoryMachines]);
-
   const [jobs, setJobs] = useState([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
   const fileInputRef = useRef(null);
 
   const fetchJobs = useCallback(async () => {
@@ -33,13 +29,6 @@ export const JobsPanel = () => {
     return () => clearInterval(interval);
   }, [fetchJobs]);
 
-  const pagedJobs = useMemo(() => {
-    const start = page * rowsPerPage;
-    return jobs.slice(start, start + rowsPerPage);
-  }, [jobs, page, rowsPerPage]);
-
-  const handlePageChange = (event, value) => setPage(value);
-  const handleRowsPerPageChange = (event) => setRowsPerPage(event.target.value);
 
   const saveToFile = () => {
     const json = JSON.stringify(jobs, null, 2);
@@ -82,13 +71,8 @@ export const JobsPanel = () => {
       </Stack>
 
       <JobsTable
-        rows={pagedJobs}
+        rows={jobs}
         setRows={setJobs}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        selected={[]}
         machines={machines}
         parts={parts}
       />

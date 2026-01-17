@@ -4,6 +4,8 @@ frontend/dist/*
 
 backend/__pycache__/*
 backend/venv/*
+backend/examples/factory1.json
+
 __pycache__/
 **/__pycache__/
 *.pyc

@@ -65,9 +65,8 @@ class Factory:
         # Assign new ID if missing
         if not job_id or job_id == "" or job_id == '':
             self._job_counter += 1
-            job_id = self._job_counter
-            job["id"] = f"J{job_id}"
-        self.jobs[job_id] = job
+            job["id"] = f"J{self._job_counter}"
+        self.jobs[job["id"]] = job
         self.save_factory()
         return job_id
     

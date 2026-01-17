@@ -24,9 +24,10 @@ import { fetchPositions, moveJoint, moveJoints } from '../../components/cobot280
 
 export const JobsTable = (props) => {
   const {
-    rows = [],
-    setRows,
-    currentJobId = null,
+    jobs,
+    addJob,
+    updateJob,
+    deleteJob,
     machines,
     parts,
   } = props;
@@ -50,67 +51,16 @@ export const JobsTable = (props) => {
   };
 
   // Compute progress
-  const count = rows.length
-  const completedCount = rows.filter(j => j.status === 'Done').length;
-  const progressPercent = (completedCount / count) * 100;
+  const count = Object.values(jobs).length;
+  const completedCount = Object.values(jobs).filter(j => j.status === 'Done').length;
+  const progressPercent = count === 0 ? 0 : (completedCount / count) * 100;
+
 
   const getDefaultParams = (machine, action) =>
     PARAM_TEMPLATES?.[machine]?.[action] ? { ...PARAM_TEMPLATES[machine][action] } : {};
 
-  const addJob = async () => {
-    const job = { id: "", machine: "gantry", action: "unlock", params: {}, status: "Pending",};
-    const job_id = job.id
-
-    try {
-      const res = await fetch("/api/jobs/update-job", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job_id, job }),
-      });
-
-      if (!res.ok) throw new Error("Failed to update job");
-      return await res.json();
-    } catch (err) {
-      console.error("update_job error:", err);
-      throw err;
-    }
-  };
-
-
-  async function updateJob(job_id, job) {
-    try {
-      const res = await fetch("/api/jobs/update-job", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job_id, job }),
-      });
-
-      if (!res.ok) throw new Error("Failed to update job");
-      return await res.json();
-    } catch (err) {
-      console.error("update_job error:", err);
-      throw err;
-    }
-  }
-
-  async function deleteJob(job_id) {
-    try {
-      const res = await fetch("/api/jobs/delete-job", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job_id }),
-      });
-
-      if (!res.ok) throw new Error("Failed to delete job");
-      return await res.json();
-    } catch (err) {
-      console.error("delete_job error:", err);
-      throw err;
-    }
-  }
-
   const runAction = (job_id) => {
-    const job = rows.find((row) => row.id === job_id);
+    const job = jobs[job_id];
     if (!job) return;
     const { machine, action, params } = job;
     console.log("Running job:", machine, action, params);
@@ -149,25 +99,41 @@ export const JobsTable = (props) => {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell></TableCell>
                 <TableCell>Job</TableCell>
                 <TableCell>Machine</TableCell>
                 <TableCell>Action</TableCell>
                 <TableCell>Parameters</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell><Button onClick={addJob}>
-                        +
-                      </Button></TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      sx={{ backgroundColor: 'green' }}
+                      onClick={addJob}
+                    >
+                      Add
+                    </Button>
+                  </Box>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((job) => {
-                const isCurrent = job.id === currentJobId;
+              {Object.values(jobs).map((job) => {
                 return (
                   <TableRow
                     hover
                     key={job.id}
-                    sx={isCurrent ? { backgroundColor: 'rgba(76, 175, 80, 0.2)' } : {}}
                   >
+                    <TableCell align="center" sx={{ verticalAlign: 'middle' }}>
+                      <IconButton
+                        color="error"
+                        onClick={() => deleteJob(job.id)}
+                      >
+                        <TrashIcon width={20} height={20} color="red" />
+                      </IconButton>
+                    </TableCell>
                     <TableCell>{job.id}</TableCell>
                     {/* Machines Dropdown */}
                     <TableCell>
@@ -226,16 +192,6 @@ export const JobsTable = (props) => {
                         onClick={() => runAction(job.id)}
                       >
                         Run
-                      </Button>
-                      {/* Delete Row */}
-                      <IconButton
-                        color="error"
-                        onClick={() => deleteJob(job.id)}
-                      >
-                        <TrashIcon width={20} height={20} color="red" />
-                      </IconButton>
-                      <Button onClick={addJob}>
-                        +
                       </Button>
                     </TableCell>
                   </TableRow>

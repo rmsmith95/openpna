@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 import {
   Box,
   Button,
@@ -15,14 +16,25 @@ import {
   TableRow,
   TextField,
   Typography,
-  LinearProgress
+  LinearProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from '@mui/material';
 import { TrashIcon } from '@heroicons/react/24/solid';
-import { Scrollbar } from 'src/components/scrollbar';
-import { goto, stepMove, handleUnlockToolChanger } from '../../components/gantry-actions';
-import { stepCloseGripper, stepOpenGripper, speedGripperDown, speedGripperUp } from '../../components/gripper-actions';
-import { fetchPositions, moveJoint, moveJoints } from '../../components/cobot280-actions';
 import ArrowPathIcon from '@heroicons/react/24/solid/ArrowPathIcon';
+import { Scrollbar } from 'src/components/scrollbar';
+
+import { goto, stepMove, handleUnlockToolChanger } from '../../components/gantry-actions';
+import {
+  stepCloseGripper,
+  stepOpenGripper,
+  speedGripperDown,
+  speedGripperUp
+} from '../../components/gripper-actions';
+import { fetchPositions, moveJoint, moveJoints } from '../../components/cobot280-actions';
 
 export const JobsTable = (props) => {
   const {
@@ -32,8 +44,11 @@ export const JobsTable = (props) => {
     updateJob,
     deleteJob,
     machines,
-    parts,
+    parts
   } = props;
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState(null);
 
   const PARAM_TEMPLATES = {
     gantry: {
@@ -53,46 +68,84 @@ export const JobsTable = (props) => {
     }
   };
 
-  // Compute progress
+  // Progress
   const count = Object.values(jobs).length;
   const completedCount = Object.values(jobs).filter(j => j.status === 'Done').length;
   const progressPercent = count === 0 ? 0 : (completedCount / count) * 100;
 
-
   const getDefaultParams = (machine, action) =>
-    PARAM_TEMPLATES?.[machine]?.[action] ? { ...PARAM_TEMPLATES[machine][action] } : {};
+    PARAM_TEMPLATES?.[machine]?.[action]
+      ? { ...PARAM_TEMPLATES[machine][action] }
+      : {};
 
   const runAction = (job_id) => {
     const job = jobs[job_id];
     if (!job) return;
+
     const { machine, action, params } = job;
-    console.log("Running job:", machine, action, params);
+    console.log('Running job:', machine, action, params);
 
     switch (machine) {
-      case "gantry":
+      case 'gantry':
         switch (action) {
-          case "goto": return goto?.(params);
-          case "step": return stepMove?.(params);
-          case "unlock": return handleUnlockToolChanger?.(5);
+          case 'goto':
+            return goto?.(params);
+          case 'step':
+            return stepMove?.(params);
+          case 'unlock':
+            return handleUnlockToolChanger?.(5);
+          default:
+            break;
         }
         break;
-      case "cobot280":
+
+      case 'cobot280':
         switch (action) {
-          case "goto": return moveJoints?.(params);
-          case "step": return moveJoint?.(params);
+          case 'goto':
+            return moveJoints?.(params);
+          case 'step':
+            return moveJoint?.(params);
+          default:
+            break;
         }
         break;
-      case "gripper":
+
+      case 'gripper':
         switch (action) {
-          case "open": return stepOpenGripper?.();
-          case "close": return stepCloseGripper?.();
-          case "speedUp": return speedGripperUp?.();
-          case "speedDown": return speedGripperDown?.();
+          case 'open':
+            return stepOpenGripper?.();
+          case 'close':
+            return stepCloseGripper?.();
+          case 'speedUp':
+            return speedGripperUp?.();
+          case 'speedDown':
+            return speedGripperDown?.();
+          default:
+            break;
         }
         break;
+
       default:
-        console.warn("Unknown machine/action:", machine, action);
+        console.warn('Unknown machine/action:', machine, action);
     }
+  };
+
+  const handleDeleteClick = (jobId) => {
+    setJobToDelete(jobId);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (jobToDelete) {
+      deleteJob(jobToDelete);
+    }
+    setConfirmOpen(false);
+    setJobToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmOpen(false);
+    setJobToDelete(null);
   };
 
   return (
@@ -132,108 +185,147 @@ export const JobsTable = (props) => {
                 </TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
-              {Object.values(jobs).map((job) => {
-                return (
-                  <TableRow
-                    hover
-                    key={job.id}
-                  >
-                    <TableCell align="center" sx={{ verticalAlign: 'middle' }}>
-                      <IconButton
-                        color="error"
-                        onClick={() => deleteJob(job.id)}
-                      >
-                        <TrashIcon width={20} height={20} color="red" />
-                      </IconButton>
-                    </TableCell>
-                    <TableCell>{job.id}</TableCell>
-                    {/* Machines Dropdown */}
-                    <TableCell>
-                      <Select
-                        value={job.machine}
-                        onChange={(e) =>
-                          updateJob(job.id, e.target.value, "")
-                        }
-                        size="small"
-                        fullWidth
-                      >
-                        {machines.map((m) => (
-                          <MenuItem key={m} value={m}>
-                            {m}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </TableCell>
+              {Object.values(jobs).map((job) => (
+                <TableRow hover key={job.id}>
+                  <TableCell align="center" sx={{ verticalAlign: 'middle' }}>
+                    <IconButton
+                      color="error"
+                      onClick={() => handleDeleteClick(job.id)}
+                    >
+                      <TrashIcon width={20} height={20} />
+                    </IconButton>
+                  </TableCell>
 
-                    {/* Action Dropdown */}
-                    <TableCell>
-                      <Select
-                        value={job.action || ""}
-                        onChange={(e) => updateJob(job.id, job.machine, e.target.value)}
-                        size="small"
-                        fullWidth
-                      >
-                        {(
-                          job.machine === "gantry" ? ["goto", "step", "unlock"] :
-                            job.machine === "cobot280" ? ["goto", "step"] :
-                              job.machine === "gripper" ? ["open", "close"] : []
-                        ).map((act) => (
-                          <MenuItem key={act} value={act}>
-                            {act}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </TableCell>
+                  <TableCell>{job.id}</TableCell>
 
-                    <TableCell>
-                      <TextField
-                        fullWidth
-                        value={JSON.stringify(job.params)} // single-line JSON
-                      // sx={{ fontFamily: 'monospace' }}
-                      />
-                    </TableCell>
+                  <TableCell>
+                    <Select
+                      value={job.machine}
+                      onChange={(e) =>
+                        updateJob(job.id, e.target.value, '')
+                      }
+                      size="small"
+                      fullWidth
+                    >
+                      {machines.map((m) => (
+                        <MenuItem key={m} value={m}>
+                          {m}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </TableCell>
 
-                    {/* Job Status */}
-                    <TableCell>{job.status}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={job.action || ''}
+                      onChange={(e) =>
+                        updateJob(job.id, job.machine, e.target.value)
+                      }
+                      size="small"
+                      fullWidth
+                    >
+                      {(job.machine === 'gantry'
+                        ? ['goto', 'step', 'unlock']
+                        : job.machine === 'cobot280'
+                        ? ['goto', 'step']
+                        : job.machine === 'gripper'
+                        ? ['open', 'close', 'speedUp', 'speedDown']
+                        : []
+                      ).map((act) => (
+                        <MenuItem key={act} value={act}>
+                          {act}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </TableCell>
 
-                    {/* Run Button */}
-                    <TableCell align="center">
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => runAction(job.id)}
-                      >
-                        Run
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                  <TableCell>
+                    <TextField
+                      fullWidth
+                      value={JSON.stringify(job.params)}
+                    />
+                  </TableCell>
+
+                  <TableCell>{job.status}</TableCell>
+
+                  <TableCell align="center">
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => runAction(job.id)}
+                    >
+                      Run
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </Box>
       </Scrollbar>
 
-      {/* Pagination with progress bar to the left and x/y jobs to the right */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1 }}>
-        {/* Progress bar fills remaining space */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 2,
+          py: 1
+        }}
+      >
         <Box sx={{ flex: 1, mr: 1 }}>
-          <LinearProgress variant="determinate" value={progressPercent} sx={{ height: 10, borderRadius: 5 }} />
+          <LinearProgress
+            variant="determinate"
+            value={progressPercent}
+            sx={{ height: 10, borderRadius: 5 }}
+          />
         </Box>
 
-        {/* x/y jobs text to the right of the progress bar */}
-        <Typography variant="body2" color="textSecondary" sx={{ ml: 2, mr: 2, whiteSpace: 'nowrap' }}>
+        <Typography
+          variant="body2"
+          color="textSecondary"
+          sx={{ ml: 2, mr: 2, whiteSpace: 'nowrap' }}
+        >
           {completedCount} / {count}
         </Typography>
-
       </Box>
+
+      <Dialog
+        open={confirmOpen}
+        onClose={handleCancelDelete}
+      >
+        <DialogTitle>Delete Job?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this job?
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            color="error"
+            variant="contained"
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 };
 
 JobsTable.propTypes = {
-  count: PropTypes.number,
-  jobs: PropTypes.array,
-  currentJobId: PropTypes.number,
+  jobs: PropTypes.object,
+  fetchJobs: PropTypes.func,
+  addJob: PropTypes.func,
+  updateJob: PropTypes.func,
+  deleteJob: PropTypes.func,
+  machines: PropTypes.array,
+  parts: PropTypes.array
 };

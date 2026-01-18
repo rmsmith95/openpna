@@ -36,10 +36,8 @@ export const FactoryProvider = ({ children }) => {
       const res = await fetch(`http://127.0.0.1:8000/${endpoint}`);
       const data = await res.json();
 
-      // Store the inner object if exists, else fallback to empty object
-      const innerData = data?.[setStateKey] || {};
-      stateSetters[setStateKey](innerData);
-
+      // ✅ backend already returns the correct object
+      stateSetters[setStateKey](data || {});
     } catch (err) {
       console.error(`Error fetching ${setStateKey}:`, err);
       stateSetters[setStateKey]({});
@@ -47,6 +45,7 @@ export const FactoryProvider = ({ children }) => {
       setLoading(prev => ({ ...prev, [setStateKey]: false }));
     }
   }, []);
+
 
   // Initial fetch on load
   useEffect(() => {

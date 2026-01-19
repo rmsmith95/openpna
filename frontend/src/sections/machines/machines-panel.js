@@ -53,7 +53,7 @@ export const MachinePanel = ({ machines = defaultMachines, connectionsProps }) =
         }}
       >
         <Tab
-          label="Connections"
+          label="Connect"
           sx={{ ...tabSx, bgcolor: "black" }}
         />
         <Tab

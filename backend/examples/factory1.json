@@ -263,22 +263,8 @@
     }
   },
   "jobs": {
-    "J2": {
-      "id": "J2",
-      "machine": "gantry",
-      "action": "unlock",
-      "params": {},
-      "status": "Pending"
-    },
     "J4": {
       "id": "J4",
-      "machine": "gantry",
-      "action": "unlock",
-      "params": {},
-      "status": "Pending"
-    },
-    "J5": {
-      "id": "J5",
       "machine": "gantry",
       "action": "unlock",
       "params": {},

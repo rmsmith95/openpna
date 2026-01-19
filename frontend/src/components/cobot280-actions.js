@@ -1,19 +1,21 @@
 export const fetchPositions = async () => {
   try {
-    const res = await fetch("/api/cobot280/get_position", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ipAddress: ipAddress }),
-    });
+    const res = await fetch("/api/cobot280/get_position"); // Next.js API route
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+
     if (data.status === "ok" && Array.isArray(data.angles)) {
-      return (data.angles.map(Number)); // ensure numeric
+      return data.angles.map(Number); // ensure numbers
+    } else {
+      console.warn("Unexpected data from backend:", data);
+      return null;
     }
   } catch (err) {
     console.error("❌ Error fetching joint positions:", err);
+    return null;
   }
 };
+
 
 export const moveJoint = async (jointIndex, deltaValue) => {
   const newAngles = [...joints];

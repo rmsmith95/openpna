@@ -3,10 +3,10 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from machines.tinyg import router as tinyg_router
-from machines.cobot280 import router as cobot280_router
-from machines.gripper import router as gripper_router
-from machines.arduino import router as arduino_router
+from api.tinyg import router as tinyg_router
+from api.cobot280 import router as cobot280_router
+from api.gripper import router as gripper_router
+from api.arduino import router as arduino_router
 from sections.factory import Factory
 
 logging.basicConfig(level=logging.INFO)
@@ -87,7 +87,13 @@ def get_jobs():
 @app.get("/get_machines")
 def get_machines():
     """Return all machines as a dict: machineId -> machine"""
-    return app.state.factory.machines
+    return {
+        'gantry': app.state.factory.machines['gantry'],
+        'cobot280': app.state.factory.machines['cobot280'],
+        'gripper': app.state.factory.machines['gripper'],
+        'arduino': app.state.factory.machines['arduino']
+    }
+    
 
 @app.get("/get_tools")
 def get_tools():

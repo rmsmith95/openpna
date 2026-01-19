@@ -36,7 +36,7 @@ export const FactoryProvider = ({ children }) => {
       const res = await fetch(`http://127.0.0.1:8000/${endpoint}`);
       const data = await res.json();
 
-      // ✅ backend already returns the correct object
+      console.log(data)
       stateSetters[setStateKey](data || {});
     } catch (err) {
       console.error(`Error fetching ${setStateKey}:`, err);

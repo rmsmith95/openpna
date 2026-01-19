@@ -2,6 +2,10 @@ from typing import List, Dict
 from aabb import AABB, plan_path
 import logging
 import json
+from machines.gantry import Gantry
+from machines.cobot280 import Cobot280
+from machines.gripper import ST3020Gripper
+from machines.arduino import Arduino
 
 
 class Factory:
@@ -11,7 +15,7 @@ class Factory:
     """
 
     def __init__(self):
-        self.machines: Dict[str, dict] = {}
+        self.machines = {'gantry': Gantry(), 'cobot280': Cobot280(), 'gripper': ST3020Gripper(), 'arduino': Arduino()}
         self.parts: Dict[str, dict] = {}
         self.jobs: Dict[str, dict] = {}
         self._job_counter = 0
@@ -23,7 +27,9 @@ class Factory:
         with open(file, "r") as f:
             data = json.load(f)
         
-        self.machines = data.get("machines", {})
+        machines = data.get("machines", {})
+        gantry = machines['gantry']
+        self.machines = {'gantry': {'objects': gantry['objects']}, 'cobot280': Cobot280(), 'gripper': ST3020Gripper(), 'arduino': Arduino()}
         self.parts = data.get("parts", {})
         self.tools = data.get("tools", {})
         self.jobs = data.get("jobs", {})
@@ -35,7 +41,15 @@ class Factory:
             raise RuntimeError("Factory save_file not set")
 
         data = {
-            "machines": self.machines,
+            "machines": {
+                'gantry': {
+                    'pose': self.machines['cobot280'].pose, 
+                    'objects': self.machines['gantry'].objects
+                    },
+                'cobot280': {'pose': self.machines['cobot280'].pose},
+                'gripper': {},
+                'arduino': {},
+            },
             "parts": self.parts,
             "tools": self.tools,
             "jobs": self.jobs,

@@ -31,10 +31,6 @@ const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed }) => {
     };
 
     loadPositions();
-
-    // optional: refresh periodically
-    const interval = setInterval(loadPositions, 1000);
-    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -67,7 +63,7 @@ const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed }) => {
                       setGotoJoints(newGotoJoints);
                     }
                   }}
-                  sx={{ width: 80, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 } }}
+                  sx={{ width: 48, minWidth: 48, '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13, } }}
                 />
               </TableCell>
               <TableCell sx={{ verticalAlign: 'middle', textAlign: 'left' }}>
@@ -75,6 +71,8 @@ const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed }) => {
                   <Button
                     size="small"
                     onClick={() => moveJoint(index, -step[index])}
+                    width='10'
+                    sx={{p:0, m:0, width:20, minWidth: 20,}}
                   >
                     -
                   </Button>
@@ -90,13 +88,14 @@ const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed }) => {
                       }
                     }}
                     sx={{
-                      width: 60,
-                      '& .MuiInputBase-input': { padding: '4px 8px', fontSize: 13 }
+                      minWidth: 46,
+                      '& .MuiInputBase-input': { padding: '0px 8px', fontSize: 13 }
                     }}
                   />
                   <Button
                     size="small"
                     onClick={() => moveJoint(index, step[index])}
+                    sx={{p:0, m:0, width:20, minWidth: 20,}}
                   >
                     +
                   </Button>

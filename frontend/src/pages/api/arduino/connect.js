@@ -1,4 +1,4 @@
-// pages/api/tool_changer/connect.js
+// pages/api/arduino/connect.js
 export default async function handler(req, res) {
   console.log("Received request to /api/arduino/connect", req.body);
 
@@ -6,13 +6,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ status: "method not allowed" });
   }
 
-  const { port, baud } = req.body;
+  const { method, com, baud, ip, port, } = req.body;
 
   try {
     const response = await fetch("http://127.0.0.1:8000/arduino/connect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ port, baud }),
+      body: JSON.stringify({ method, com, baud, ip, port, }),
     });
 
     console.log("FastAPI response status:", response.status);

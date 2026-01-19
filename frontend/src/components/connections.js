@@ -55,10 +55,16 @@ export const Connections = () => {
   });
 
 
-  const update = (key, field, value) => {
+  const update = (key, section, field, value) => {
     setConnections(prev => ({
       ...prev,
-      [key]: { ...prev[key], [field]: value },
+      [key]: {
+        ...prev[key],
+        [section]: {
+          ...prev[key][section],
+          [field]: value,
+        },
+      },
     }));
   };
 
@@ -68,13 +74,8 @@ export const Connections = () => {
     let endpoint = '';
     let body = {};
 
-    if (c.type === 'serial') {
-      endpoint = `/api/${key}/connect`;
-      body = { port: c.port, baud: c.baud };
-    } else {
-      endpoint = `/api/${key}/connect_network`;
-      body = { ip: c.ip, port: c.port };
-    }
+    endpoint = `/api/${key}/connect`;
+    body = { method: c.method, com: c.com, baud: c.baud, ip: c.ip, port: c.port };
 
     try {
       const res = await fetch(endpoint, {
@@ -103,32 +104,37 @@ export const Connections = () => {
     return c.type === 'serial' ? (
       <TextField
         size="small"
-        value={c.port}
-        onChange={e => update(key, 'port', e.target.value)}
+        value={c.serial.port}
+        onChange={e => update(key, 'serial', 'port', e.target.value)}
       />
     ) : (
       <TextField
         size="small"
-        value={c.ip}
-        onChange={e => update(key, 'ip', e.target.value)}
+        value={c.network.ip}
+        onChange={e => update(key, 'network', 'ip', e.target.value)}
       />
     );
   };
+
 
   const renderBaudOrPortCell = (key, c) => {
     return c.type === 'serial' ? (
       <TextField
         size="small"
         type="number"
-        value={c.baud}
-        onChange={e => update(key, 'baud', Number(e.target.value))}
+        value={c.serial.baud}
+        onChange={e =>
+          update(key, 'serial', 'baud', Number(e.target.value))
+        }
       />
     ) : (
       <TextField
         size="small"
         type="number"
-        value={c.port}
-        onChange={e => update(key, 'port', Number(e.target.value))}
+        value={c.network.port}
+        onChange={e =>
+          update(key, 'network', 'port', Number(e.target.value))
+        }
       />
     );
   };
@@ -137,10 +143,10 @@ export const Connections = () => {
     <Table>
       <TableHead>
         <TableRow>
-          <TableCell>Name</TableCell>
-          <TableCell>Type</TableCell>
-          <TableCell>COM / IP</TableCell>
-          <TableCell>Baud / Port</TableCell>
+          <TableCell>Board</TableCell>
+          <TableCell>Method</TableCell>
+          <TableCell sx={{ minWidth: 180 }}>COM / IP</TableCell>
+          <TableCell sx={{ minWidth: 180 }}>Baud / Port</TableCell>
           <TableCell>Connect</TableCell>
         </TableRow>
       </TableHead>

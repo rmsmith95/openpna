@@ -17,9 +17,6 @@ import {
   Typography,
   TextField
 } from '@mui/material';
-import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
-import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
-// import GantryActions from '../../components/gantry-actions';
 import GripperControls from '../../components/gripper-controls';
 import { useFactory } from "src/utils/factory-context";
 
@@ -35,7 +32,6 @@ export const Gripper = () => {
           <Tabs
             value={tab}
             onChange={handleChange}
-            textColor="primary"
             indicatorColor="primary"
             sx={{ borderBottom: 1, borderColor: 'divider' }}
           >

@@ -133,7 +133,7 @@ export const JobsPanel = () => {
         updateJob={updateJob}
         deleteJob={deleteJob}
         machines={machines}
-        parts={parts}
+        // parts={parts}
       />
     </Box>
   );

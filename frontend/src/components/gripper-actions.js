@@ -37,3 +37,11 @@ export async function speedGripperDown () {
         body: JSON.stringify({}),
     });
 }
+
+export const setGripperSpeed = async (speed) => {
+  await fetch("/api/gripper/set_speed", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ speed }),
+  });
+};

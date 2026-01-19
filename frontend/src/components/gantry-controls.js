@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import {
+  Box,
+  Button,
+  IconButton,
   Stack,
   SvgIcon,
   Table,
@@ -8,13 +11,12 @@ import {
   TableCell,
   TableRow,
   TableHead,
-  Typography,
-  Box,
-  Button,
   TextField,
+  Typography,
 } from "@mui/material";
 import { goto, getInfo, handleUnlockToolChanger, stepMove } from './gantry-actions';
-// import LockOpenIcon from '@mui/icons-material/LockOpen';
+import LockOpenIcon from '@heroicons/react/24/solid/LockOpenIcon';
+
 
 
 const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
@@ -153,17 +155,29 @@ const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
             sx={{ minWidth: '30px', px: '12px' }}>
             Zero
           </Button> */}
+          <Button
+            variant="contained"
+            onClick={() => handleUnlockToolChanger(5)}
+            sx={{
+              minWidth: 30,
+              height: '40px',
+              px: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <SvgIcon fontSize="small">
+              <LockOpenIcon />
+            </SvgIcon>
+          </Button>
           <Button variant="contained" onClick={setCurrentPosition}
-            sx={{ minWidth: '30px', px: '12px' }}>
+            sx={{ height: '40px', minWidth: '30px', px: '12px' }}>
             Set
           </Button>
           <Button variant="contained" onClick={() => goto({ ...gotoPosition, speed })}
             sx={{ minWidth: '30px', px: '12px' }}>
             GoTo
-          </Button>
-          <Button variant="contained" onClick={() => handleUnlockToolChanger(5)}
-            sx={{ minWidth: '30px', px: '12px' }}>
-            Unlock
           </Button>
           <TextField
             label="Speed"

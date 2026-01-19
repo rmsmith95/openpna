@@ -44,7 +44,7 @@ export const JobsTable = (props) => {
     updateJob,
     deleteJob,
     machines,
-    parts
+    // parts
   } = props;
 
   const [confirmOpen, setConfirmOpen] = useState(false);

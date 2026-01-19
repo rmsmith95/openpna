@@ -1,73 +1,66 @@
 import socket
 import logging
-from fastapi import APIRouter, Request
-from pydantic import BaseModel
-from typing import List
 import json
+from typing import List
+from sections.utils import Connection, Pose
 
-router = APIRouter()
 
-# --- Models ---
-class ConnectRequest(BaseModel):
-    ip: str = '10.163.187.60'
-    port: int = 8000
-    timeout: float = 3.0  # seconds
+class Cobot280:
+    def __init__(self):
+        self.connection = Connection()
+        self.pose = None
+        pass
 
-class SetAnglesRequest(BaseModel):
-    angles: List[float]
-    speed: int = 50
-    ip: str       # Pi IP
-    port: int = 8000  # optional override
+    def send_command_to_pi(self, cmd: dict, ip: str, port: int, timeout: float = 3.0):
+        """ Sends a JSON command to the Pi over TCP and returns the JSON response. """
+        print(f"Sending command to Pi: {cmd} @ {ip}:{port}")
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(timeout)
+                s.connect((ip, port))
+                s.sendall((json.dumps(cmd) + "\n").encode())
 
-class SetAngleRequest(BaseModel):
-    jointIndex: int
-    deltaValue: float
-    speed: int = 50
-    ip: str       # Pi IP
-    port: int = 8000  # optional override
+                resp = s.recv(1024).decode().strip()
+                return json.loads(resp)
 
-# --- Helper to send command to Pi ---
-def send_command_to_pi(cmd: dict, ip: str, port: int, timeout: float = 3.0):
-    print(f'cmd: {cmd}, ip: {ip}:{port}')
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(timeout)
-            s.connect((ip, port))
-            s.sendall((json.dumps(cmd) + "\n").encode())
-            resp = s.recv(1024).decode().strip()
-            return json.loads(resp)
-    except Exception as e:
-        logging.error(f"Failed to send command to Pi ({ip}:{port}): {e}")
-        return {"status": "error", "message": str(e)}
+        except Exception as e:
+            logging.error(f"Failed to send command to Pi ({ip}:{port}): {e}")
+            return {"status": "error", "message": str(e)}
 
-# --- Test connection endpoint ---
-@router.post("/connect_network")
-def connect_network(req: ConnectRequest):
-    test_cmd = {"command": "get_position"}
-    return send_command_to_pi(test_cmd, req.ip, req.port, req.timeout)
+    def connect_network(self, ip: str, port: int, timeout: float = 3.0):
+        """ Test connection by requesting current positions. """
+        cmd = {"command": "get_position"}
+        return self.send_command_to_pi(cmd, ip, port, timeout)
 
-# --- Set angles ---
-@router.post("/set_angle")
-def set_angles(req: SetAngleRequest):
-    cmd = {"command": "set_angle", "jointIndex": req.jointIndex, "deltaValue": req.deltaValue, "speed": req.speed}
-    return send_command_to_pi(cmd, req.ip, req.port)
+    def get_position(self, ip: str, port: int, timeout: float = 3.0) -> List[float]:
+        """ Returns current joint positions as a list of 6 floats. """
+        cmd = {"command": "get_position"}
+        resp = self.send_command_to_pi(cmd, ip, port, timeout)
+        if resp.get("status") == "ok" and "angles" in resp:
+            return resp["angles"]
+        return []
 
-# --- Set angles ---
-@router.post("/set_angles")
-def set_angles(req: SetAnglesRequest):
-    if len(req.angles) != 6:
-        return {"status": "error", "message": "'angles' must be a list of 6 values"}
-    cmd = {"command": "set_angles", "angles": req.angles, "speed": req.speed}
-    return send_command_to_pi(cmd, req.ip, req.port)
+    def set_angle(self, joint_index: int, delta_value: float, speed: float, ip: str, port: int):
+        """ Increment a single joint by delta_value. """
+        cmd = {
+            "command": "set_angle",
+            "jointIndex": joint_index,
+            "deltaValue": delta_value,
+            "speed": speed
+        }
+        return self.send_command_to_pi(cmd, ip, port)
 
-# --- Get current joint angles ---
-class GetPositionRequest(BaseModel):
-    ip: str
-    port: int = 8000
+    def set_angles(self, angles: List[float], speed: float, ip: str, port: int):
+        """ Set all joints to the given angles. """
+        if len(angles) != 6:
+            return {"status": "error", "message": "'angles' must be a list of 6 values"}
+        cmd = {
+            "command": "set_angles",
+            "angles": angles,
+            "speed": speed
+        }
+        return self.send_command_to_pi(cmd, ip, port)
 
-@router.post("/get_position")
-def get_position(req: GetPositionRequest):
-    cmd = {"command": "get_position"}
-    values =  send_command_to_pi(cmd, req.ip, req.port)
-    print(values)
-    return values
+    def move_to(self, angles: List[float], speed: float, ip: str, port: int):
+        """Alias for set_angles, for clarity. """
+        return self.set_angles(angles, speed, ip, port)

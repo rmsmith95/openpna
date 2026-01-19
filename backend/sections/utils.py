@@ -1,6 +1,16 @@
 from typing import List
 
 
+class Connection:
+    def __init__(self):
+        self.mode = ''
+        self.ip = ''
+        self.port = 0
+        self.com = ''
+        self.baud = 115200
+        self.timeout = 3
+
+
 class Pose:
     def __init__(self, x: float, y: float, z: float,
                  yaw: float = 0, pitch: float = 0, roll: float = 0):

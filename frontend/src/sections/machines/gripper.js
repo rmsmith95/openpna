@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 import {
   Card,
@@ -18,7 +17,6 @@ import {
   TextField
 } from '@mui/material';
 import GripperControls from '../../components/gripper-controls';
-import { useFactory } from "src/utils/factory-context";
 
 
 export const Gripper = () => {
@@ -32,7 +30,6 @@ export const Gripper = () => {
           <Tabs
             value={tab}
             onChange={handleChange}
-            indicatorColor="primary"
             sx={{ borderBottom: 1, borderColor: 'divider' }}
           >
             <Tab
@@ -42,14 +39,6 @@ export const Gripper = () => {
                 </Stack>
               }
             />
-            <Box
-              sx={{
-                borderRadius: 2,
-                width: 220,
-                textAlign: "center",
-                py: 1.5
-              }}>
-            </Box>
           </Tabs>
         </Box>
 
@@ -62,8 +51,4 @@ export const Gripper = () => {
       </CardContent>
     </Card>
   );
-};
-
-Gripper.propTypes = {
-  connectedServoGripper: PropTypes.bool
 };

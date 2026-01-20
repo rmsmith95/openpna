@@ -18,7 +18,6 @@ import { goto, getInfo, handleUnlockToolChanger, stepMove } from './gantry-actio
 import LockOpenIcon from '@heroicons/react/24/solid/LockOpenIcon';
 
 
-
 const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
   const [step, setStep] = useState({ x: 5, y: 5, z: 2, a: 10 });
   const [speed, setSpeed] = useState(3000);

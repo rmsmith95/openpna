@@ -11,36 +11,45 @@ class Cobot280:
         self.pose = None
         pass
 
-    def send_command_to_pi(self, cmd: dict, ip: str, port: int, timeout: float = 3.0):
+    def send_command_to_pi(self, cmd: dict):
         """ Sends a JSON command to the Pi over TCP and returns the JSON response. """
-        print(f"Sending command to Pi: {cmd} @ {ip}:{port}")
+        if self.connection.ip == "" or self.connection.port == "":
+            return {"cmd": cmd, "status": "error", "message": "no connection"}
+
+        print(f"Sending command to Pi: {cmd} @ {self.connection.ip}:{self.connection.port}")
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(timeout)
-                s.connect((ip, port))
+                s.settimeout(self.connection.timeout)
+                s.connect((self.connection.ip, self.connection.port))
                 s.sendall((json.dumps(cmd) + "\n").encode())
 
                 resp = s.recv(1024).decode().strip()
                 return json.loads(resp)
 
         except Exception as e:
-            logging.error(f"Failed to send command to Pi ({ip}:{port}): {e}")
+            logging.error(f"Failed to send command to Pi ({self.connection.ip}:{self.connection.port}): {e}")
             return {"status": "error", "message": str(e)}
 
-    def connect_network(self, ip: str, port: int, timeout: float = 3.0):
+    def connect_network(self, mode, ip, port, com, baud, timeout=3):
         """ Test connection by requesting current positions. """
+        self.connection.mode = mode
+        self.connection.ip = ip
+        self.connection.port = port
+        self.connection.com = com
+        self.connection.baud = baud
+        self.connection.timeout = timeout
         cmd = {"command": "get_position"}
-        return self.send_command_to_pi(cmd, ip, port, timeout)
+        return self.send_command_to_pi(cmd)
 
-    def get_position(self, ip: str, port: int, timeout: float = 3.0) -> List[float]:
+    def get_position(self) -> List[float]:
         """ Returns current joint positions as a list of 6 floats. """
         cmd = {"command": "get_position"}
-        resp = self.send_command_to_pi(cmd, ip, port, timeout)
+        resp = self.send_command_to_pi(cmd)
         if resp.get("status") == "ok" and "angles" in resp:
             return resp["angles"]
         return []
 
-    def set_angle(self, joint_index: int, delta_value: float, speed: float, ip: str, port: int):
+    def set_angle(self, joint_index: int, delta_value: float, speed: float):
         """ Increment a single joint by delta_value. """
         cmd = {
             "command": "set_angle",
@@ -48,9 +57,9 @@ class Cobot280:
             "deltaValue": delta_value,
             "speed": speed
         }
-        return self.send_command_to_pi(cmd, ip, port)
+        return self.send_command_to_pi(cmd)
 
-    def set_angles(self, angles: List[float], speed: float, ip: str, port: int):
+    def set_angles(self, angles: List[float], speed: float):
         """ Set all joints to the given angles. """
         if len(angles) != 6:
             return {"status": "error", "message": "'angles' must be a list of 6 values"}
@@ -59,8 +68,8 @@ class Cobot280:
             "angles": angles,
             "speed": speed
         }
-        return self.send_command_to_pi(cmd, ip, port)
+        return self.send_command_to_pi(cmd)
 
-    def move_to(self, angles: List[float], speed: float, ip: str, port: int):
+    def move_to(self, angles: List[float], speed: float):
         """Alias for set_angles, for clarity. """
-        return self.set_angles(angles, speed, ip, port)
+        return self.set_angles(angles, speed)

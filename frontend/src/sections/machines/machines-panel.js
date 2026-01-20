@@ -17,7 +17,7 @@ const defaultMachines = [
   { name: "Gripper", component: Gripper, color: "purple" },
 ];
 
-export const MachinePanel = ({ machines = defaultMachines, connectionsProps }) => {
+export const MachinePanel = ({ machines = defaultMachines }) => {
   const [selectedTab, setSelectedTab] = useState(0);
   const handleTabChange = (_, newValue) => setSelectedTab(newValue);
 
@@ -84,7 +84,7 @@ export const MachinePanel = ({ machines = defaultMachines, connectionsProps }) =
           minHeight: 200,
         }}
       >
-        {selectedTab === 0 && <Connections {...connectionsProps} />}
+        {selectedTab === 0 && <Connections />}
         {machines.map((machine, idx) => {
           const MachineComponent = machine.component;
           return selectedTab === idx + 1 ? <MachineComponent key={machine.name} /> : null;

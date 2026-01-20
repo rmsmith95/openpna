@@ -9,7 +9,7 @@ import { JobsTable } from 'src/sections/jobs/job-table';
 
 export const JobsPanel = () => {
   const { parts, machines: factoryMachines } = useFactory();
-  const machines = useMemo(() => Object.values(factoryMachines).map(m => m.name), [factoryMachines]);
+  const machines = useMemo(() => Object.keys(factoryMachines),[factoryMachines]);
   const [jobs, setJobs] = useState({});
   const fileInputRef = useRef(null);
 
@@ -17,8 +17,9 @@ export const JobsPanel = () => {
     try {
       const res = await fetch("/api/jobs/get-jobs");
       const data = await res.json();
-      console.log(data)
+      // console.log(data)
       setJobs((data || {}));
+      // console.log(machines)
     } catch (err) {
       console.error('Error fetching jobs:', err);
     }

@@ -1,32 +1,28 @@
 import { useState, useEffect } from "react";
 import {
-  Box,
   Button,
-  FormControl,
-  InputLabel,
   IconButton,
-  OutlinedInput,
   Stack,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  TableHead
+  TextField
 } from "@mui/material";
-import { stepOpenGripper, stepCloseGripper, setGripperSpeed, gripperGoTo } from './gripper-actions';
-import ExpandIcon from '@mui/icons-material/Expand';
-import CompressIcon from '@mui/icons-material/Compress';
+import {
+  stepOpenGripper,
+  stepCloseGripper,
+  setGripperSpeed,
+  gripperGoTo
+} from "./gripper-actions";
+import ExpandIcon from "@mui/icons-material/Expand";
+import CompressIcon from "@mui/icons-material/Compress";
 
 export default function GripperControls() {
   const [speedInput, setSpeedInput] = useState(100);
   const [moveTime, setMoveTime] = useState(1);
   const [status, setStatus] = useState({
-    "voltage": "",
-    "position": "",
-    "load": "",
-    "temper": "",
-    "speed_set": ""
+    voltage: "",
+    position: "",
+    load: "",
+    temper: "",
+    speed_set: 0
   });
 
   useEffect(() => {
@@ -34,7 +30,15 @@ export default function GripperControls() {
       try {
         const res = await fetch("/api/gripper/get_status");
         const data = await res.json();
-        if (data.raw) setStatus(data.raw);
+        if (data?.raw) {
+          setStatus({
+            voltage: data.raw.voltage ?? "",
+            position: data.raw.position ?? "",
+            load: data.raw.load ?? "",
+            temper: data.raw.temper ?? "",
+            speed_set: Number(data.raw.speed_set) || 0
+          });
+        }
       } catch (err) {
         console.error("Error fetching gripper status:", err);
       }
@@ -45,27 +49,34 @@ export default function GripperControls() {
 
   return (
     <Stack spacing={4} sx={{ pt: 3 }}>
-      {/* Row 1: Control buttons */}
-      <Stack direction="row" spacing={3} justifyContent="left" alignItems="left" sx={{ pl: 0 }}>
-        <Button variant="contained" size="small" onClick={() => gripperGoTo(0, 200, 100)}>
+      {/* Row 1: Open / Close */}
+      <Stack direction="row" spacing={3}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => gripperGoTo(0, 200, speedInput)}
+        >
           Open
         </Button>
-        <Button variant="contained" size="small" onClick={() => gripperGoTo(0, 200, 100)}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => gripperGoTo(200, 0, speedInput)}
+        >
           Close
         </Button>
       </Stack>
 
-      {/* Row 2: Step controls + Step Size + Speed */}
+      {/* Row 2: Step / Speed */}
       <Stack direction="row" spacing={5} alignItems="center">
         <IconButton onClick={() => stepCloseGripper(moveTime, status.speed_set)}>
-          <CompressIcon sx={{ transform: 'rotate(90deg)' }} />
+          <CompressIcon sx={{ transform: "rotate(90deg)" }} />
         </IconButton>
 
-        <Stack spacing={0.2} alignItems="left">
-          <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.2 }}>Step Size</div>
+        <Stack spacing={0.5}>
+          <span style={{ fontSize: 12, fontWeight: 500 }}>Step Size</span>
           <TextField
             value={moveTime}
-            variant="outlined"
             onChange={(e) => setMoveTime(Number(e.target.value) || 0)}
             size="small"
             type="number"
@@ -74,37 +85,34 @@ export default function GripperControls() {
           />
         </Stack>
 
-
         <IconButton onClick={() => stepOpenGripper(moveTime, status.speed_set)}>
-          <ExpandIcon sx={{ transform: 'rotate(90deg)' }} />
+          <ExpandIcon sx={{ transform: "rotate(90deg)" }} />
         </IconButton>
-        <Stack spacing={0.2} alignItems="left">
-          <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.2 }}>Speed</div>
+
+        <Stack spacing={0.5}>
+          <span style={{ fontSize: 12, fontWeight: 500 }}>Speed</span>
           <TextField
             value={speedInput}
-            variant="outlined"
-            onChange={(e) => setSpeedInput(e.target.value)}
-            onBlur={() => { if (speedInput !== "") setGripperSpeed(Number(speedInput)); }}
-            onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+            onChange={(e) => setSpeedInput(Number(e.target.value) || 0)}
+            onBlur={() => setGripperSpeed(speedInput)}
+            onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
             size="small"
             type="number"
             sx={{ width: 100 }}
             inputProps={{ min: 0, max: 1000 }}
           />
         </Stack>
-
       </Stack>
 
-      {/* Row 3: Voltage / Position */}
-      <Stack direction="row" spacing={2}>
-        <Box sx={{ width: 120 }}>Voltage: {status.voltage}</Box>
-        <Box sx={{ width: 120 }}>Position: {status.position}</Box>
+      {/* Status */}
+      <Stack direction="row" spacing={4}>
+        <span>Voltage: {status.voltage}</span>
+        <span>Position: {status.position}</span>
       </Stack>
 
-      {/* Row 4: Load / Temp */}
-      <Stack direction="row" spacing={2}>
-        <Box sx={{ width: 120 }}>Load: {status.load}</Box>
-        <Box sx={{ width: 120 }}>Temp: {status.temper}</Box>
+      <Stack direction="row" spacing={4}>
+        <span>Load: {status.load}</span>
+        <span>Temp: {status.temper}</span>
       </Stack>
     </Stack>
   );

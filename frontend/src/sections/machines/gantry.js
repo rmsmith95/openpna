@@ -47,8 +47,6 @@ export const Gantry = () => {
     };
 
     fetchInfo();
-    const interval = setInterval(fetchInfo, 100);
-    return () => clearInterval(interval);
   }, []);
 
   return (

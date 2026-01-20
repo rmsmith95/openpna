@@ -13,12 +13,13 @@ class Gantry:
     # -------------------------
     # CONNECTION
     # -------------------------
-    def connect(self, port: str, baud: int = 115200, timeout: float = 1.0):
-        if self.connection.serial and self.connection.serial.is_open:
+    def connect(self, method, ip, port, com, baud, timeout=3):
+        logging.warning(f'{self.connection}')
+        if self.connection.serial is not None and self.connection.serial.is_open:
             self.connection.serial.close()
 
-        self.connection = serial.Serial(port, baud, timeout=timeout)
-        logging.info(f"Connected to TinyG on {port}")
+        self.connection = serial.Serial(com, baud, timeout=timeout)
+        logging.info(f"Connected to TinyG on {com}")
         return True
 
     def is_connected(self) -> bool:

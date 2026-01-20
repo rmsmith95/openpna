@@ -30,7 +30,7 @@ class Cobot280:
             logging.error(f"Failed to send command to Pi ({self.connection.ip}:{self.connection.port}): {e}")
             return {"status": "error", "message": str(e)}
 
-    def connect_network(self, mode, ip, port, com, baud, timeout=3):
+    def connect(self, mode, ip, port, com, baud, timeout=3):
         """ Test connection by requesting current positions. """
         self.connection.mode = mode
         self.connection.ip = ip

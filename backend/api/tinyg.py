@@ -8,10 +8,12 @@ router = APIRouter(tags=["gantry"])
 # ============================================================
 
 class ConnectRequest(BaseModel):
+    method: str
     com: str
     baud: int = 115200
-    timeout: float = 1.0
-
+    ip: str = '10.163.187.60'
+    port: int = 8000
+    timeout: float = 3.0  # seconds
 
 class SetPositionRequest(BaseModel):
     x: float
@@ -45,7 +47,7 @@ class RawCommandRequest(BaseModel):
 def connect(req: ConnectRequest, request: Request):
     gantry = request.app.state.factory.machines['gantry']
     try:
-        gantry.connect(req.servo_id, req.mode, req.ip, req.port, req.com, req.baud)
+        gantry.connect(req.method, req.ip, req.port, req.com, req.baud)
         return {"status": "connected", "device": "gantry"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

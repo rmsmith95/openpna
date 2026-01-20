@@ -28,10 +28,12 @@ app.include_router(cobot280_router, prefix="/cobot280")
 app.include_router(gripper_router, prefix="/gripper")
 app.include_router(arduino_router, prefix="/arduino")
 
+
 @app.get("/")
 def read_root():
     logging.info("OpenPnA backend running!")
     return {"message": "OpenPnA backend running!"}
+
 
 @app.get("/health")
 def health():
@@ -46,8 +48,10 @@ def startup():
     print(f"factory has {len(factory.jobs)} jobs")
     print(f"factory has {len(factory.parts)} parts")
     print(f"factory has {len(factory.machines)} machines")
+    print(f"factory machines: {(factory.machines)}")
     logging.info(f"factory1 loaded: {factory}")
     return {"status": "Factory initialized"}
+
 
 @app.get("/factory_status")
 def factory_status():

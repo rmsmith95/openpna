@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import PropTypes from 'prop-types';
 import {
   Table, TableHead, TableRow, TableCell, TableBody,
   TextField, Button, SvgIcon, MenuItem, Select
@@ -9,76 +8,72 @@ import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 
 export const Connections = () => {
   const [connections, setConnections] = useState({
-    tinyG: {
+    tinyg: {
       name: 'TinyG',
-      type: 'serial',
-      serial: {
-        port: 'COM10',
-        baud: 115200,
-      },
-      network: null,
+      method: 'serial',
+      com: 'COM10',
+      baud: 115200,
+      ip: '',
+      port: -1,
       connected: false,
     },
 
     arduino: {
       name: 'Arduino',
-      type: 'serial',
-      serial: {
-        port: 'COM3',
-        baud: 9600,
-      },
-      network: null,
+      method: 'serial',
+      com: 'COM3',
+      baud: 9600,
+      ip: '',
+      port: -1,
       connected: false,
     },
 
     cobot280: {
       name: 'Cobot280',
-      type: 'network',
-      serial: null,
-      network: {
-        ip: '10.163.187.60',
-        port: 502,
-      },
+      method: 'network',
+      com: '',
+      baud: -1,
+      ip: '10.163.187.60',
+      port: 502,
       connected: false,
     },
 
     esp32: {
       name: 'ESP32',
-      type: 'network',
-      serial: null,
-      network: {
-        ip: '10.163.187.219',
-        port: 80,
-      },
+      method: 'network',
+      com: '',
+      baud: -1,
+      ip: '10.163.187.219',
+      port: 80,
       connected: false,
     },
   });
 
-
-  const update = (key, section, field, value) => {
+  // Flat updater
+  const update = (key, field, value) => {
     setConnections(prev => ({
       ...prev,
       [key]: {
         ...prev[key],
-        [section]: {
-          ...prev[key][section],
-          [field]: value,
-        },
+        [field]: value,
       },
     }));
   };
 
+  // Connect API call — always send all values
   const handleConnect = async (key) => {
     const c = connections[key];
 
-    let endpoint = '';
-    let body = {};
-
-    endpoint = `/api/${key}/connect`;
-    body = { method: c.method, com: c.com, baud: c.baud, ip: c.ip, port: c.port };
+    const body = {
+      method: c.method,
+      com: c.com,
+      baud: c.baud,
+      ip: c.ip,
+      port: c.port,
+    };
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(`/api/${key}/connect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -100,44 +95,32 @@ export const Connections = () => {
     }
   };
 
-  const renderAddressCell = (key, c) => {
-    return c.type === 'serial' ? (
-      <TextField
-        size="small"
-        value={c.serial.port}
-        onChange={e => update(key, 'serial', 'port', e.target.value)}
-      />
-    ) : (
-      <TextField
-        size="small"
-        value={c.network.ip}
-        onChange={e => update(key, 'network', 'ip', e.target.value)}
-      />
-    );
-  };
+  // Render COM / IP field
+  const renderAddressCell = (key, c) => (
+    <TextField
+      size="small"
+      value={c.method === 'serial' ? c.com : c.ip}
+      onChange={e =>
+        update(key, c.method === 'serial' ? 'com' : 'ip', e.target.value)
+      }
+    />
+  );
 
-
-  const renderBaudOrPortCell = (key, c) => {
-    return c.type === 'serial' ? (
-      <TextField
-        size="small"
-        type="number"
-        value={c.serial.baud}
-        onChange={e =>
-          update(key, 'serial', 'baud', Number(e.target.value))
-        }
-      />
-    ) : (
-      <TextField
-        size="small"
-        type="number"
-        value={c.network.port}
-        onChange={e =>
-          update(key, 'network', 'port', Number(e.target.value))
-        }
-      />
-    );
-  };
+  // Render Baud / Port field
+  const renderBaudOrPortCell = (key, c) => (
+    <TextField
+      size="small"
+      type="number"
+      value={c.method === 'serial' ? c.baud : c.port}
+      onChange={e =>
+        update(
+          key,
+          c.method === 'serial' ? 'baud' : 'port',
+          Number(e.target.value)
+        )
+      }
+    />
+  );
 
   return (
     <Table>
@@ -168,8 +151,8 @@ export const Connections = () => {
             <TableCell>
               <Select
                 size="small"
-                value={c.type}
-                onChange={e => update(key, 'type', e.target.value)}
+                value={c.method}
+                onChange={e => update(key, 'method', e.target.value)}
               >
                 <MenuItem value="serial">serial</MenuItem>
                 <MenuItem value="network">network</MenuItem>
@@ -194,5 +177,3 @@ export const Connections = () => {
     </Table>
   );
 };
-
-Connections.propTypes = {};

@@ -27,11 +27,10 @@ class SetAngleRequest(BaseModel):
     port: int = 8000  # optional override
 
 # --- Test connection endpoint ---
-@router.post("/connect_network")
-def connect_network(req: ConnectRequest, request: Request):
-    test_cmd = {"command": "get_position"}
+@router.post("/connect")
+def connect(req: ConnectRequest, request: Request):
     cobot280 = request.app.state.factory.machines['cobot280']
-    return cobot280.send_command_to_pi(test_cmd, req.ip, req.port, req.timeout)
+    return cobot280.connect(req.method, req.ip, req.port, req.com, req.baud)
 
 # --- Set angles ---
 @router.post("/set_angle")

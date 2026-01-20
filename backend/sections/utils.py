@@ -9,6 +9,7 @@ class Connection:
         self.com = ''
         self.baud = 115200
         self.timeout = 3
+        self.serial = None
 
 
 class Pose:

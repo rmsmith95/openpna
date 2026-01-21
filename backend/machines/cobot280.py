@@ -13,10 +13,10 @@ class Cobot280:
 
     def send_command_to_pi(self, cmd: dict):
         """ Sends a JSON command to the Pi over TCP and returns the JSON response. """
-        if self.connection.ip == "" or self.connection.port == "":
+        if self.connection.ip == "":
             return {"cmd": cmd, "status": "error", "message": "no connection"}
 
-        print(f"Sending command to Pi: {cmd} @ {self.connection.ip}:{self.connection.port}")
+        print(f"Sending command to Pi: {cmd} @ {self.connection.ip}")
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(self.connection.timeout)
@@ -27,19 +27,15 @@ class Cobot280:
                 return json.loads(resp)
 
         except Exception as e:
-            logging.error(f"Failed to send command to Pi ({self.connection.ip}:{self.connection.port}): {e}")
+            logging.error(f"Failed to send command to Pi ({self.connection.ip}): {e}")
             return {"status": "error", "message": str(e)}
 
-    def connect(self, mode, ip, port, com, baud, timeout=3):
+    def connect(self, method, ip, port, com, baud, timeout=3):
         """ Test connection by requesting current positions. """
-        self.connection.mode = mode
-        self.connection.ip = ip
-        self.connection.port = port
-        self.connection.com = com
-        self.connection.baud = baud
-        self.connection.timeout = timeout
+        self.connection = Connection(method, ip, port, com, baud, timeout)
         cmd = {"command": "get_position"}
-        return self.send_command_to_pi(cmd)
+        pos = self.send_command_to_pi(cmd)
+        return pos 
 
     def get_position(self) -> List[float]:
         """ Returns current joint positions as a list of 6 floats. """

@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
 import socket
-import threading
 import json
 from pymycobot.mycobot import MyCobot
 
 # --- MyCobot setup ---
 PORT = "/dev/ttyAMA0"
-BAUD = 115200
+BAUD = 1000000
 mc = MyCobot(PORT, BAUD)
-print("✅ Connected to MyCobot 280 on", PORT)
 
 # --- TCP server setup ---
 HOST = "0.0.0.0"  # listen on all interfaces
-PORT_TCP = 8000
+PORT_TCP = 9000
 
-def handle_client(conn, addr):
-    print(f"🔌 Client connected: {addr}")
+def handle_connection(conn, addr):
     try:
         while True:
             data = conn.recv(1024)
@@ -24,35 +21,32 @@ def handle_client(conn, addr):
             try:
                 cmd = json.loads(data.decode())
                 command = cmd.get("command")
-
-                if command == "set_angles":
-                    angles = cmd.get("angles")
-                    if not angles or len(angles) != 6:
-                        raise ValueError("Must provide 6 angles")
-                    speed = int(cmd.get("speed", 50))
-                    mc.send_angles(angles, speed)
-                    resp = {"status": "ok", "angles": angles}
-                
-                elif command == "set_angle":
+                resp = {"status": "error", "message": "Unknown Command"}
+                if command == "set_angle":
                     jointIndex = cmd.get("jointIndex")
                     deltaValue = cmd.get("deltaValue")
                     angles = mc.get_angles()
-                    angles[jointIndex] += deltaValue
+                    angles[jointIndex] = angles[jointIndex] + deltaValue
                     speed = int(cmd.get("speed", 50))
-                    mc.send_angles(angles, speed)
-                    resp = {"status": "ok", "angles": angles}
+                    if angles and len(angles) == 6:
+                        print(f"Set angles: {angles}")
+                        mc.send_angles(angles, speed)
+                        resp = {"status": "ok", "angles": angles}
+                
+                elif command == "set_angles":
+                    angles = mc.get_angles()
+                    speed = int(cmd.get("speed", 50))
+                    if angles and len(angles) == 6:
+                        print(f"Set angles: {angles}")
+                        mc.send_angles(angles, speed)
+                        resp = {"status": "ok", "angles": angles}
+                    else:
+                        resp = {"status": "error", "message": "Must provide 6 angles"}
 
                 elif command == "get_position":
                     angles = mc.get_angles()
+                    print(f"angles:{angles}")
                     resp = {"status": "ok", "angles": angles}
-
-                elif command == "gripper_open":
-                    mc.open_gripper()
-                    resp = {"status": "ok"}
-
-                elif command == "gripper_close":
-                    mc.close_gripper()
-                    resp = {"status": "ok"}
 
                 else:
                     resp = {"status": "error", "message": f"Unknown command '{command}'"}
@@ -75,4 +69,5 @@ print(f"🚀 Listening for commands on {HOST}:{PORT_TCP}")
 
 while True:
     conn, addr = sock.accept()
-    threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()
+    print(f"Client connected: {addr}")
+    handle_connection(conn, addr)

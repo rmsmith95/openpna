@@ -14,6 +14,7 @@ class Gantry:
     # CONNECTION
     # -------------------------
     def connect(self, method, ip, port, com, baud, timeout=3):
+        self.connection = Connection(method, ip, port, com, baud, timeout)
         logging.warning(f'{self.connection}')
         if self.connection.serial is not None and self.connection.serial.is_open:
             self.connection.serial.close()

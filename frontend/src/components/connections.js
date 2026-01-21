@@ -32,9 +32,9 @@ export const Connections = () => {
       name: 'Cobot280',
       method: 'network',
       com: '',
-      baud: -1,
+      baud: 115200,
       ip: '10.163.187.60',
-      port: 502,
+      port: 9000,
       connected: false,
     },
 
@@ -42,9 +42,9 @@ export const Connections = () => {
       name: 'ESP32',
       method: 'network',
       com: '',
-      baud: -1,
+      baud: 115200,
       ip: '10.163.187.219',
-      port: 80,
+      port: 8005,
       connected: false,
     },
   });

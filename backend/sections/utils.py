@@ -2,13 +2,13 @@ from typing import List
 
 
 class Connection:
-    def __init__(self):
-        self.mode = ''
-        self.ip = ''
-        self.port = 0
-        self.com = ''
-        self.baud = 115200
-        self.timeout = 3
+    def __init__(self, method='', ip='',port=8000,com='',baud=115200,timeout=3):
+        self.method = method
+        self.ip = ip
+        self.port = port
+        self.com = com
+        self.baud = baud
+        self.timeout = timeout
         self.serial = None
 
 

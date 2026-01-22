@@ -9,6 +9,7 @@ class Gantry:
     def __init__(self):
         self.connection = Connection()
         self.pose = None
+        self.objects = dict()
 
     # -------------------------
     # CONNECTION

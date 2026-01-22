@@ -108,6 +108,7 @@ export const Gantry = () => {
                   <TableRow>
                     <TableCell>Name</TableCell>
                     <TableCell>Position</TableCell>
+                    <TableCell>Effector</TableCell>
                     <TableCell></TableCell>
                   </TableRow>
                 </TableHead>
@@ -117,7 +118,10 @@ export const Gantry = () => {
                       <TableRow key={obj.id}>
                         <TableCell>{obj.name}</TableCell>
                         <TableCell>
-                          {obj.position.x}, {obj.position.y}, {obj.position.z}, {obj.position.a}
+                          {obj.position?.x}, {obj.position?.y}, {obj.position?.z}, {obj.position?.a}
+                        </TableCell>
+                        <TableCell>
+                          {obj?.effector}
                         </TableCell>
                         <TableCell>
                           <Button

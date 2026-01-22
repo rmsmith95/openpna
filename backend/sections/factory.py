@@ -30,7 +30,7 @@ class Factory:
         machines = data.get("machines", {})
         gantry = machines['gantry']
         self.machines = {'gantry': Gantry(), 'cobot280': Cobot280(), 'gripper': ST3020Gripper(), 'arduino': Arduino()}
-        self.machines['gantry'].objects = {'objects': gantry['objects']}
+        self.machines['gantry'].objects = gantry['objects']
         self.parts = data.get("parts", {})
         self.tools = data.get("tools", {})
         self.jobs = data.get("jobs", {})

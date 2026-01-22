@@ -23,7 +23,8 @@
             "z": 0.0,
             "a": 0.0
           },
-          "speed": 0.0
+          "speed": 0.0,
+          "effector": "gripper"
         },
         "holder1": {
           "id": "o2",
@@ -44,7 +45,8 @@
             "y": 60,
             "z": 50,
             "a": 270
-          }
+          },
+          "effector": ""
         },
         "holder2": {
           "id": "o3",
@@ -65,7 +67,8 @@
             "y": 100,
             "z": 50,
             "a": 270
-          }
+          },
+          "effector": ""
         }
       },
       "workingArea": [
@@ -78,7 +81,6 @@
         550,
         400
       ],
-      "effector": "",
       "cad": "/home/gantry.stl"
     },
     "cobot280": {

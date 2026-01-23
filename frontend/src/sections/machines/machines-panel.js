@@ -7,6 +7,7 @@ import {
 import { Gantry } from "src/sections/machines/gantry";
 import { Cobot280 } from "src/sections/machines/cobot280";
 import { Gripper } from "src/sections/machines/gripper";
+import { Screwdriver } from "src/sections/machines/screwdriver";
 import { Connections } from "src/components/connections";
 
 
@@ -15,6 +16,7 @@ const defaultMachines = [
   { name: "Gantry", component: Gantry, color: "#1976d2" },
   { name: "Cobot280", component: Cobot280, color: "#1976d2" },
   { name: "Gripper", component: Gripper, color: "purple" },
+  { name: "Screwdriver", component: Screwdriver, color: "purple" },
 ];
 
 export const MachinePanel = ({ machines = defaultMachines }) => {
@@ -71,6 +73,14 @@ export const MachinePanel = ({ machines = defaultMachines }) => {
         <Tab
           label="Gripper"
           sx={{ ...tabSx, bgcolor: "purple" }}
+        />
+        <Tab
+          label="Screwdriver"
+          sx={{ ...tabSx, bgcolor: "purple",
+            "& .MuiTab-wrapper": {
+              justifyContent: "flex-start",
+              textAlign: "left",
+            }, }}
         />
       </Tabs>
 

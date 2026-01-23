@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
+  Box,
+  Button,
   Card,
   CardContent,
   Stack,
@@ -10,12 +12,13 @@ import {
   TableHead,
   Tabs,
   Tab,
-  Box,
-  Button,
+  TextField,
+  Typography
 } from '@mui/material';
 import GantryControls from '../../components/gantry-controls';
-import { getInfo, goto } from '../../components/gantry-actions';
+import { screwdriverIn, screwdriverOut, screwdriverStop, getInfo, goto } from '../../components/gantry-actions';
 import { useFactory } from 'src/utils/factory-context';
+
 
 export const Gantry = () => {
   const [tab, setTab] = useState(0);
@@ -26,13 +29,15 @@ export const Gantry = () => {
   const { machines } = useFactory();
   const gantry = machines?.gantry;
 
-  // Convert gantry objects into an array for the table
-  const gantryObjects = useMemo(() => {
-    return gantry?.objects ? Object.values(gantry.objects) : [];
-  }, [gantry]);
+  const toolend = useMemo(() => gantry?.toolend ?? null, [gantry]);
+  const holders = useMemo(() => gantry?.holders ?? [], [gantry]);
+
+  // tools / screwdriver
+  const [threadPitch, setThreadPitch] = useState(5); // mm/turn
+  const [depth, setDepth] = useState(12); // mm
+  const [rotPs, setRotPs] = useState(1); // mm
 
   useEffect(() => {
-    // fetch gantry info continuously
     const fetchInfo = async () => {
       const result = await getInfo();
       if (result) {
@@ -53,24 +58,21 @@ export const Gantry = () => {
     <Card>
       <CardContent sx={{ pt: 0 }}>
         {/* Tabs */}
-        <Box>
-          <Tabs
-            value={tab}
-            onChange={(_, newValue) => setTab(newValue)}
-            textColor="primary"
-            indicatorColor="primary"
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab label={<Stack direction="row" alignItems="center" spacing={1}><span>Gantry</span></Stack>} />
-            <Tab label="Control" />
-            <Tab label="Locations" />
-          </Tabs>
-        </Box>
+        <Tabs
+          value={tab}
+          onChange={(_, newValue) => setTab(newValue)}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab label="Gantry" />
+          <Tab label="Control" />
+          <Tab label="Locations" />
+          <Tab label="Tools" />
+        </Tabs>
 
         {/* Tab Panels */}
         <Box>
           {tab === 0 && (
-            <Stack spacing={2} alignItems="flex-start">
+            <Stack spacing={2}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -82,8 +84,8 @@ export const Gantry = () => {
                 </TableHead>
                 <TableBody>
                   <TableRow>
-                    <TableCell>700x500x300</TableCell>
-                    <TableCell>560x360x80x360</TableCell>
+                    <TableCell>700×500×300</TableCell>
+                    <TableCell>560×360×80</TableCell>
                     <TableCell>3kg</TableCell>
                     <TableCell>gantry.stl</TableCell>
                   </TableRow>
@@ -102,48 +104,141 @@ export const Gantry = () => {
           )}
 
           {tab === 2 && (
-            <Stack>
+            <Stack spacing={3}>
+              {/* Toolend */}
+              {toolend && (
+                <Box display="flex" alignItems="center" gap={1} sx={{ p: 2, pt: 4 }}>
+                  <Typography variant="subtitle2" color="textSecondary">
+                    Tool End:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="500">
+                    {toolend.effector || "None"}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Holders */}
               <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell>Name</TableCell>
-                    <TableCell>Position</TableCell>
-                    <TableCell>Effector</TableCell>
+                    <TableCell>Position Out</TableCell>
                     <TableCell></TableCell>
+                    <TableCell>Position In</TableCell>
+                    <TableCell></TableCell>
+                    <TableCell>Effector</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {gantryObjects.length > 0 ? (
-                    gantryObjects.map((obj) => (
-                      <TableRow key={obj.id}>
-                        <TableCell>{obj.name}</TableCell>
-                        <TableCell>
-                          {obj.position?.x}, {obj.position?.y}, {obj.position?.z}, {obj.position?.a}
-                        </TableCell>
-                        <TableCell>
-                          {obj?.effector}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="contained"
-                            onClick={() => goto({ ...obj.position, speed: 1000 })}
-                          >
-                            GoTo
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3}>Loading gantry objects...</TableCell>
+                  {holders.map((holder) => (
+                    <TableRow key={holder.id}>
+                      <TableCell>{holder.name}</TableCell>
+                      <TableCell>
+                        {holder.positionOut?.x}, {holder.positionOut?.y},{' '}
+                        {holder.positionOut?.z}, {holder.positionOut?.a}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          onClick={() =>
+                            goto({ ...holder.positionIn, speed: 1000 })
+                          }>
+                          GoTo
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        {holder.positionIn?.x}, {holder.positionIn?.y},{' '}
+                        {holder.positionIn?.z}, {holder.positionIn?.a}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          onClick={() =>
+                            goto({ ...holder.positionOut, speed: 1000 })
+                          }>
+                          GoTo
+                        </Button>
+                      </TableCell>
+                      <TableCell>{holder.effector}</TableCell>
                     </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </Stack>
           )}
+          {tab === 3 && (
+            <Stack spacing={3} sx={{ p: 2 }}>
+              <Typography variant="h6">Screwdriver Settings</Typography>
+
+              {/* Thread pitch */}
+              <Box display="flex" alignItems="center" gap={2}>
+                <Typography variant="subtitle2" color="textSecondary">
+                  Thread Pitch (mm/turn):
+                </Typography>
+                <TextField
+                  type="number"
+                  size="small"
+                  value={threadPitch}
+                  onChange={(e) => setThreadPitch(Number(e.target.value))}
+                />
+              </Box>
+
+              {/* Depth */}
+              <Box display="flex" alignItems="center" gap={2}>
+                <Typography variant="subtitle2" color="textSecondary">
+                  Depth (mm):
+                </Typography>
+                <TextField
+                  type="number"
+                  size="small"
+                  value={depth}
+                  onChange={(e) => setDepth(Number(e.target.value))}
+                />
+              </Box>
+
+              {/* Speed */}
+              <Box display="flex" alignItems="center" gap={2}>
+                <Typography variant="subtitle2" color="textSecondary">
+                  Speed (turns/sec):
+                </Typography>
+                <TextField
+                  type="number"
+                  size="small"
+                  value={rotPs}
+                  onChange={(e) => setRotPs(Number(e.target.value))}
+                />
+              </Box>
+
+              {/* Action buttons */}
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => screwdriverIn({ threadPitch, depth, rotPs })}
+                >
+                  Screw In
+                </Button>
+
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => screwdriverOut({ threadPitch, depth, rotPs})}
+                >
+                  Screw Out
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => screwdriverStop({ })}
+                >
+                  Stop
+                </Button>
+              </Stack>
+            </Stack>
+          )}
         </Box>
       </CardContent>
-    </Card>
+    </Card >
   );
 };

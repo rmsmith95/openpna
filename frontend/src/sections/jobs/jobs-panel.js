@@ -17,9 +17,7 @@ export const JobsPanel = () => {
     try {
       const res = await fetch("/api/jobs/get-jobs");
       const data = await res.json();
-      // console.log(data)
       setJobs((data || {}));
-      // console.log(machines)
     } catch (err) {
       console.error('Error fetching jobs:', err);
     }

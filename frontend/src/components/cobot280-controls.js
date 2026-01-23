@@ -26,7 +26,7 @@ const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed }) => {
 
   useEffect(() => {
     const loadPositions = async () => {
-      const js = await fetchPositions(); // wait for Promise to resolve
+      const js = await fetchPositions();
       if (js) setJoints(js);
     };
 

@@ -1,3 +1,10 @@
+import {
+  screwIn,
+  screwOut,
+  stop
+} from "./screwdriver-actions";
+
+
 export const goto = async (req) => {
   console.log(req)
   const { x, y, z, a, speed} = req;
@@ -47,4 +54,37 @@ export async function handleUnlockToolChanger(time = 5) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ time_s:time }),
   });
+}
+
+export async function screwdriverIn(threadPitch, depth, rotPs) {
+  const rotations = depth / threadPitch // rotations needed to reach target depth
+  const duration = rotations / rotPs // total time needed at given rotation speed
+
+  // Run rotation and linear motion together. NOTE: assumes both start at the same time
+  await Promise.all([
+    screwIn(duration, rotPs),
+    stepMove(0, 0, depth, 0)
+  ])
+}
+
+export async function screwdriverOut(threadPitch, depth, rotPs) {
+  const rotations = depth / threadPitch // rotations needed to reach target depth
+  const duration = rotations / rotPs // total time needed at given rotation speed
+
+  // Run rotation and linear motion together. NOTE: assumes both start at the same time
+  await Promise.all([
+    screwIn(duration, rotPs),
+    stepMove(0, 0, depth, 0)
+  ])
+}
+
+export async function screwdriverStop(threadPitch, depth, rotPs) {
+  const rotations = depth / threadPitch // rotations needed to reach target depth
+  const duration = rotations / rotPs // total time needed at given rotation speed
+
+  // Run rotation and linear motion together. NOTE: assumes both start at the same time
+  await Promise.all([
+    screwdriverStop(),
+    stepMove(0, 0, 0, 0)
+  ])
 }

@@ -74,7 +74,7 @@ export async function screwdriverOut(threadPitch, depth, rotPs) {
   // Run rotation and linear motion together. NOTE: assumes both start at the same time
   await Promise.all([
     screwIn(duration, rotPs),
-    stepMove(0, 0, depth, 0)
+    stepMove(0, 0, -depth, 0)
   ])
 }
 

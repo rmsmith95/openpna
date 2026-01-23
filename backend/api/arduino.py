@@ -1,7 +1,7 @@
 # backend/machines/tool_changer.py
 # import serial
 import time
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -16,15 +16,9 @@ class ConnectRequest(BaseModel):
     timeout: float = 3.0  # seconds
 
 @router.post("/connect")
-def connect(req: ConnectRequest):
-    global arduino
-    try:
-        if arduino is None or not arduino.is_open:
-            arduino = serial.Serial(req.port, req.baud, timeout=1)
-            time.sleep(2)
-        return {"status": "connected", "port": req.port}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to connect: {e}")
+def connect(req: ConnectRequest, request: Request):
+    arduino = request.app.state.factory.machines['arduino']
+    return arduino.connect(req.method, req.ip, req.port, req.com, req.baud)
 
 def send_cmd(cmd: str):
     if arduino is None or not arduino.is_open:
@@ -43,4 +37,28 @@ def unlock(req: UnlockRequest):
     time.sleep(req.time_s)
     send_cmd("OFF")
     time.sleep(1)
+    return {"status": "completed"}
+
+
+class Screw(BaseModel):
+    duration: int
+    speed: int
+
+@router.post("/screw_clockwise")
+def screw_clockwise(req: Screw, request: Request):
+    arduino = request.app.state.factory.machines['arduino']
+    arduino.screw("clockwise", req.duration, req.speed)
+    return {"status": "completed"}
+
+
+@router.post("/screw_reverse")
+def screw_clockwise(req: Screw, request: Request):
+    arduino = request.app.state.factory.machines['arduino']
+    arduino.screw("reverse", req.duration, req.speed)
+    return {"status": "completed"}
+
+@router.post("/screwdriver_stop")
+def screw_clockwise(request: Request):
+    arduino = request.app.state.factory.machines['arduino']
+    arduino.screw("stop")
     return {"status": "completed"}

@@ -5,11 +5,6 @@ import {
   Stack,
   TextField
 } from "@mui/material";
-import {
-  screwIn,
-  screwOut,
-  stop
-} from "./screwdriver-actions";
 
 
 export default function ScrewdriverControls() {

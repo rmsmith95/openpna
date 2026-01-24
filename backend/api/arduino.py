@@ -47,18 +47,20 @@ class Screw(BaseModel):
 @router.post("/screw_clockwise")
 def screw_clockwise(req: Screw, request: Request):
     arduino = request.app.state.factory.machines['arduino']
-    arduino.screw("clockwise", req.duration, req.speed)
-    return {"status": "completed"}
+    lines = arduino.screw("FWD", req.duration, req.speed)
+    return {"status": "completed", "response": lines}
 
 
 @router.post("/screw_reverse")
-def screw_clockwise(req: Screw, request: Request):
+def screw_reverse(req: Screw, request: Request):
     arduino = request.app.state.factory.machines['arduino']
-    arduino.screw("reverse", req.duration, req.speed)
-    return {"status": "completed"}
+    # lines = arduino.screw("CCW", req.duration, req.speed)
+    lines = arduino.screw("BKW", req.duration, req.speed)
+    return {"status": "completed", "response": lines}
+
 
 @router.post("/screwdriver_stop")
-def screw_clockwise(request: Request):
+def screwdriver_stop(request: Request):
     arduino = request.app.state.factory.machines['arduino']
-    arduino.screw("stop")
-    return {"status": "completed"}
+    lines = arduino.screw("STOP")
+    return {"status": "completed", "response": lines}

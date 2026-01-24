@@ -21,28 +21,25 @@ class Gantry:
         if self.connection.serial is not None and self.connection.serial.is_open:
             self.connection.serial.close()
 
-        self.connection = serial.Serial(com, baud, timeout=timeout)
+        self.connection.serial = serial.Serial(com, baud, timeout=timeout)
         logging.info(f"Connected to TinyG on {com}")
         return True
 
     def is_connected(self) -> bool:
-        return self.connection is not None and self.connection.is_open
+        return self.connection.serial is not None and self.connection.serial.is_open
 
-    # -------------------------
-    # LOW LEVEL
-    # -------------------------
     def send(self, command: str, delay: float = 0.05):
         if not self.is_connected():
             raise RuntimeError("TinyG not connected")
 
-        self.connection.reset_input_buffer()
-        self.connection.write((command + "\n").encode())
+        self.connection.serial.reset_input_buffer()
+        self.connection.serial.write((command + "\n").encode())
         time.sleep(delay)
 
         lines = []
-        while self.connection.in_waiting:
+        while self.connection.serial.in_waiting:
             lines.append(
-                self.connection.readline().decode(errors="ignore").strip()
+                self.connection.serial.readline().decode(errors="ignore").strip()
             )
 
         return lines
@@ -98,5 +95,5 @@ class Gantry:
         self.send("M9")
 
     def reset(self):
-        self.connection.write(b"\x18")
+        self.connection.serial.write(b"\x18")
         time.sleep(0.2)

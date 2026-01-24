@@ -5,11 +5,12 @@ import {
   Stack,
   TextField
 } from "@mui/material";
+import { screwIn, screwOut, screwdriverStop } from './screwdriver-actions';
 
 
 export default function ScrewdriverControls() {
-  const [speedInput, setSpeedInput] = useState(100);
-  const [moveTime, setMoveTime] = useState(1);
+  const [speed, setSpeed] = useState(100);
+  const [duration, setDuration] = useState(1);
   const [status, setStatus] = useState({
     voltage: "",
     position: "",
@@ -18,28 +19,6 @@ export default function ScrewdriverControls() {
     speed_set: 0
   });
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const res = await fetch("/api/gripper/get_status");
-        const data = await res.json();
-        if (data?.raw) {
-          setStatus({
-            voltage: data.raw.voltage ?? "",
-            position: data.raw.position ?? "",
-            load: data.raw.load ?? "",
-            temper: data.raw.temper ?? "",
-            speed_set: Number(data.raw.speed_set) || 0
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching gripper status:", err);
-      }
-    };
-
-    fetchStatus();
-  }, []);
-
   return (
     <Stack spacing={4} sx={{ pt: 3 }}>
       {/* Row 1: Open / Close */}
@@ -47,21 +26,21 @@ export default function ScrewdriverControls() {
         <Button
           variant="contained"
           size="small"
-          onClick={() => gripperGoTo(0, 200, speedInput)}
+          onClick={() => screwOut(duration, speed)}
         >
           Anticlockwise
         </Button>
         <Button
           variant="contained"
           size="small"
-          onClick={() => gripperGoTo(200, 0, speedInput)}
+          onClick={() => screwdriverStop()}
         >
           Stop
         </Button>
         <Button
           variant="contained"
           size="small"
-          onClick={() => gripperGoTo(200, 0, speedInput)}
+          onClick={() => screwIn(duration, speed)}
         >
           Clockwise
         </Button>
@@ -71,17 +50,27 @@ export default function ScrewdriverControls() {
       <Stack direction="row" spacing={4}>
         <span>Voltage: {status.voltage}</span>
         <span>Position: {status.position}</span>
-                <span style={{ fontSize: 12, fontWeight: 500 }}>Speed</span>
+        <span style={{ fontSize: 12, fontWeight: 500 }}>Speed</span>
         <TextField
-          value={speedInput}
-          onChange={(e) => setSpeedInput(Number(e.target.value) || 0)}
-          onBlur={() => setGripperSpeed(speedInput)}
+          value={speed}
+          onChange={(e) => setSpeed(Number(e.target.value) || 0)}
+          onBlur={() => setSpeed(speed)}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+          size="small"
+          type="number"
+          sx={{ width: 100 }}
+          inputProps={{ min: 0, max: 1000 }}/>
+          <TextField
+          value={duration}
+          onChange={(e) => setDuration(Number(e.target.value) || 0)}
+          onBlur={() => setDuration(duration)}
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
           size="small"
           type="number"
           sx={{ width: 100 }}
           inputProps={{ min: 0, max: 1000 }}/>
       </Stack>
+      
 
       <Stack direction="row" spacing={4}>
         <span>Load: {status.load}</span>

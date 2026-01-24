@@ -1,6 +1,6 @@
-// pages/api/arduino/screw_cw.js
+// pages/api/arduino/screw_reverse.js
 export default async function handler(req, res) {
-  console.log("Received request to /api/arduino/screw_cw", req.body);
+  console.log("Received request to /api/arduino/screw_reverse", req.body);
 
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   const { duration, speed } = req.body;
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/arduino/screw_cw", {
+    const response = await fetch("http://127.0.0.1:8000/arduino/screw_reverse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ duration, speed }),

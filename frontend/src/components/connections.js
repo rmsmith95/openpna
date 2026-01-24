@@ -22,7 +22,7 @@ export const Connections = () => {
       name: 'Arduino',
       method: 'serial',
       com: 'COM3',
-      baud: 9600,
+      baud: 115200,
       ip: '',
       port: -1,
       connected: false,

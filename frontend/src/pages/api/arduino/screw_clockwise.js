@@ -5,7 +5,8 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
   }
-
+  
+  console.log(req.body)
   const { duration, speed } = req.body;
 
   try {

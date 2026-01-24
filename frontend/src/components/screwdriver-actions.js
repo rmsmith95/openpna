@@ -1,5 +1,5 @@
 export async function screwIn(duration, speed) {
-  await fetch("/api/screwdriver/screwIn", {
+  await fetch("/api/arduino/screw_clockwise", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ duration, speed }),
@@ -7,15 +7,15 @@ export async function screwIn(duration, speed) {
 }
 
 export async function screwOut(duration, speed) {
-  await fetch("/api/screwdriver/screwOut", {
+  await fetch("/api/arduino/screw_reverse", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ duration, speed }),
   });
 }
 
-export async function stop() {
-  await fetch("/api/screwdriver/stop", {
+export async function screwdriverStop() {
+  await fetch("/api/arduino/screwdriver_stop", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ }),

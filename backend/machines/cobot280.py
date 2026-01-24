@@ -14,7 +14,7 @@ class Cobot280:
     def send_command_to_pi(self, cmd: dict):
         """ Sends a JSON command to the Pi over TCP and returns the JSON response. """
         if self.connection.ip == "":
-            return {"cmd": cmd, "status": "error", "message": "no connection"}
+            return {"cmd": cmd, "status": "error", "message": "no ip"}
 
         print(f"Sending command to Pi: {cmd} @ {self.connection.ip}")
         try:

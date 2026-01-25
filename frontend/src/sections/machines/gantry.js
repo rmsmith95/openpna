@@ -16,7 +16,7 @@ import {
   Typography
 } from '@mui/material';
 import GantryControls from '../../components/gantry-controls';
-import { screwdriverIn, screwdriverOut, screwdriverStop, getInfo, goto } from '../../components/gantry-actions';
+import { screwdriverIn, screwdriverOut, screwdriverStop, getInfo, goto, stepMove } from '../../components/gantry-actions';
 import { useFactory } from 'src/utils/factory-context';
 
 
@@ -38,7 +38,7 @@ export const Gantry = () => {
   const [rotPs, setRotPs] = useState(1); // mm
 
   useEffect(() => {
-    const fetchInfo = async () => {
+    const id = setInterval(async () => {
       const result = await getInfo();
       if (result) {
         setData(result);
@@ -49,9 +49,9 @@ export const Gantry = () => {
           a: result.a ?? 0,
         });
       }
-    };
+    }, 500);
 
-    fetchInfo();
+    return () => clearInterval(id);
   }, []);
 
   return (
@@ -214,7 +214,7 @@ export const Gantry = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={() => screwdriverIn({ threadPitch, depth, rotPs })}
+                  onClick={() => screwdriverIn(threadPitch, depth, rotPs)}
                 >
                   Screw In
                 </Button>
@@ -222,7 +222,7 @@ export const Gantry = () => {
                 <Button
                   variant="contained"
                   color="secondary"
-                  onClick={() => screwdriverOut({ threadPitch, depth, rotPs})}
+                  onClick={() => screwdriverOut(threadPitch, depth, rotPs)}
                 >
                   Screw Out
                 </Button>
@@ -230,7 +230,7 @@ export const Gantry = () => {
                 <Button
                   variant="outlined"
                   color="error"
-                  onClick={() => screwdriverStop({ })}
+                  onClick={() => screwdriverStop({})}
                 >
                   Stop
                 </Button>

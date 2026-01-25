@@ -32,7 +32,7 @@ class Gantry:
         if not self.is_connected():
             raise RuntimeError("TinyG not connected")
 
-        self.connection.serial.reset_input_buffer()
+        # self.connection.serial.reset_input_buffer()
         self.connection.serial.write((command + "\n").encode())
         time.sleep(delay)
 
@@ -56,6 +56,7 @@ class Gantry:
             "velocity": 0.0,
             "machine_state": None,
         }
+        info = dict(self.pose) if self.pose else None
 
         for line in lines:
             if line.startswith("X position"):

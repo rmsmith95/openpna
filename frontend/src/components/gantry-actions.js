@@ -61,9 +61,11 @@ export async function screwdriverIn(threadPitch, depth, rotPs) {
   const duration = rotations / rotPs // total time needed at given rotation speed
 
   // Run rotation and linear motion together. NOTE: assumes both start at the same time
+  const speed = threadPitch * rotPs * 60
+  const axisStep = { x: 0, y: 0, z: -depth, a: 0, speed: speed };
   await Promise.all([
     screwIn(duration, rotPs),
-    stepMove(0, 0, depth, 0)
+    stepMove(axisStep)
   ])
 }
 
@@ -72,9 +74,12 @@ export async function screwdriverOut(threadPitch, depth, rotPs) {
   const duration = rotations / rotPs // total time needed at given rotation speed
 
   // Run rotation and linear motion together. NOTE: assumes both start at the same time
+  // speed in mm/min so rot/s * 60 = rot/min * threadPitch
+  const speed = threadPitch * rotPs * 60
+  const axisStep = { x: 0, y: 0, z: depth, a: 0, speed: speed };
   await Promise.all([
     screwIn(duration, rotPs),
-    stepMove(0, 0, -depth, 0)
+    stepMove(axisStep)
   ])
 }
 
@@ -85,6 +90,6 @@ export async function screwdriverStop(threadPitch, depth, rotPs) {
   // Run rotation and linear motion together. NOTE: assumes both start at the same time
   await Promise.all([
     screwdriverStop(),
-    stepMove(0, 0, 0, 0)
+    // stepMove(0, 0, 0, 0, 1)
   ])
 }

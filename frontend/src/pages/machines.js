@@ -11,23 +11,6 @@ import { Layout as DashboardLayout } from "src/layouts/dashboard/layout";
 import { MachinePanel } from "src/sections/machines/machines-panel";
 
 const Page = () => {
-  const [serverStatus, setServerStatus] = useState("stopped");
-
-  const checkServer = useCallback(async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/health");
-      setServerStatus(res.ok ? "connected" : "stopped");
-    } catch {
-      setServerStatus("stopped");
-    }
-  }, []);
-
-  useEffect(() => {
-    checkServer();
-    const interval = setInterval(checkServer, 10000);
-    return () => clearInterval(interval);
-  }, [checkServer]);
-
   return (
     <>
       <Head>
@@ -62,22 +45,8 @@ const Page = () => {
                   alignItems: "center",
                   gap: 0.5,
                   width: "fit-content",
-                  bgcolor:
-                    serverStatus === "connected"
-                      ? "green"
-                      : serverStatus === "loading"
-                      ? "orange"
-                      : "red",
                 }}
               >
-                {serverStatus === "loading" && (
-                  <CircularProgress size={12} color="inherit" />
-                )}
-                {serverStatus === "connected"
-                  ? "Connected"
-                  : serverStatus === "loading"
-                  ? "Loading"
-                  : "Stopped"}
               </Box>
             </Stack>
           </Stack>

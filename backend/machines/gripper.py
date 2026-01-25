@@ -94,6 +94,13 @@ class ST3020Gripper:
             self.connected = False
             return False
 
+    def is_connected(self) -> bool:
+        try:
+            status = self.get_status()
+            return bool(status)  # True if status dict is non-empty
+        except Exception:
+            return False
+    
     def send_command(self, arg0, arg1, arg2=0, arg3=0):
         r = requests.get(
             f"http://{self.connection.ip}/cmd",

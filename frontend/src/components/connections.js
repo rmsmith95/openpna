@@ -1,126 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table, TableHead, TableRow, TableCell, TableBody,
-  TextField, Button, SvgIcon, MenuItem, Select
+  TextField, Button, Select, MenuItem, SvgIcon
 } from '@mui/material';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 
-export const Connections = () => {
-  const [connections, setConnections] = useState({
-    tinyg: {
-      name: 'TinyG',
-      method: 'serial',
-      com: 'COM10',
-      baud: 115200,
-      ip: '',
-      port: -1,
-      connected: false,
-    },
+export const Connections = ({ serverStatus }) => {
+  // Editable machine config state
+  const [machines, setMachines] = useState([
+    { key: 'gantry', name: 'TinyG', method: 'serial', ip: '192.168.1.1', port: 8000, com: 'COM10', baud: 115200 },
+    { key: 'arduino', name: 'Arduino', method: 'serial', ip: '192.168.1.1', port: 8000, com: 'COM3', baud: 115200 },
+    { key: 'cobot280', name: 'Cobot280', method: 'network', ip: '10.163.187.60', port: 9000, com: 'COM4', baud: 115200 },
+    { key: 'gripper', name: 'ESP32', method: 'network', ip: '10.163.187.219', port: 8005, com: 'COM5', baud: 115200 },
+  ]);
 
-    arduino: {
-      name: 'Arduino',
-      method: 'serial',
-      com: 'COM3',
-      baud: 115200,
-      ip: '',
-      port: -1,
-      connected: false,
-    },
+  const [connecting, setConnecting] = useState({});
 
-    cobot280: {
-      name: 'Cobot280',
-      method: 'network',
-      com: '',
-      baud: 115200,
-      ip: '10.163.187.60',
-      port: 9000,
-      connected: false,
-    },
-
-    esp32: {
-      name: 'ESP32',
-      method: 'network',
-      com: '',
-      baud: 115200,
-      ip: '10.163.187.219',
-      port: 8005,
-      connected: false,
-    },
-  });
-
-  // Flat updater
-  const update = (key, field, value) => {
-    setConnections(prev => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        [field]: value,
-      },
-    }));
+  // Helper to update a field in local machine state
+  const updateMachine = (key, field, value) => {
+    setMachines(prev =>
+      prev.map(m => (m.key === key ? { ...m, [field]: value } : m))
+    );
   };
 
-  // Connect API call — always send all values
-  const handleConnect = async (key) => {
-    const c = connections[key];
+  const handleConnect = async (m) => {
+    setConnecting(prev => ({ ...prev, [m.key]: true }));
 
     const body = {
-      method: c.method,
-      com: c.com,
-      baud: c.baud,
-      ip: c.ip,
-      port: c.port,
+      method: m.method,
+      com: m.com,
+      baud: m.baud,
+      ip: m.ip,
+      port: m.port,
     };
 
     try {
-      const res = await fetch(`/api/${key}/connect`, {
+      const res = await fetch(`/api/${m.key}/connect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-
       const data = await res.json();
-      const connected = data.status === 'ok' || data.status === 'connected';
-
-      setConnections(prev => ({
-        ...prev,
-        [key]: { ...prev[key], connected },
-      }));
+      console.log(`${m.name} connect response:`, data);
+      // You could optionally trigger a refresh of serverStatus here
     } catch (err) {
-      console.error(`Failed to connect ${key}`, err);
-      setConnections(prev => ({
-        ...prev,
-        [key]: { ...prev[key], connected: false },
-      }));
+      console.error(`Failed to connect ${m.name}:`, err);
+    } finally {
+      setConnecting(prev => ({ ...prev, [m.key]: false }));
     }
   };
-
-  // Render COM / IP field
-  const renderAddressCell = (key, c) => (
-    <TextField
-      size="small"
-      value={c.method === 'serial' ? c.com : c.ip}
-      onChange={e =>
-        update(key, c.method === 'serial' ? 'com' : 'ip', e.target.value)
-      }
-    />
-  );
-
-  // Render Baud / Port field
-  const renderBaudOrPortCell = (key, c) => (
-    <TextField
-      size="small"
-      type="number"
-      value={c.method === 'serial' ? c.baud : c.port}
-      onChange={e =>
-        update(
-          key,
-          c.method === 'serial' ? 'baud' : 'port',
-          Number(e.target.value)
-        )
-      }
-    />
-  );
 
   return (
     <Table>
@@ -128,51 +57,75 @@ export const Connections = () => {
         <TableRow>
           <TableCell>Board</TableCell>
           <TableCell>Method</TableCell>
-          <TableCell sx={{ minWidth: 180 }}>COM / IP</TableCell>
-          <TableCell sx={{ minWidth: 180 }}>Baud / Port</TableCell>
+          <TableCell>COM / IP</TableCell>
+          <TableCell>Baud / Port</TableCell>
           <TableCell>Connect</TableCell>
         </TableRow>
       </TableHead>
 
       <TableBody>
-        {Object.entries(connections).map(([key, c]) => (
-          <TableRow key={key}>
-            <TableCell>
-              {c.name}
-              <SvgIcon
-                fontSize="small"
-                color={c.connected ? 'success' : 'error'}
-                sx={{ ml: 1 }}
-              >
-                {c.connected ? <CheckCircleIcon /> : <XCircleIcon />}
-              </SvgIcon>
-            </TableCell>
+        {machines.map((m) => {
+          const connected = serverStatus?.machines?.[m.key] ?? false;
+          const isConnecting = connecting[m.key] || false;
 
-            <TableCell>
-              <Select
-                size="small"
-                value={c.method}
-                onChange={e => update(key, 'method', e.target.value)}
-              >
-                <MenuItem value="serial">serial</MenuItem>
-                <MenuItem value="network">network</MenuItem>
-              </Select>
-            </TableCell>
+          return (
+            <TableRow key={m.key}>
+              <TableCell>
+                {m.name}
+                <SvgIcon
+                  fontSize="small"
+                  color={connected ? 'success' : 'error'}
+                  sx={{ ml: 1 }}
+                >
+                  {connected ? <CheckCircleIcon /> : <XCircleIcon />}
+                </SvgIcon>
+              </TableCell>
 
-            <TableCell>{renderAddressCell(key, c)}</TableCell>
-            <TableCell>{renderBaudOrPortCell(key, c)}</TableCell>
+              <TableCell>
+                <Select
+                  size="small"
+                  value={m.method}
+                  onChange={e => updateMachine(m.key, 'method', e.target.value)}
+                >
+                  <MenuItem value="serial">serial</MenuItem>
+                  <MenuItem value="network">network</MenuItem>
+                </Select>
+              </TableCell>
 
-            <TableCell>
-              <Button
-                variant="contained"
-                color="success"
-                onClick={() => handleConnect(key)}
-              >
-                Connect
-              </Button>
-            </TableCell>
-          </TableRow>
-        ))}
+              <TableCell>
+                <TextField
+                  size="small"
+                  value={m.method === 'serial' ? m.com : m.ip}
+                  onChange={e =>
+                    updateMachine(m.key, m.method === 'serial' ? 'com' : 'ip', e.target.value)
+                  }
+                />
+              </TableCell>
+
+              <TableCell>
+                <TextField
+                  size="small"
+                  type="number"
+                  value={m.method === 'serial' ? m.baud : m.port}
+                  onChange={e =>
+                    updateMachine(m.key, m.method === 'serial' ? 'baud' : 'port', Number(e.target.value))
+                  }
+                />
+              </TableCell>
+
+              <TableCell>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={isConnecting || connected}
+                  onClick={() => handleConnect(m)}
+                >
+                  {isConnecting ? 'Connecting...' : 'Connect'}
+                </Button>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

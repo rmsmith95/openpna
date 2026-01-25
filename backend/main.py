@@ -35,11 +35,6 @@ def read_root():
     return {"message": "OpenPnA backend running!"}
 
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
-
 @app.on_event("startup")
 def startup():
     logging.info("===== Initialise Factory1 =====")
@@ -51,6 +46,20 @@ def startup():
     print(f"factory machines: {(factory.machines)}")
     logging.info(f"factory1 loaded: {factory}")
     return {"status": "Factory initialized"}
+
+
+@app.get("/get_health")
+def get_health():
+    machines = app.state.factory.machines
+    return {
+        "status": "ofk",
+        "machines": {
+            "gantry": machines["gantry"].is_connected(),
+            "gripper": False, #machines["gripper"].is_connected(),
+            "arduino": False, #machines["arduino"].is_connected(),
+            "cobot280": False, #machines["cobot280"].is_connected(),
+        }
+    }
 
 
 @app.get("/factory_status")

@@ -21,7 +21,7 @@ class Arduino:
         return {"status": "connected", "com": com, "baud": baud}
 
     def is_connected(self):
-        return self.connection.serial is not None and self.connection.serial.is_open
+        return self.connection is not None and self.connection.serial is not None and self.connection.serial.is_open
 
     def screw(self, direction: str, duration: float = 0, speed: int = 150):
         """

@@ -19,9 +19,41 @@ const defaultMachines = [
   { name: "Screwdriver", component: Screwdriver, color: "purple" },
 ];
 
+export const useMachineStatus = (intervalMs = 5000) => {
+  const [serverStatus, setServerStatus] = useState({
+    status: "stopped",
+    machines: {},
+  });
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      setServerStatus((prev) => ({ ...prev, status: "loading" }));
+      try {
+        const res = await fetch("/api/get_health");
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        setServerStatus({
+          status: "connected",
+          machines: data.machines || {},
+        });
+      } catch {
+        setServerStatus({ status: "stopped", machines: {} });
+      }
+    };
+
+    fetchStatus();
+    const interval = setInterval(fetchStatus, intervalMs);
+
+    return () => clearInterval(interval);
+  }, [intervalMs]);
+  // console.log(serverStatus); // true/false
+  return serverStatus;
+};
+
 export const MachinePanel = ({ machines = defaultMachines }) => {
   const [selectedTab, setSelectedTab] = useState(0);
   const handleTabChange = (_, newValue) => setSelectedTab(newValue);
+  const serverStatus = useMachineStatus(5000);
 
   const tabSx = {
     justifyContent: "flex-start",
@@ -64,11 +96,13 @@ export const MachinePanel = ({ machines = defaultMachines }) => {
         />
         <Tab
           label="Cobot280"
-          sx={{ ...tabSx, bgcolor: "#1976d2", 
+          sx={{
+            ...tabSx, bgcolor: "#1976d2",
             "& .MuiTab-wrapper": {
               justifyContent: "flex-start",
               textAlign: "left",
-            }, }}
+            },
+          }}
         />
         <Tab
           label="Gripper"
@@ -76,11 +110,13 @@ export const MachinePanel = ({ machines = defaultMachines }) => {
         />
         <Tab
           label="Screwdriver"
-          sx={{ ...tabSx, bgcolor: "purple",
+          sx={{
+            ...tabSx, bgcolor: "purple",
             "& .MuiTab-wrapper": {
               justifyContent: "flex-start",
               textAlign: "left",
-            }, }}
+            },
+          }}
         />
       </Tabs>
 
@@ -94,7 +130,7 @@ export const MachinePanel = ({ machines = defaultMachines }) => {
           minHeight: 200,
         }}
       >
-        {selectedTab === 0 && <Connections />}
+        {selectedTab === 0 && <Connections serverStatus={serverStatus}/>}
         {machines.map((machine, idx) => {
           const MachineComponent = machine.component;
           return selectedTab === idx + 1 ? <MachineComponent key={machine.name} /> : null;

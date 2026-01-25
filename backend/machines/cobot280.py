@@ -35,7 +35,14 @@ class Cobot280:
         self.connection = Connection(method, ip, port, com, baud, timeout)
         cmd = {"command": "get_position"}
         pos = self.send_command_to_pi(cmd)
-        return pos 
+        return pos
+    
+    def is_connected(self) -> bool:
+        try:
+            status = self.get_status()
+            return bool(status)  # True if status dict is non-empty
+        except Exception:
+            return False
 
     def get_position(self) -> List[float]:
         """ Returns current joint positions as a list of 6 floats. """

@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from api.tinyg import router as tinyg_router
+from api.gantry import router as gantry_router
 from api.cobot280 import router as cobot280_router
 from api.gripper import router as gripper_router
 from api.arduino import router as arduino_router
@@ -23,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(tinyg_router, prefix="/tinyg")
+app.include_router(gantry_router, prefix="/gantry")
 app.include_router(cobot280_router, prefix="/cobot280")
 app.include_router(gripper_router, prefix="/gripper")
 app.include_router(arduino_router, prefix="/arduino")
@@ -55,9 +55,9 @@ def get_health():
         "status": "ofk",
         "machines": {
             "gantry": machines["gantry"].is_connected(),
-            "gripper": False, #machines["gripper"].is_connected(),
-            "arduino": False, #machines["arduino"].is_connected(),
-            "cobot280": False, #machines["cobot280"].is_connected(),
+            "gripper": machines["gripper"].is_connected(),
+            "arduino": machines["arduino"].is_connected(),
+            "cobot280": machines["cobot280"].is_connected(),
         }
     }
 

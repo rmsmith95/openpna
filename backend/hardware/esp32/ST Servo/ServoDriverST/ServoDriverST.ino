@@ -4,10 +4,9 @@ const char* AP_SSID = "ESP32_DEV";
 const char* AP_PWD  = "12345678";
 
 // WIFI_STA settings.
-// const char* STA_SSID = "Smart-5G-Hub-GF59";
-// const char* STA_PWD  = "ugRe9KrXDeHb";
-const char* STA_SSID = "Galaxy S24fe";
-const char* STA_PWD  = "eibz1588";
+const char* STA_SSID = "Smart-5G-Hub-GF59";
+const char* STA_PWD  = "ugRe9KrXDeHb";
+
 
 // the MAC address of the device you want to ctrl.
 uint8_t broadcastAddress[] = {0x08, 0x3A, 0xF2, 0x93, 0x5F, 0xA8};
@@ -34,12 +33,12 @@ struct_message myData;
 // set the default wifi mode here.
 // 1 as [AP] mode, it will not connect other wifi.
 // 2 as [STA] mode, it will connect to know wifi.
-#define DEFAULT_WIFI_MODE 2
+#define DEFAULT_WIFI_MODE 1
 
 // the uart used to control servos.
 // GPIO 18 - S_RXD, GPIO 19 - S_TXD, as default.
-#define S_RXD 18
-#define S_TXD 19
+#define S_RXD 16
+#define S_TXD 17
 
 // the IIC used to control OLED screen.
 // GPIO 21 - S_SDA, GPIO 22 - S_SCL, as default.
@@ -92,29 +91,30 @@ int    WIFI_RSSI;
 void setup() {
   Serial.begin(115200);
   while(!Serial) {}
-
+  Serial.println("Step1");
   InitRGB();
-
+  Serial.println("Step2");
   espNowInit();
-
+  Serial.println("Step3");
   getMAC();
-  
+  Serial.println("Step4");
   boardDevInit();
-
+  Serial.println("Step5");
   RGBcolor(0, 64, 255);
-
+  Serial.println("Step6");
   servoInit();
-
+  Serial.println("Step7");
   wifiInit();
-
+  Serial.println("Step8");
   webServerSetup();
-
+  Serial.println("Step9");
   RGBoff();
-
+  Serial.println("Step10");
   delay(1000);
   pingAll(true);
-
+  Serial.println("Step11");
   threadInit();
+  Serial.println("StepEnd");
 }
 
 

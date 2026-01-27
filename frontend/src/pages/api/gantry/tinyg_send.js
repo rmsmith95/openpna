@@ -1,24 +1,25 @@
-// pages/api/tinyg/connect.js
+// pages/api/gantry/move.js
 export default async function handler(req, res) {
-  console.log("Received request to /api/tinyg/connect", req.body);
-
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
   }
 
-  const { method, com, baud, ip, port, } = req.body;
-
   try {
-    const response = await fetch("http://127.0.0.1:8000/tinyg/connect", {
+    const { command } = req.body || {}; // get command from frontend
+
+    if (!command) {
+      return res.status(400).json({ status: "error", message: "Missing command" });
+    }
+
+    // Forward the command to FastAPI
+    const response = await fetch("http://127.0.0.1:8000/gantry/tinyg_send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ method, com, baud, ip, port, }),
+      body: JSON.stringify({ command }), // send the actual command
     });
 
-    console.log("FastAPI response status:", response.status);
-
     const data = await response.json();
-    console.log("FastAPI response body:", data);
+    console.log("FastAPI response:", data);
 
     res.status(200).json(data);
   } catch (err) {

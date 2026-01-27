@@ -26,7 +26,7 @@ class Gantry:
         return True
 
     def is_connected(self) -> bool:
-        return self.connection.serial is not None and self.connection.serial.is_open
+        return self.connection is not None and self.connection.serial is not None and self.connection.serial.is_open
 
     def send(self, command: str, delay: float = 0.05):
         if not self.is_connected():
@@ -51,12 +51,18 @@ class Gantry:
         lines = self.send("?")
 
         info = {
-            "x": 0.0, "y": 0.0, "z": 0.0, "a": 0.0,
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "a": 0.0,
             "feedrate": 0.0,
             "velocity": 0.0,
             "machine_state": None,
         }
-        info = dict(self.pose) if self.pose else None
+
+        # merge pose if present (DO NOT replace info)
+        if self.pose:
+            info.update(self.pose)
 
         for line in lines:
             if line.startswith("X position"):
@@ -75,6 +81,7 @@ class Gantry:
                 info["machine_state"] = line.split(":", 1)[1].strip()
 
         return info
+
 
     # -------------------------
     # MOTION

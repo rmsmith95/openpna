@@ -9,7 +9,7 @@ export const goto = async (req) => {
   console.log(req)
   const { x, y, z, a, speed} = req;
   try {
-    const res = await fetch("/api/tinyg/goto", {
+    const res = await fetch("/api/gantry/goto", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ x, y, z, a, speed }),
@@ -24,7 +24,7 @@ export const stepMove = async (req) => {
   console.log(req)
   const { x, y, z, a, speed } = req;
   try {
-    const res = await fetch("/api/tinyg/step", {
+    const res = await fetch("/api/gantry/step", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ x, y, z, a, speed }),
@@ -37,7 +37,7 @@ export const stepMove = async (req) => {
 
 export const getInfo = async () => {
   try {
-    const res = await fetch("/api/tinyg/get_info");
+    const res = await fetch("/api/gantry/get_info");
     const data = await res.json();
     // console.log(data);
     const { x, y, z, a, feedrate, machine_state } = data;
@@ -49,7 +49,7 @@ export const getInfo = async () => {
 };
 
 export async function handleUnlockToolChanger(time = 5) {
-  await fetch("/api/tinyg/unlock", {
+  await fetch("/api/gantry/unlock", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ time_s:time }),

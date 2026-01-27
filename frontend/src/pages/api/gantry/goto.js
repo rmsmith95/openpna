@@ -1,6 +1,6 @@
-// pages/api/gantry/step.js
+// pages/api/gantry/goto.js
 export default async function handler(req, res) {
-  console.log("Received request to /api/tinyg/step", req.body);
+  console.log("Received request to /api/gantry/goto", req.body);
 
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
@@ -19,13 +19,13 @@ export default async function handler(req, res) {
   ) {
     return res.status(400).json({
       status: "error",
-      message: "x, y, z, a and speed must all be valid numbers",
+      message: "x, y, z, a and speed must all be numbers",
     });
   }
 
-  console.log("Gantry step:", { x, y, z, a, speed });
+  console.log("gantry goto:", { x, y, z, a, speed });
   try {
-    const response = await fetch("http://127.0.0.1:8000/tinyg/step", {
+    const response = await fetch("http://127.0.0.1:8000/gantry/goto", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ x, y, z, a, speed }),
@@ -35,9 +35,9 @@ export default async function handler(req, res) {
     const data = await response.json();
     console.log("FastAPI response body:", data);
 
-    return res.status(200).json(data);
+    res.status(200).json(data);
   } catch (err) {
     console.error("Error forwarding to FastAPI:", err);
-    return res.status(500).json({ status: "error", message: err.message });
+    res.status(500).json({ status: "error", message: err.message });
   }
 }

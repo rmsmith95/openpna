@@ -1,24 +1,19 @@
-// pages/api/tool_changer/unlock.js
+// pages/api/gantry/move.js
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
   }
 
-  const { time_s } = req.body;
-
   try {
-    const response = await fetch("http://127.0.0.1:8000/tinyg/unlock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ time_s }),
+    const response = await fetch("http://127.0.0.1:8000/gantry/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
     });
 
+    console.log("FastAPI response status:", response.status);
     const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Backend error:", data);
-      return res.status(response.status).json(data);
-    }
+    console.log("FastAPI response body:", data);
 
     res.status(200).json(data);
   } catch (err) {

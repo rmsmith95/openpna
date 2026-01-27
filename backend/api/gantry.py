@@ -54,8 +54,8 @@ def connect(req: ConnectRequest, request: Request):
 
 
 @router.get("/get_info")
-def get_info(request: Request):
-    gantry = request.app.state.factory.machines['gantry']
+async def get_info(request: Request):
+    gantry = request.app.state.factory.machines.get("gantry")
     if not gantry:
         return {"connected": False}
 
@@ -63,7 +63,7 @@ def get_info(request: Request):
         info = gantry.get_info()
         return {
             "connected": True,
-            **info
+            **info,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

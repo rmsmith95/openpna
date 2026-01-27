@@ -25,7 +25,7 @@ const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
   // --- RESET (Ctrl+X Soft Reset, RED BUTTON) ---
   const reset = async () => {
     try {
-      const res = await fetch("/api/tinyg/reset", { method: "POST" });
+      const res = await fetch("/api/gantry/reset", { method: "POST" });
       console.log("Reset response:", await res.json());
     } catch (err) {
       console.error("Reset error:", err);
@@ -35,7 +35,7 @@ const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
   // --- ZERO (G92 X0 Y0 Z0 A0) ---
   const zero = async () => {
     try {
-      const res = await fetch("/api/tinyg/set_position", {
+      const res = await fetch("/api/gantry/set_position", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ x: 0, y: 0, z: 0, a: 0 }),
@@ -48,7 +48,7 @@ const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
 
   const setCurrentPosition = async () => {
     try {
-      const res = await fetch("/api/tinyg/set_position", {
+      const res = await fetch("/api/gantry/set_position", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(gotoPosition),

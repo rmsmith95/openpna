@@ -41,6 +41,7 @@ export const Gantry = () => {
     const id = setInterval(async () => {
       const result = await getInfo();
       if (result) {
+        if (result.x === 0 && result.y === 0 && result.z === 0 && result.a === 0) return;
         setData(result);
         setPosition({
           x: result.x ?? 0,

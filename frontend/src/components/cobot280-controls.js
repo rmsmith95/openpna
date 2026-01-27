@@ -70,7 +70,7 @@ const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed }) => {
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Button
                     size="small"
-                    onClick={() => moveJoint(index, -step[index])}
+                    onClick={() => moveJoint(index-1, -step[index], speed)}
                     width='10'
                     sx={{p:0, m:0, width:20, minWidth: 20,}}
                   >
@@ -94,7 +94,7 @@ const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed }) => {
                   />
                   <Button
                     size="small"
-                    onClick={() => moveJoint(index, step[index])}
+                    onClick={() => moveJoint(index-1, step[index], speed)}
                     sx={{p:0, m:0, width:20, minWidth: 20,}}
                   >
                     +
@@ -114,7 +114,7 @@ const Cobot280Controls = ({ axisData, step, setStep, speed, setSpeed }) => {
         sx={{ mt: 3 }}
         flexWrap="wrap"
       >
-        <Button variant="contained" onClick={() => moveJoints(gotoJoints)}>
+        <Button variant="contained" onClick={() => moveJoints(gotoJoints, speed)}>
           GoTo
         </Button>
         <Stack direction="row" spacing={1} alignItems="center">

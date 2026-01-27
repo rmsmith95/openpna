@@ -10,6 +10,7 @@ class Connection:
         self.baud = baud
         self.timeout = timeout
         self.serial = None
+        self.connected = False
 
 
 class Pose:

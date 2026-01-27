@@ -17,20 +17,34 @@ export const fetchPositions = async () => {
 };
 
 
-export const moveJoint = async (jointIndex, deltaValue) => {
-  const newAngles = [...joints];
-  newAngles[jointIndex] += deltaValue;
-  await moveJoints(newAngles);
+export const moveJoint = async (jointIndex, deltaValue, speed) => {
+  try {
+    const response = await fetch("/api/cobot280/set_angle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({jointIndex, deltaValue, speed}),
+    });
+
+    if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+    const data = await response.json();
+    console.log("✅ SetAngle response:", data);
+
+    if (data.status === "ok" || data.status === "sent") {
+      // fetch updated positions from backend to avoid drift
+      fetchPositions();
+    }
+  } catch (err) {
+    console.error("❌ Error setting angles:", err);
+  }
 };
 
-export const moveJoints = async (newAngles) => {
+export const moveJoints = async (gotoJoints, speed) => {
   try {
     const response = await fetch("/api/cobot280/set_angles", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        ipAddress: ipAddress,
-        angles: newAngles,
+        angles: gotoJoints,
         speed: speed,
       }),
     });

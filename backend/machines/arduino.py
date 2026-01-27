@@ -20,9 +20,12 @@ class Arduino:
         logging.info(f"Connected to Arduino on {com}")
         return {"status": "connected", "com": com, "baud": baud}
 
-    def is_connected(self):
-        return self.connection is not None and self.connection.serial is not None and self.connection.serial.is_open
-
+    def is_connected(self) -> bool:
+        if self.connection:
+            self.connection.connected = self.connection.serial is not None and self.connection.serial.is_open
+            return self.connection.connected
+        return False
+    
     def screw(self, direction: str, duration: float = 0, speed: int = 150):
         """
         duration: seconds (ignored for STOP)

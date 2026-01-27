@@ -117,7 +117,7 @@ export const Connections = ({ serverStatus }) => {
                 <Button
                   variant="contained"
                   color="primary"
-                  disabled={isConnecting || connected}
+                  // disabled={isConnecting || connected}
                   onClick={() => handleConnect(m)}
                 >
                   {isConnecting ? 'Connecting...' : 'Connect'}

@@ -12,9 +12,6 @@ class Gantry:
         self.holders = []
         self.toolend = None
 
-    # -------------------------
-    # CONNECTION
-    # -------------------------
     def connect(self, method, ip, port, com, baud, timeout=3):
         self.connection = Connection(method, ip, port, com, baud, timeout)
         logging.warning(f'{self.connection}')
@@ -26,7 +23,10 @@ class Gantry:
         return True
 
     def is_connected(self) -> bool:
-        return self.connection is not None and self.connection.serial is not None and self.connection.serial.is_open
+        if self.connection:
+            self.connection.connected = self.connection.serial is not None and self.connection.serial.is_open
+            return self.connection.connected
+        return False
 
     def send(self, command: str, delay: float = 0.05):
         if not self.is_connected():
@@ -83,9 +83,6 @@ class Gantry:
         return info
 
 
-    # -------------------------
-    # MOTION
-    # -------------------------
     def set_position(self, x, y, z, a):
         return self.send(f"G92 X{x} Y{y} Z{z} A{a}")
 

@@ -33,16 +33,15 @@ class Cobot280:
     def connect(self, method, ip, port, com, baud, timeout=3):
         """ Test connection by requesting current positions. """
         self.connection = Connection(method, ip, port, com, baud, timeout)
-        cmd = {"command": "get_position"}
-        pos = self.send_command_to_pi(cmd)
-        return pos
+        resp = self.send_command_to_pi({"command": "get_position"})
+        self.connection.connected = (
+            isinstance(resp, dict) and
+            resp.get("status") == "ok"
+        )
+        return resp
     
     def is_connected(self) -> bool:
-        try:
-            status = self.get_status()
-            return bool(status)  # True if status dict is non-empty
-        except Exception:
-            return False
+        return self.connection.connected
 
     def get_position(self) -> List[float]:
         """ Returns current joint positions as a list of 6 floats. """

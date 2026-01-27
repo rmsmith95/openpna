@@ -52,7 +52,7 @@ def startup():
 def get_health():
     machines = app.state.factory.machines
     return {
-        "status": "ofk",
+        "status": "server connected",
         "machines": {
             "gantry": machines["gantry"].is_connected(),
             "gripper": machines["gripper"].is_connected(),

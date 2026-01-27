@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({ method, com, baud, ip, port, }),
     });
 
-    console.log("FastAPI response status:", response.status);
+    console.log("Cobot connect status:", response.status);
 
     const data = await response.json();
     console.log("FastAPI response body:", data);

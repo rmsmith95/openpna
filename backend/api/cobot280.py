@@ -15,15 +15,11 @@ class ConnectRequest(BaseModel):
 class SetAnglesRequest(BaseModel):
     angles: List[float]
     speed: int = 50
-    ip: str       # Pi IP
-    port: int = 8000  # optional override
 
 class SetAngleRequest(BaseModel):
     jointIndex: int
     deltaValue: float
     speed: int = 50
-    ip: str       # Pi IP
-    port: int = 8000  # optional override
 
 # --- Test connection endpoint ---
 @router.post("/connect")
@@ -36,7 +32,7 @@ def connect(req: ConnectRequest, request: Request):
 def set_angles(req: SetAngleRequest, request: Request):
     cmd = {"command": "set_angle", "jointIndex": req.jointIndex, "deltaValue": req.deltaValue, "speed": req.speed}
     cobot280 = request.app.state.factory.machines['cobot280']
-    return cobot280.send_command_to_pi(cmd, req.ip, req.port)
+    return cobot280.send_command_to_pi(cmd)
 
 # --- Set angles ---
 @router.post("/set_angles")
@@ -45,7 +41,7 @@ def set_angles(req: SetAnglesRequest, request: Request):
         return {"status": "error", "message": "'angles' must be a list of 6 values"}
     cmd = {"command": "set_angles", "angles": req.angles, "speed": req.speed}
     cobot280 = request.app.state.factory.machines['cobot280']
-    return cobot280.send_command_to_pi(cmd, req.ip, req.port)
+    return cobot280.send_command_to_pi(cmd)
 
 
 @router.get("/get_position")

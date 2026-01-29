@@ -17,7 +17,6 @@ const Page = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          mt: 2,
           p: 'clamp(8px, 4vw, 80px)'
         }}
       >

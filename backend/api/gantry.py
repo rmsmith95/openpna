@@ -39,6 +39,14 @@ class RawCommandRequest(BaseModel):
     delay: float = 0.05
 
 
+class DetachRequest(BaseModel):
+    target: str
+
+
+class AttachRequest(BaseModel):
+    target: str
+
+
 # ============================================================
 # ROUTES
 # ============================================================
@@ -136,3 +144,23 @@ def reset(request: Request):
 
     gantry.reset()
     return {"status": "ok"}
+
+
+@router.post("/detach")
+def unlock(req: DetachRequest, request: Request):
+    gantry = request.app.state.factory.machines['gantry']
+    if not gantry:
+        raise HTTPException(400, "Gantry not connected")
+
+    gantry.detach(req.target)
+    return {"status": "completed"}
+
+
+@router.post("/attach")
+def unlock(req: AttachRequest, request: Request):
+    gantry = request.app.state.factory.machines['gantry']
+    if not gantry:
+        raise HTTPException(400, "Gantry not connected")
+
+    gantry.attach(req.target)
+    return {"status": "completed"}

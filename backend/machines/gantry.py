@@ -102,3 +102,56 @@ class Gantry:
     def reset(self):
         self.connection.serial.write(b"\x18")
         time.sleep(0.2)
+    
+    def detach(self, target=None):
+        """detach current end effector to target holder"""
+        target_holder = None
+        if target is None:
+            for holder in self.holders:
+                if holder.effector == "":
+                    target_holder = holder
+                    break
+        else:
+            for holder in self.holders:
+                if holder.name == target:
+                    target_holder = holder
+                    break
+
+        if target_holder is None:
+            return False
+        
+        holder_out_pose = self.locations[f"{target}_out"]
+        self.goto(holder_out_pose)
+        time.sleep(10)
+        holder_in_pose = self.locations[f"{target}_in"]
+        self.goto(holder_in_pose)
+        time.sleep(3)
+        self.unlock()
+        time.sleep(1)
+        self.goto(holder_out_pose)
+        return True
+    
+    def attach(self, target):
+        """attach end effector from its holder to the toolend. detach first if required"""
+        if self.toolend.effector != "":
+            self.detach()
+        
+        target_holder = None
+        for holder in self.holders:
+            if holder.name == target:
+                target_holder = holder
+
+        if target_holder is None:
+            return False
+        
+        holder_out_pose = self.locations[f"{target}_out"]
+        self.goto(holder_out_pose)
+        time.sleep(10)
+        holder_in_pose = self.locations[f"{target}_in"]
+        self.goto(holder_in_pose)
+        time.sleep(3)
+        self.unlock()
+        time.sleep(1)
+        self.goto(holder_out_pose)
+        return True
+

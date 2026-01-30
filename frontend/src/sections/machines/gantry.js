@@ -16,7 +16,8 @@ import {
   Typography
 } from '@mui/material';
 import GantryControls from '../../components/gantry-controls';
-import { screwdriverIn, screwdriverOut, screwdriverStop, getInfo, goto, stepMove } from '../../components/gantry-actions';
+import GantryTools from '../../components/gantry-tools'
+import { getInfo, goto, stepMove } from '../../components/gantry-actions';
 import { useFactory } from 'src/utils/factory-context';
 
 
@@ -31,11 +32,6 @@ export const Gantry = () => {
 
   const toolend = useMemo(() => gantry?.toolend ?? null, [gantry]);
   const locations = useMemo(() => gantry?.locations ?? [], [gantry]);
-
-  // tools / screwdriver
-  const [threadPitch, setThreadPitch] = useState(5); // mm/turn
-  const [depth, setDepth] = useState(12); // mm
-  const [rotPs, setRotPs] = useState(1); // mm
 
   useEffect(() => {
     const id = setInterval(async () => {
@@ -74,6 +70,16 @@ export const Gantry = () => {
         <Box>
           {tab === 0 && (
             <Stack spacing={2}>
+                    {toolend && (
+                      <Box display="flex" alignItems="center" gap={1} sx={{pl:2, pt:3}}>
+                        <Typography variant="subtitle2" color="textSecondary">
+                          Tool End:
+                        </Typography>
+                        <Typography variant="body1" fontWeight="500">
+                          {toolend.effector || "None"}
+                        </Typography>
+                      </Box>
+                    )}
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -139,86 +145,7 @@ export const Gantry = () => {
             </Stack>
           )}
           {tab === 3 && (
-            <Stack spacing={3} sx={{ p: 2 }}>
-              {/* Toolend */}
-              {toolend && (
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    Tool End:
-                  </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {toolend.effector || "None"}
-                  </Typography>
-                </Box>
-              )}
-              <Typography variant="h6">Screwdriver Settings</Typography>
-
-              {/* Thread pitch */}
-              <Box display="flex" alignItems="center" gap={2}>
-                <Typography variant="subtitle2" color="textSecondary">
-                  Thread Pitch (mm/turn):
-                </Typography>
-                <TextField
-                  type="number"
-                  size="small"
-                  value={threadPitch}
-                  onChange={(e) => setThreadPitch(Number(e.target.value))}
-                />
-              </Box>
-
-              {/* Depth */}
-              <Box display="flex" alignItems="center" gap={2}>
-                <Typography variant="subtitle2" color="textSecondary">
-                  Depth (mm):
-                </Typography>
-                <TextField
-                  type="number"
-                  size="small"
-                  value={depth}
-                  onChange={(e) => setDepth(Number(e.target.value))}
-                />
-              </Box>
-
-              {/* Speed */}
-              <Box display="flex" alignItems="center" gap={2}>
-                <Typography variant="subtitle2" color="textSecondary">
-                  Speed (turns/sec):
-                </Typography>
-                <TextField
-                  type="number"
-                  size="small"
-                  value={rotPs}
-                  onChange={(e) => setRotPs(Number(e.target.value))}
-                />
-              </Box>
-
-              {/* Action buttons */}
-              <Stack direction="row" spacing={2}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => screwdriverIn(threadPitch, depth, rotPs)}
-                >
-                  Screw In
-                </Button>
-
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => screwdriverOut(threadPitch, depth, rotPs)}
-                >
-                  Screw Out
-                </Button>
-
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={() => screwdriverStop({})}
-                >
-                  Stop
-                </Button>
-              </Stack>
-            </Stack>
+            <GantryTools toolend={toolend}/>
           )}
         </Box>
       </CardContent>

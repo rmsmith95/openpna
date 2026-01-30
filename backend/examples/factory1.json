@@ -37,18 +37,6 @@
           150,
           52
         ],
-        "positionIn": {
-          "x": 5,
-          "y": 60,
-          "z": 50,
-          "a": 270
-        },
-        "positionOut": {
-          "x": -20,
-          "y": 160,
-          "z": -32,
-          "a": 0
-        },
         "effector": ""
       }, {
         "id": "h2",
@@ -64,18 +52,6 @@
           150,
           52
         ],
-        "positionIn": {
-          "x": 5,
-          "y": 100,
-          "z": 50,
-          "a": 270
-        },
-        "positionOut": {
-          "x": 5,
-          "y": 100,
-          "z": 50,
-          "a": 270
-        },
         "effector": ""
       }],
       "workingArea": [
@@ -88,7 +64,16 @@
         550,
         400
       ],
-      "cad": "/home/gantry.stl"
+      "cad": "/home/gantry.stl",
+      "locations": [{
+        "name": "h1 out", "x": 6.0, "y": 4.0, "z": 0.0, "a": 0.0},
+      {
+        "name": "h1 in", "x": 6.0, "y": 4.0, "z": 0.0, "a": 0.0},
+      {
+        "name": "h2 out", "x": 6.0, "y": 4.0, "z": 0.0, "a": 0.0},
+      {
+        "name": "h2 in", "x": 6.0, "y": 4.0, "z": 0.0, "a": 0.0}
+    ]
     },
   "cobot280": {
     "name": "cobot280",

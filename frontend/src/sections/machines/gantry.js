@@ -30,7 +30,7 @@ export const Gantry = () => {
   const gantry = machines?.gantry;
 
   const toolend = useMemo(() => gantry?.toolend ?? null, [gantry]);
-  const holders = useMemo(() => gantry?.holders ?? [], [gantry]);
+  const locations = useMemo(() => gantry?.locations ?? [], [gantry]);
 
   // tools / screwdriver
   const [threadPitch, setThreadPitch] = useState(5); // mm/turn
@@ -106,61 +106,32 @@ export const Gantry = () => {
 
           {tab === 2 && (
             <Stack spacing={3}>
-              {/* Toolend */}
-              {toolend && (
-                <Box display="flex" alignItems="center" gap={1} sx={{ p: 2, pt: 4 }}>
-                  <Typography variant="subtitle2" color="textSecondary">
-                    Tool End:
-                  </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {toolend.effector || "None"}
-                  </Typography>
-                </Box>
-              )}
-
               {/* Holders */}
               <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell>Name</TableCell>
-                    <TableCell>Position Out</TableCell>
+                    <TableCell>Position</TableCell>
                     <TableCell></TableCell>
-                    <TableCell>Position In</TableCell>
-                    <TableCell></TableCell>
-                    <TableCell>Effector</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {holders.map((holder) => (
-                    <TableRow key={holder.id}>
-                      <TableCell>{holder.name}</TableCell>
+                  {locations.map((location) => (
+                    <TableRow key={location.name}>
+                      <TableCell>{location.name}</TableCell>
                       <TableCell>
-                        {holder.positionOut?.x}, {holder.positionOut?.y},{' '}
-                        {holder.positionOut?.z}, {holder.positionOut?.a}
+                        {location.x}, {location.y},{' '}
+                        {location.z}, {location.a}
                       </TableCell>
                       <TableCell>
                         <Button
                           variant="contained"
                           onClick={() =>
-                            goto({ ...holder.positionIn, speed: 1000 })
+                            goto({ ...location, speed: 1000 })
                           }>
                           GoTo
                         </Button>
                       </TableCell>
-                      <TableCell>
-                        {holder.positionIn?.x}, {holder.positionIn?.y},{' '}
-                        {holder.positionIn?.z}, {holder.positionIn?.a}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="contained"
-                          onClick={() =>
-                            goto({ ...holder.positionOut, speed: 1000 })
-                          }>
-                          GoTo
-                        </Button>
-                      </TableCell>
-                      <TableCell>{holder.effector}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -169,6 +140,17 @@ export const Gantry = () => {
           )}
           {tab === 3 && (
             <Stack spacing={3} sx={{ p: 2 }}>
+              {/* Toolend */}
+              {toolend && (
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Typography variant="subtitle2" color="textSecondary">
+                    Tool End:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="500">
+                    {toolend.effector || "None"}
+                  </Typography>
+                </Box>
+              )}
               <Typography variant="h6">Screwdriver Settings</Typography>
 
               {/* Thread pitch */}

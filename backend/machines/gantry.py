@@ -19,6 +19,7 @@ class Gantry:
             self.connection.serial.close()
 
         self.connection.serial = serial.Serial(com, baud, timeout=timeout)
+        self.set_position(**self.toolend['position'])
         logging.info(f"Connected to TinyG on {com}")
         return True
 

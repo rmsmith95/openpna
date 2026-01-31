@@ -33,6 +33,7 @@ class Factory:
         self.machines['gantry'].holders = gantry['holders']
         self.machines['gantry'].locations = gantry['locations']
         self.machines['gantry'].toolend = gantry['toolend']
+        self.machines['gantry'].set_position(**self.machines['gantry'].toolend['position'])
         self.parts = data.get("parts", {})
         self.tools = data.get("tools", {})
         self.jobs = data.get("jobs", {})

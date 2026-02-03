@@ -24,7 +24,7 @@ class SetSpeed(BaseModel):
 @router.post("/connect")
 def connect(req: ConnectRequest, request: Request):
     gripper = request.app.state.factory.machines['gripper']
-    connected = gripper.connect(req.mode, req.ip, req.port, req.com, req.baud)
+    connected = gripper.connect(req.method, req.ip, req.port, req.com, req.baud)
     return {
         "connected": connected,
         "status": gripper.status

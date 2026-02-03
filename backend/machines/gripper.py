@@ -66,40 +66,37 @@ class ST3020Gripper:
         self.status = {}
         self.servo_id = None
 
-    def connect(self, mode, ip, port, com, baud ):
-        self.connection.mode = mode
-        self.connection.ip = ip
-        self.connection.port = port
-        self.connection.com = com
-        self.connection.baud = baud
-
+    def connect(self, method, ip, port, com, baud, timeout=10 ):
+        self.connection = Connection(method, ip, port, com, baud, timeout)
+        logging.warning(f'{self.connection}')
+        if self.connection.serial is not None and self.connection.serial.is_open:
+            self.connection.serial.close()
+        
         try:
             self.select_id(1)
             time.sleep(0.1)
-
-            self.set_mode(mode)
+            self.set_mode("motor")
             time.sleep(0.1)
 
-            # poll status
             for _ in range(5):
                 if self.get_status():
                     self.connected = True
                     break
                 time.sleep(0.2)
-
             return self.connected
 
         except Exception as e:
             logging.error(f"Connect failed: {e}")
             self.connected = False
             return False
+        
 
     def is_connected(self) -> bool:
-        try:
-            status = self.get_status()
-            return bool(status)  # True if status dict is non-empty
-        except Exception:
-            return False
+        if self.connection:
+            return self.connection.connected
+            # self.connection.connected = self.connection.serial is not None and self.connection.serial.is_open
+            # return self.connection.connected
+        return False
     
     def send_command(self, arg0, arg1, arg2=0, arg3=0):
         r = requests.get(

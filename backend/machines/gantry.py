@@ -11,10 +11,12 @@ class Gantry:
         self.connection = Connection()
         self.pose = None
         self.holders = []
+        self.locations = []
         self.toolend = None
+        self._io_lock = threading.Lock()
+
 
     def connect(self, method, ip, port, com, baud, timeout=3):
-
         # close existing serial if open
         if self.connection and self.connection.serial:
             if self.connection.serial.is_open:
@@ -32,28 +34,26 @@ class Gantry:
             return self.connection.connected
         return False
 
-    def send(self, command: str, delay: float = 0.05):
+    def send(self, command, delay=0.05):
         if not self.is_connected():
             return False
 
-        # self.connection.serial.reset_input_buffer()
-        self.connection.serial.write((command + "\n").encode())
-        time.sleep(delay)
+        with self._io_lock:
+            self.connection.serial.write((command + "\n").encode())
+            time.sleep(delay)
+            # return self.read_response()
+            lines = []
+            while self.connection.serial.in_waiting:
+                lines.append(
+                    self.connection.serial.readline().decode(errors="ignore").strip()
+                )
+            return lines
 
-        lines = []
-        while self.connection.serial.in_waiting:
-            lines.append(
-                self.connection.serial.readline().decode(errors="ignore").strip()
-            )
 
-        return lines
-
-    # -------------------------
-    # POSITION / STATUS
-    # -------------------------
     def get_info(self):
+        if not self.is_connected():
+            return False
         lines = self.send("?")
-
         info = {
             "x": 0.0,
             "y": 0.0,
@@ -82,7 +82,8 @@ class Gantry:
             elif line.startswith("Machine state"):
                 info["machine_state"] = line.split(":", 1)[1].strip()
 
-        self.toolend['position'] = {'x': info['x'], 'y':info['y'], 'z':info['z'], 'a':info['a']}
+        if self.toolend['position']:
+            self.toolend['position'] = {'x': info['x'], 'y':info['y'], 'z':info['z'], 'a':info['a']}
         logging.debug(f"get_info: {info}")
         return info
 

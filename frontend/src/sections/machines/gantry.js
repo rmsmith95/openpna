@@ -16,6 +16,7 @@ import {
   Typography
 } from '@mui/material';
 import GantryControls from './tabs/gantry-controls';
+import GantryLocations from './tabs/gantry-locations';
 import GantryTools from './tabs/gantry-tools'
 import { getInfo, goto, stepMove } from './tabs/gantry-actions';
 import { useFactory } from 'src/utils/factory-context';
@@ -33,20 +34,23 @@ export const Gantry = () => {
   const toolend = useMemo(() => gantry?.toolend ?? null, [gantry]);
   const locations = useMemo(() => gantry?.locations ?? [], [gantry]);
 
+  const fetchPosition = async () => {
+    const result = await getInfo();
+    if (result && result.x != null && result.y != null && result.z != null && result.a != null) {
+      setData(result);
+      setPosition({
+        x: result.x,
+        y: result.y,
+        z: result.z,
+        a: result.a,
+      });
+    }
+  };
+
   useEffect(() => {
     const id = setInterval(async () => {
-      const result = await getInfo();
-      if (result && result.x != null && result.y != null && result.z != null && result.a != null) {
-        // console.log(result)
-        setData(result);
-        setPosition({
-          x: result.x,
-          y: result.y,
-          z: result.z,
-          a: result.a,
-        });
-      }
-    }, 50);
+      fetchPosition()
+    }, 1000);
 
     return () => clearInterval(id);
   }, []);
@@ -70,16 +74,16 @@ export const Gantry = () => {
         <Box>
           {tab === 0 && (
             <Stack spacing={2}>
-                    {toolend && (
-                      <Box display="flex" alignItems="center" gap={1} sx={{pl:2, pt:3}}>
-                        <Typography variant="subtitle2" color="textSecondary">
-                          Tool End:
-                        </Typography>
-                        <Typography variant="body1" fontWeight="500">
-                          {toolend.effector || "None"}
-                        </Typography>
-                      </Box>
-                    )}
+              {toolend && (
+                <Box display="flex" alignItems="center" gap={1} sx={{ pl: 2, pt: 3 }}>
+                  <Typography variant="subtitle2" color="textSecondary">
+                    Tool End:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="500">
+                    {toolend.effector || "None"}
+                  </Typography>
+                </Box>
+              )}
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -111,41 +115,10 @@ export const Gantry = () => {
           )}
 
           {tab === 2 && (
-            <Stack spacing={3}>
-              {/* Holders */}
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Position</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {locations.map((location) => (
-                    <TableRow key={location.name}>
-                      <TableCell>{location.name}</TableCell>
-                      <TableCell>
-                        {location.x}, {location.y},{' '}
-                        {location.z}, {location.a}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="contained"
-                          onClick={() =>
-                            goto({ ...location, speed: 1000 })
-                          }>
-                          GoTo
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Stack>
+            <GantryLocations locations={locations} position={position} />
           )}
           {tab === 3 && (
-            <GantryTools toolend={toolend}/>
+            <GantryTools toolend={toolend} />
           )}
         </Box>
       </CardContent>

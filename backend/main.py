@@ -107,11 +107,12 @@ def get_jobs():
 @app.get("/get_machines")
 def get_machines():
     """Return all machines as a dict: machineId -> machine"""
+    gantry = app.state.factory.machines["gantry"]
     return {
-        "gantry": app.state.factory.machines["gantry"],
-        "cobot280": app.state.factory.machines["cobot280"],
-        "gripper": app.state.factory.machines["gripper"],
-        "arduino": app.state.factory.machines["arduino"],
+        "gantry": {'locations': gantry.locations, 'toolend': gantry.toolend, 'holders': gantry.holders },
+        "cobot280": {},
+        "gripper": {},
+        "arduino": {},
     }
 
 

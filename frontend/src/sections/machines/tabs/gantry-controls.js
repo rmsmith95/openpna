@@ -206,11 +206,11 @@ const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
           />
 
           {/* RESET BUTTON (RED, MOVED RIGHT) */}
-          <Box sx={{ flexGrow: 1 }} /> {/* pushes reset fully to the right */}
+          {/* <Box sx={{ flexGrow: 1 }} />
           <Button variant="contained" color="error" onClick={reset}
             sx={{ minWidth: '30px', px: '12px' }}>
             Reset
-          </Button>
+          </Button> */}
         </Stack>
       </Box>
     </Stack>

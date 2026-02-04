@@ -120,16 +120,6 @@ async def unlock(req: UnlockRequest, request: Request):
     return {"status": "completed"}
 
 
-@router.post("/send")
-async def send_raw(req: RawCommandRequest, request: Request):
-    gantry = request.app.state.factory.machines['gantry']
-    if not gantry:
-        raise HTTPException(400, "Gantry not connected")
-
-    response = await asyncio.to_thread(gantry.send, req.command, req.delay)
-    return {"status": "ok", "response": response}
-
-
 @router.post("/reset")
 async def reset(request: Request):
     gantry = request.app.state.factory.machines['gantry']

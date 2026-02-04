@@ -3,10 +3,10 @@
 import { useEffect, useRef, useMemo } from "react";
 import { useFactory } from "src/utils/factory-context";
 
+
 export default function CameraModel({ active }) {
   const canvasRef = useRef(null);
   const { parts, machines, gantryPosition, cameraOffset, loading } = useFactory();
-
   const workspace = machines["m1"]?.workingArea || { width: 560, height: 360 };
 
   // Combine parts + camera as one list
@@ -97,6 +97,7 @@ export default function CameraModel({ active }) {
       ctx.textBaseline = "top";
       ctx.fillText(part.name || "unnamed", x + 3, y + 3);
     });
+
   }, [active, loading.parts, combinedParts]);
 
   return (

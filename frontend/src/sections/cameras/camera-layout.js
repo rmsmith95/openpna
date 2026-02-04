@@ -10,13 +10,36 @@ const CAMERA_METADATA = [
   { label: "Digital Model", name: "Digital Model", location: "Liteplacer", direction: "Top View" },
 ];
 
+function drawCrosshair(ctx, width, height, options = {}) {
+  const { size = 22, gap = 6, color = "#00ff00", lineWidth = 2 } = options;
+  const cx = width / 2;
+  const cy = height / 2;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+
+  ctx.beginPath();
+  ctx.moveTo(cx - size, cy);
+  ctx.lineTo(cx - gap, cy);
+  ctx.moveTo(cx + gap, cy);
+  ctx.lineTo(cx + size, cy);
+
+  ctx.moveTo(cx, cy - size);
+  ctx.lineTo(cx, cy - gap);
+  ctx.moveTo(cx, cy + gap);
+  ctx.lineTo(cx, cy + size);
+
+  ctx.stroke();
+}
+
 export default function CameraDashboard() {
   const [devices, setDevices] = useState([]);
   const [selectedTab, setSelectedTab] = useState(0);
 
   const videoRef = useRef(null);
+  const overlayCanvasRef = useRef(null);
   const activeStreamRef = useRef(null);
-  const activeDeviceIdRef = useRef(null);
 
   /* ------------------ Load camera devices ------------------ */
   useEffect(() => {
@@ -37,19 +60,25 @@ export default function CameraDashboard() {
     loadDevices();
   }, []);
 
+  /* ------------------ Draw crosshair overlay ------------------ */
+  useEffect(() => {
+    const canvas = overlayCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    drawCrosshair(ctx, canvas.width, canvas.height);
+  }, [selectedTab]);
+
   /* ------------------ Switch camera on tab change ------------------ */
   useEffect(() => {
     const device = devices[selectedTab];
     if (!device) return;
 
-    // Stop previous stream
     if (activeStreamRef.current) {
       activeStreamRef.current.getTracks().forEach(t => t.stop());
       activeStreamRef.current = null;
-      activeDeviceIdRef.current = null;
     }
 
-    // Digital model does not use camera
     if (device.deviceId === "DigitalModel") {
       if (videoRef.current) videoRef.current.srcObject = null;
       return;
@@ -70,11 +99,7 @@ export default function CameraDashboard() {
       });
 
       activeStreamRef.current = stream;
-      activeDeviceIdRef.current = deviceId;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      if (videoRef.current) videoRef.current.srcObject = stream;
     } catch (err) {
       console.error("Camera start failed:", deviceId, err);
     }
@@ -82,7 +107,7 @@ export default function CameraDashboard() {
 
   return (
     <Box sx={{ width: "100%", display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* ------------------ TABS ------------------ */}
+
       <Tabs
         value={selectedTab}
         onChange={(_, v) => setSelectedTab(v)}
@@ -96,21 +121,36 @@ export default function CameraDashboard() {
         })}
       </Tabs>
 
-      {/* ------------------ VIEW ------------------ */}
       <Box sx={{ flex: 1, position: "relative", bgcolor: "black", maxHeight: '100vh' }}>
+
         {devices[selectedTab]?.deviceId === "DigitalModel" ? (
           <CameraModel active />
         ) : (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
+          <>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+
+            {/* ✅ Crosshair overlay */}
+            <canvas
+              ref={overlayCanvasRef}
+              width={640}
+              height={480}
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                pointerEvents: "none",
+              }}
+            />
+          </>
         )}
 
-        {/* Overlay */}
         <Box
           sx={{
             position: "absolute",
@@ -126,6 +166,7 @@ export default function CameraDashboard() {
             {CAMERA_METADATA[selectedTab]?.name || "Camera"}
           </Typography>
         </Box>
+
       </Box>
     </Box>
   );

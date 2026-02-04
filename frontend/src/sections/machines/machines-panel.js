@@ -11,7 +11,7 @@ import {
 import { Connections } from "src/components/connections";
 import { StatusFooter } from "src/components/status-footer";
 import { useMachineStatus } from "src/components/server-status";
-import { machines } from "src/components/machines"
+import { machineList } from "src/components/machine-list"
 
 
 export const MachinePanel = ({ }) => {
@@ -96,7 +96,7 @@ export const MachinePanel = ({ }) => {
           }}
         >
           {selectedTab === 0 && <Connections serverStatus={serverStatus} />}
-          {machines.map((machine, idx) => {
+          {machineList.map((machine, idx) => {
             const MachineComponent = machine.component;
             return selectedTab === idx + 1 ? <MachineComponent key={machine.name} /> : null;
           })}

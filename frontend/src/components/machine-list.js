@@ -5,7 +5,7 @@ import { Gripper } from "src/sections/machines/gripper";
 import { Screwdriver } from "src/sections/machines/screwdriver";
 
 
-export const machines = [
+export const machineList = [
     { name: "Gantry", component: Gantry, color: "#1976d2" },
     { name: "Cobot280", component: Cobot280, color: "#1976d2" },
     { name: "Gripper", component: Gripper, color: "purple" },

@@ -1,12 +1,14 @@
 import { Box } from "@mui/material";
 import CheckCircleIcon from "@heroicons/react/24/solid/CheckCircleIcon";
 import XCircleIcon from "@heroicons/react/24/solid/XCircleIcon";
-import { machines } from "src/components/machines"
-import { useMachineStatus } from "src/components/server-status"
-
+import { machineList } from "src/components/machine-list";
+import { useMachineStatus } from "src/components/server-status";
 
 export const StatusFooter = ({ }) => {
     const serverStatus = useMachineStatus(5000);
+    const serverConnected = serverStatus?.status && serverStatus.status == "connected";
+    console.log(serverStatus)
+
     return (
         <Box
             sx={{
@@ -17,9 +19,30 @@ export const StatusFooter = ({ }) => {
                 alignItems: "center",
                 gap: 3,
                 bgcolor: "#fafafa",
+                flexWrap: "wrap",
             }}
         >
-            {machines.map((m) => {
+            {/* SERVER STATUS */}
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                }}
+            >
+                {serverConnected ? (
+                    <CheckCircleIcon style={{ width: 16, height: 16, color: "#2e7d32" }} />
+                ) : (
+                    <XCircleIcon style={{ width: 16, height: 16, color: "#d32f2f" }} />
+                )}
+                Server
+            </Box>
+
+            {/* MACHINE STATUS */}
+            {machineList.map((m) => {
                 const connected = serverStatus.machines?.[m.name] ?? false;
 
                 return (
@@ -35,13 +58,9 @@ export const StatusFooter = ({ }) => {
                         }}
                     >
                         {connected ? (
-                            <CheckCircleIcon
-                                style={{ width: 16, height: 16, color: "#2e7d32" }}
-                            />
+                            <CheckCircleIcon style={{ width: 16, height: 16, color: "#2e7d32" }} />
                         ) : (
-                            <XCircleIcon
-                                style={{ width: 16, height: 16, color: "#d32f2f" }}
-                            />
+                            <XCircleIcon style={{ width: 16, height: 16, color: "#d32f2f" }} />
                         )}
                         {m.name}
                     </Box>

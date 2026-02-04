@@ -31,7 +31,7 @@ class Gantry:
 
     def send(self, command: str, delay: float = 0.05):
         if not self.is_connected():
-            raise RuntimeError("TinyG not connected")
+            return False
 
         # self.connection.serial.reset_input_buffer()
         self.connection.serial.write((command + "\n").encode())

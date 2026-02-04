@@ -93,3 +93,23 @@ export async function screwdriverStop(threadPitch, depth, rotPs) {
     // stepMove(0, 0, 0, 0, 1)
   ])
 }
+
+
+export async function attach(req) {
+  const { tool } = req;
+  await fetch("/api/gantry/attach", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tool }),
+  });
+}
+
+
+export async function detach(req) {
+  const { holder } = req;
+  await fetch("/api/gantry/detach", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ holder }),
+  });
+}

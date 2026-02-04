@@ -7,8 +7,6 @@ import {
   IconButton,
   MenuItem,
   Select,
-  Stack,
-  SvgIcon,
   Table,
   TableBody,
   TableCell,
@@ -27,34 +25,34 @@ import { TrashIcon } from '@heroicons/react/24/solid';
 import ArrowPathIcon from '@heroicons/react/24/solid/ArrowPathIcon';
 import { Scrollbar } from 'src/components/scrollbar';
 
-import { goto, stepMove, handleUnlockToolChanger } from '../machines/tabs/gantry-actions';
-import {
-  stepCloseGripper,
-  stepOpenGripper,
-  speedGripperDown,
-  speedGripperUp
-} from '../machines/tabs/gripper-actions';
-import { fetchPositions, moveJoint, moveJoints } from '../machines/tabs/cobot280-actions';
+import { getDefaultParams, runAction } from './job-actions';
 
-export const JobsTable = (props) => {
-  const {
-    jobs,
-    fetchJobs,
-    addJob,
-    updateJob,
-    deleteJob,
-    machines,
-    // parts
-  } = props;
-
+export const JobsTable = ({
+  jobs,
+  fetchJobs,
+  addJob,
+  updateJob,
+  deleteJob,
+  machines
+}) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState(null);
 
+  // Progress
+  const count = Object.values(jobs).length;
+  const completedCount = Object.values(jobs).filter(j => j.status === 'Done').length;
+  const progressPercent = count === 0 ? 0 : (completedCount / count) * 100;
+
+  // Parameter templates
   const PARAM_TEMPLATES = {
     gantry: {
       goto: { x: 0, y: 0, z: 0, a: 0, speed: 2000 },
       step: { x: 0, y: 0, z: 0, r: 0, speed: 1000 },
-      unlock: {}
+      unlock: {},
+      screwIn: {},
+      screwOut: {},
+      attach: { tool: 'gripper'},
+      detach: {},
     },
     cobot280: {
       goto: { j1: 0, j2: 0, j3: 0, j4: 0, j5: 0, j6: 0 },
@@ -64,70 +62,14 @@ export const JobsTable = (props) => {
       open: {},
       close: {},
       speedUp: {},
-      speedDown: {}
+      speedDown: {},
     }
   };
 
-  // Progress
-  const count = Object.values(jobs).length;
-  const completedCount = Object.values(jobs).filter(j => j.status === 'Done').length;
-  const progressPercent = count === 0 ? 0 : (completedCount / count) * 100;
-
-  const getDefaultParams = (machine, action) =>
-    PARAM_TEMPLATES?.[machine]?.[action]
-      ? { ...PARAM_TEMPLATES[machine][action] }
-      : {};
-
-  const runAction = (job_id) => {
-    const job = jobs[job_id];
-    if (!job) return;
-
-    const { machine, action, params } = job;
-    console.log('Running job:', machine, action, params);
-
-    switch (machine) {
-      case 'gantry':
-        switch (action) {
-          case 'goto':
-            return goto?.(params);
-          case 'step':
-            return stepMove?.(params);
-          case 'unlock':
-            return handleUnlockToolChanger?.(5);
-          default:
-            break;
-        }
-        break;
-
-      case 'cobot280':
-        switch (action) {
-          case 'goto':
-            return moveJoints?.(params);
-          case 'step':
-            return moveJoint?.(params);
-          default:
-            break;
-        }
-        break;
-
-      case 'gripper':
-        switch (action) {
-          case 'open':
-            return stepOpenGripper?.();
-          case 'close':
-            return stepCloseGripper?.();
-          case 'speedUp':
-            return speedGripperUp?.();
-          case 'speedDown':
-            return speedGripperDown?.();
-          default:
-            break;
-        }
-        break;
-
-      default:
-        console.warn('Unknown machine/action:', machine, action);
-    }
+  // Return the available actions for a given machine
+  const getActionsForMachine = (machine) => {
+    if (!machine || !PARAM_TEMPLATES[machine]) return [];
+    return Object.keys(PARAM_TEMPLATES[machine]);
   };
 
   const handleDeleteClick = (jobId) => {
@@ -136,9 +78,7 @@ export const JobsTable = (props) => {
   };
 
   const handleConfirmDelete = () => {
-    if (jobToDelete) {
-      deleteJob(jobToDelete);
-    }
+    if (jobToDelete) deleteJob(jobToDelete);
     setConfirmOpen(false);
     setJobToDelete(null);
   };
@@ -156,32 +96,19 @@ export const JobsTable = (props) => {
             <TableHead>
               <TableRow>
                 <TableCell align="center">
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <IconButton
-                      color="primary"
-                      onClick={fetchJobs}
-                      size="small"
-                    >
-                      <ArrowPathIcon width={20} height={20} />
-                    </IconButton>
-                  </Box>
+                  <IconButton color="primary" onClick={fetchJobs} size="small">
+                    <ArrowPathIcon width={20} height={20} />
+                  </IconButton>
                 </TableCell>
                 <TableCell>Job</TableCell>
                 <TableCell>Machine</TableCell>
                 <TableCell>Action</TableCell>
                 <TableCell>Parameters</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      sx={{ backgroundColor: 'green' }}
-                      onClick={addJob}
-                    >
-                      Add
-                    </Button>
-                  </Box>
+                <TableCell align="center">
+                  <Button variant="contained" size="small" sx={{ backgroundColor: 'green' }} onClick={addJob}>
+                    Add
+                  </Button>
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -189,25 +116,26 @@ export const JobsTable = (props) => {
             <TableBody>
               {Object.values(jobs).map((job) => (
                 <TableRow hover key={job.id}>
-                  <TableCell align="center" sx={{ verticalAlign: 'middle' }}>
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDeleteClick(job.id)}
-                    >
+                  <TableCell align="center">
+                    <IconButton color="error" onClick={() => handleDeleteClick(job.id)}>
                       <TrashIcon width={20} height={20} />
                     </IconButton>
                   </TableCell>
 
                   <TableCell>{job.id}</TableCell>
 
+                  {/* Machine Dropdown */}
                   <TableCell>
                     <Select
-                      value={job.machine}
-                      onChange={(e) =>
-                        updateJob(job.id, e.target.value, '')
-                      }
+                      value={job.machine || ''}
                       size="small"
                       fullWidth
+                      onChange={(e) => {
+                        const newMachine = e.target.value;
+                        const availableActions = getActionsForMachine(newMachine);
+                        const newAction = availableActions.includes(job.action) ? job.action : '';
+                        updateJob(job.id, { ...job, machine: newMachine, action: newAction, params: getDefaultParams(newMachine, newAction) });
+                      }}
                     >
                       {machines.map((m) => (
                         <MenuItem key={m} value={m}>
@@ -217,23 +145,18 @@ export const JobsTable = (props) => {
                     </Select>
                   </TableCell>
 
+                  {/* Action Dropdown */}
                   <TableCell>
                     <Select
                       value={job.action || ''}
-                      onChange={(e) =>
-                        updateJob(job.id, job.machine, e.target.value)
-                      }
                       size="small"
                       fullWidth
+                      onChange={(e) => {
+                        const newAction = e.target.value;
+                        updateJob(job.id, { ...job, action: newAction, params: getDefaultParams(job.machine, newAction) });
+                      }}
                     >
-                      {(job.machine === 'gantry'
-                        ? ['goto', 'step', 'unlock']
-                        : job.machine === 'cobot280'
-                        ? ['goto', 'step']
-                        : job.machine === 'gripper'
-                        ? ['open', 'close', 'speedUp', 'speedDown']
-                        : []
-                      ).map((act) => (
+                      {getActionsForMachine(job.machine).map((act) => (
                         <MenuItem key={act} value={act}>
                           {act}
                         </MenuItem>
@@ -241,21 +164,22 @@ export const JobsTable = (props) => {
                     </Select>
                   </TableCell>
 
+                  {/* Parameters */}
                   <TableCell>
                     <TextField
                       fullWidth
                       value={JSON.stringify(job.params)}
+                      size="small"
+                      InputProps={{
+                        readOnly: true
+                      }}
                     />
                   </TableCell>
 
                   <TableCell>{job.status}</TableCell>
 
                   <TableCell align="center">
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={() => runAction(job.id)}
-                    >
+                    <Button variant="contained" size="small" onClick={() => runAction(job)}>
                       Run
                     </Button>
                   </TableCell>
@@ -266,52 +190,27 @@ export const JobsTable = (props) => {
         </Box>
       </Scrollbar>
 
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 2,
-          py: 1
-        }}
-      >
+      {/* Progress Bar */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1 }}>
         <Box sx={{ flex: 1, mr: 1 }}>
-          <LinearProgress
-            variant="determinate"
-            value={progressPercent}
-            sx={{ height: 10, borderRadius: 5 }}
-          />
+          <LinearProgress variant="determinate" value={progressPercent} sx={{ height: 10, borderRadius: 5 }} />
         </Box>
-
-        <Typography
-          variant="body2"
-          color="textSecondary"
-          sx={{ ml: 2, mr: 2, whiteSpace: 'nowrap' }}
-        >
+        <Typography variant="body2" color="textSecondary" sx={{ ml: 2, mr: 2, whiteSpace: 'nowrap' }}>
           {completedCount} / {count}
         </Typography>
       </Box>
 
-      <Dialog
-        open={confirmOpen}
-        onClose={handleCancelDelete}
-      >
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={confirmOpen} onClose={handleCancelDelete}>
         <DialogTitle>Delete Job?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this job?
-            This action cannot be undone.
+            Are you sure you want to delete this job? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDelete}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            color="error"
-            variant="contained"
-          >
+          <Button onClick={handleCancelDelete}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} color="error" variant="contained">
             Delete
           </Button>
         </DialogActions>
@@ -326,6 +225,5 @@ JobsTable.propTypes = {
   addJob: PropTypes.func,
   updateJob: PropTypes.func,
   deleteJob: PropTypes.func,
-  machines: PropTypes.array,
-  parts: PropTypes.array
+  machines: PropTypes.array
 };

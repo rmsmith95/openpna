@@ -3,6 +3,7 @@ import time
 import logging
 import re
 from sections.utils import Connection, Pose
+import threading
 
 
 class Gantry:
@@ -13,11 +14,13 @@ class Gantry:
         self.toolend = None
 
     def connect(self, method, ip, port, com, baud, timeout=3):
-        self.connection = Connection(method, ip, port, com, baud, timeout)
-        logging.warning(f'{self.connection}')
-        if self.connection.serial is not None and self.connection.serial.is_open:
-            self.connection.serial.close()
 
+        # close existing serial if open
+        if self.connection and self.connection.serial:
+            if self.connection.serial.is_open:
+                self.connection.serial.close()
+
+        self.connection = Connection(method, ip, port, com, baud, timeout)
         self.connection.serial = serial.Serial(com, baud, timeout=timeout)
         self.set_position(**self.toolend['position'])
         logging.info(f"Connected to TinyG on {com}")
@@ -60,10 +63,8 @@ class Gantry:
             "velocity": 0.0,
             "machine_state": None,
         }
-
-        # merge pose if present (DO NOT replace info)
-        if self.pose:
-            info.update(self.pose)
+        if not lines:
+            return False
 
         for line in lines:
             if line.startswith("X position"):
@@ -81,15 +82,30 @@ class Gantry:
             elif line.startswith("Machine state"):
                 info["machine_state"] = line.split(":", 1)[1].strip()
 
+        self.toolend['position'] = {'x': info['x'], 'y':info['y'], 'z':info['z'], 'a':info['a']}
+        logging.debug(f"get_info: {info}")
         return info
 
 
     def set_position(self, x, y, z, a):
+        logging.info(f"set_position {x, y, z, a}")
         return self.send(f"G92 X{x} Y{y} Z{z} A{a}")
 
+    def _goto(self, x, y, z, a, speed):
+        """Run motion in background thread"""
+        self.in_motion = True
+        try:
+            self.send("G90")
+            self.send(f"G1 X{x} Y{y} Z{z} A{a} F{speed}")
+        finally:
+            self.in_motion = False
+        logging.info(f"goto {x, y, z, a, speed}")
+
     def goto(self, x, y, z, a, speed):
-        self.send("G90")
-        return self.send(f"G1 X{x} Y{y} Z{z} A{a} F{speed}")
+        """Non-blocking API: motion runs in background"""
+        t = threading.Thread(target=self._goto, args=(x, y, z, a, speed), daemon=True)
+        t.start()
+        return True
 
     def step(self, x, y, z, a, speed):
         self.send("G91")

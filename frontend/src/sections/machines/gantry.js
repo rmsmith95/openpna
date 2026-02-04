@@ -36,17 +36,17 @@ export const Gantry = () => {
   useEffect(() => {
     const id = setInterval(async () => {
       const result = await getInfo();
-      if (result) {
-        if (result.x === 0 && result.y === 0 && result.z === 0 && result.a === 0) return;
+      if (result && result.x != null && result.y != null && result.z != null && result.a != null) {
+        // console.log(result)
         setData(result);
         setPosition({
-          x: result.x ?? 0,
-          y: result.y ?? 0,
-          z: result.z ?? 0,
-          a: result.a ?? 0,
+          x: result.x,
+          y: result.y,
+          z: result.z,
+          a: result.a,
         });
       }
-    }, 500);
+    }, 50);
 
     return () => clearInterval(id);
   }, []);

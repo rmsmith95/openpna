@@ -7,7 +7,7 @@ import { useMachineStatus } from "src/components/server-status";
 export const StatusFooter = ({ }) => {
     const serverStatus = useMachineStatus(5000);
     const serverConnected = serverStatus?.status && serverStatus.status == "connected";
-    console.log(serverStatus)
+    // console.log(serverStatus)
 
     return (
         <Box

@@ -38,6 +38,7 @@ class Factory:
         self.tools = data.get("tools", {})
         self.jobs = data.get("jobs", {})
         self._job_counter = len(self.jobs)
+        logging.info(f"Loaded factory {file}")
         return self
 
     def save_factory(self):
@@ -47,8 +48,9 @@ class Factory:
         data = {
             "machines": {
                 'gantry': {
-                    'pose': self.machines['cobot280'].pose, 
-                    'objects': self.machines['gantry'].objects
+                    'toolend': self.machines['gantry'].toolend, 
+                    'holders': self.machines['gantry'].holders,
+                    'locations': self.machines['gantry'].locations
                     },
                 'cobot280': {'pose': self.machines['cobot280'].pose},
                 'gripper': {},
@@ -61,6 +63,8 @@ class Factory:
 
         with open(self.save_file, "w") as f:
             json.dump(data, f, indent=2)
+
+        logging.debug(f"Saved Factory, toolend {self.machines['gantry'].toolend}")
 
 
     def plot_path(self, machine, target_part):

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
+import asyncio
 
 router = APIRouter(tags=["gantry"])
 
@@ -21,7 +22,6 @@ class SetPositionRequest(BaseModel):
     z: float
     a: float
 
-
 class MoveXYZRequest(BaseModel):
     x: float
     y: float
@@ -29,33 +29,33 @@ class MoveXYZRequest(BaseModel):
     a: float
     speed: float  # mm/min
 
-
 class UnlockRequest(BaseModel):
     time_s: float
-
 
 class RawCommandRequest(BaseModel):
     command: str
     delay: float = 0.05
 
-
 class DetachRequest(BaseModel):
     target: str
 
-
 class AttachRequest(BaseModel):
     target: str
-
 
 # ============================================================
 # ROUTES
 # ============================================================
 
 @router.post("/connect")
-def connect(req: ConnectRequest, request: Request):
+async def connect(req: ConnectRequest, request: Request):
     gantry = request.app.state.factory.machines['gantry']
+    if not gantry:
+        raise HTTPException(400, "Gantry not connected")
+
     try:
-        gantry.connect(req.method, req.ip, req.port, req.com, req.baud)
+        await asyncio.to_thread(
+            gantry.connect, req.method, req.ip, req.port, req.com, req.baud
+        )
         return {"status": "connected", "device": "gantry"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -68,99 +68,93 @@ async def get_info(request: Request):
         return {"connected": False}
 
     try:
-        info = gantry.get_info()
-        return {
-            "connected": True,
-            **info,
-        }
+        info = await asyncio.to_thread(gantry.get_info)
+        return {"connected": True, **info}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/set_position")
-def set_position(req: SetPositionRequest, request: Request):
+async def set_position(req: SetPositionRequest, request: Request):
     gantry = request.app.state.factory.machines['gantry']
     if not gantry:
         raise HTTPException(400, "Gantry not connected")
 
-    gantry.set_position(req.x, req.y, req.z, req.a)
+    await asyncio.to_thread(gantry.set_position, req.x, req.y, req.z, req.a)
     return {"status": "ok"}
 
 
 @router.post("/goto")
-def goto(req: MoveXYZRequest, request: Request):
+async def goto(req: MoveXYZRequest, request: Request):
     gantry = request.app.state.factory.machines['gantry']
     if not gantry:
         raise HTTPException(400, "Gantry not connected")
 
-    gantry.goto(req.x, req.y, req.z, req.a, req.speed)
-    return {
-        "status": "ok",
-        "target": req.dict()
-    }
+    # Step movement in background thread
+    await asyncio.to_thread(
+        gantry.goto, req.x, req.y, req.z, req.a, req.speed
+    )
+
+    return {"status": "ok", "target": req.dict()}
 
 
 @router.post("/step")
-def step(req: MoveXYZRequest, request: Request):
+async def step(req: MoveXYZRequest, request: Request):
     gantry = request.app.state.factory.machines['gantry']
     if not gantry:
         raise HTTPException(400, "Gantry not connected")
 
-    gantry.step(req.x, req.y, req.z, req.a, req.speed)
-    return {
-        "status": "ok",
-        "delta": req.dict()
-    }
+    await asyncio.to_thread(
+        gantry.step, req.x, req.y, req.z, req.a, req.speed
+    )
+    return {"status": "ok", "delta": req.dict()}
 
 
 @router.post("/unlock")
-def unlock(req: UnlockRequest, request: Request):
+async def unlock(req: UnlockRequest, request: Request):
     gantry = request.app.state.factory.machines['gantry']
     if not gantry:
         raise HTTPException(400, "Gantry not connected")
 
-    gantry.unlock(req.time_s)
+    await asyncio.to_thread(gantry.unlock, req.time_s)
     return {"status": "completed"}
 
 
 @router.post("/send")
-def send_raw(req: RawCommandRequest, request: Request):
+async def send_raw(req: RawCommandRequest, request: Request):
     gantry = request.app.state.factory.machines['gantry']
     if not gantry:
         raise HTTPException(400, "Gantry not connected")
 
-    response = gantry.send(req.command, req.delay)
-    return {
-        "status": "ok",
-        "response": response
-    }
+    response = await asyncio.to_thread(gantry.send, req.command, req.delay)
+    return {"status": "ok", "response": response}
 
 
 @router.post("/reset")
-def reset(request: Request):
+async def reset(request: Request):
     gantry = request.app.state.factory.machines['gantry']
     if not gantry:
         raise HTTPException(400, "Gantry not connected")
 
-    gantry.reset()
+    await asyncio.to_thread(gantry.reset)
     return {"status": "ok"}
 
 
 @router.post("/detach")
-def unlock(req: DetachRequest, request: Request):
+async def detach(req: DetachRequest, request: Request):
     gantry = request.app.state.factory.machines['gantry']
     if not gantry:
         raise HTTPException(400, "Gantry not connected")
 
-    gantry.detach(req.target)
+    await asyncio.to_thread(gantry.detach, req.target)
     return {"status": "completed"}
 
 
 @router.post("/attach")
-def unlock(req: AttachRequest, request: Request):
+async def attach(req: AttachRequest, request: Request):
     gantry = request.app.state.factory.machines['gantry']
     if not gantry:
         raise HTTPException(400, "Gantry not connected")
 
-    gantry.attach(req.target)
+    await asyncio.to_thread(gantry.attach, req.target)
     return {"status": "completed"}

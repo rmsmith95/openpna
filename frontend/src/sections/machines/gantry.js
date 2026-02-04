@@ -15,9 +15,9 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import GantryControls from '../../components/gantry-controls';
-import GantryTools from '../../components/gantry-tools'
-import { getInfo, goto, stepMove } from '../../components/gantry-actions';
+import GantryControls from './tabs/gantry-controls';
+import GantryTools from './tabs/gantry-tools'
+import { getInfo, goto, stepMove } from './tabs/gantry-actions';
 import { useFactory } from 'src/utils/factory-context';
 
 

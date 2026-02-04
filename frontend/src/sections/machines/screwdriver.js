@@ -16,7 +16,7 @@ import {
   Typography,
   TextField
 } from '@mui/material';
-import ScrewdriverControls from '../../components/screwdriver-controls';
+import ScrewdriverControls from './tabs/screwdriver-controls';
 
 
 export const Screwdriver = () => {

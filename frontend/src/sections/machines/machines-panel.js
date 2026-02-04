@@ -8,7 +8,7 @@ import {
   TableCell,
   TableRow,
 } from "@mui/material";
-import { Connections } from "src/components/connections";
+import { Connections } from "src/sections/machines/tabs/connections";
 import { StatusFooter } from "src/components/status-footer";
 import { useMachineStatus } from "src/components/server-status";
 import { machineList } from "src/components/machine-list"

@@ -16,7 +16,7 @@ import {
   Typography,
   TextField
 } from '@mui/material';
-import GripperControls from '../../components/gripper-controls';
+import GripperControls from './tabs/gripper-controls';
 
 
 export const Gripper = () => {

@@ -3,7 +3,7 @@ import {
   Card, CardContent, Stack, Table, TableBody, TableCell, TableHead, TableRow,
   Tabs, Tab,
 } from '@mui/material';
-import Cobot280Controls from '../../components/cobot280-controls';
+import Cobot280Controls from './tabs/cobot280-controls';
 
 export const Cobot280 = () => {
   const [tab, setTab] = useState(0);

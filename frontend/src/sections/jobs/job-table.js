@@ -27,14 +27,14 @@ import { TrashIcon } from '@heroicons/react/24/solid';
 import ArrowPathIcon from '@heroicons/react/24/solid/ArrowPathIcon';
 import { Scrollbar } from 'src/components/scrollbar';
 
-import { goto, stepMove, handleUnlockToolChanger } from '../../components/gantry-actions';
+import { goto, stepMove, handleUnlockToolChanger } from '../machines/tabs/gantry-actions';
 import {
   stepCloseGripper,
   stepOpenGripper,
   speedGripperDown,
   speedGripperUp
-} from '../../components/gripper-actions';
-import { fetchPositions, moveJoint, moveJoints } from '../../components/cobot280-actions';
+} from '../machines/tabs/gripper-actions';
+import { fetchPositions, moveJoint, moveJoints } from '../machines/tabs/cobot280-actions';
 
 export const JobsTable = (props) => {
   const {

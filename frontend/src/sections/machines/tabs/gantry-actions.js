@@ -113,3 +113,23 @@ export async function detach(req) {
     body: JSON.stringify({ holder }),
   });
 }
+
+
+export const editLocations = async (locations) => {
+  console.log("sending locations:", locations);
+
+  try {
+    const res = await fetch("/api/gantry/edit_locations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ locations }),
+    });
+
+    const data = await res.json();
+    console.log("editLocations:", data);
+    return data;
+
+  } catch (err) {
+    console.error("Error editing locations:", err);
+  }
+};

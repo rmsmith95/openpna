@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 import asyncio
+from typing import List
+import logging
+
 
 router = APIRouter(tags=["gantry"])
 
@@ -128,6 +131,31 @@ async def reset(request: Request):
 
     await asyncio.to_thread(gantry.reset)
     return {"status": "ok"}
+
+class Location(BaseModel):
+    name: str
+    x: float
+    y: float
+    z: float
+    a: float
+
+class EditLocationsRequest(BaseModel):
+    locations: List[Location]
+
+@router.post("/edit_locations")
+async def edit_locations(req: EditLocationsRequest, request: Request):
+    gantry = request.app.state.factory.machines.get('gantry')
+    if not gantry:
+        raise HTTPException(400, "Gantry not connected")
+
+    # Update the gantry's locations safely in a thread
+    async def update_locations():
+        gantry.locations = [loc.dict() for loc in req.locations]
+        await asyncio.to_thread(lambda: None)  # placeholder if gantry needs real sync save
+
+    await update_locations()
+    # logging.info(f"locations: {req.locations}")
+    return {"status": "ok", "locations": gantry.locations}
 
 
 @router.post("/detach")

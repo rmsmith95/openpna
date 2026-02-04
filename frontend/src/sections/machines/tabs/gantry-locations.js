@@ -1,132 +1,189 @@
-import { useState } from 'react';
-import { Stack, Box, Typography, Table, TableHead, TableBody, TableRow, TableCell, Button, TextField } from '@mui/material';
-import { goto } from './gantry-actions'; // adjust path as needed
+import { useState, useMemo } from 'react';
+import {
+  Stack,
+  Box,
+  Typography,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Button,
+  TextField,
+  Paper
+} from '@mui/material';
+import { goto, editLocations } from './gantry-actions';
 
 const GantryLocations = ({
-  locations = [],                  // default to empty array
-  position = { x: 0, y: 0, z: 0, a: 0 },  // default to 0
-  onUpdateLocations = () => {}     // default to no-op function
+  gantry_locations = [],
+  setLocations,
+  position = { x: 0, y: 0, z: 0, a: 0 },
 }) => {
-  const [newLocation, setNewLocation] = useState({ name: '', x: 0, y: 0, z: 0, a: 0 });
+  const [newLocation, setNewLocation] = useState({
+    name: '',
+    x: 0,
+    y: 0,
+    z: 0,
+    a: 0
+  });
 
-  // Prevent adding a location if locations isn't ready
-  const handleAdd = () => {
-    if (!newLocation.name) return;
-    const updated = [...(locations || []), newLocation];
-    onUpdateLocations(updated); 
+  // auto default name from coords
+  const defaultName = useMemo(
+    () => `X${newLocation.x}_Y${newLocation.y}_Z${newLocation.z}_A${newLocation.a}`,
+    [newLocation]
+  );
+
+  // -------------------
+  // ADD
+  // -------------------
+  const handleAdd = async () => {
+    const name = newLocation.name.trim() || defaultName;
+
+    if (gantry_locations.find(loc => loc.name === name)) {
+      alert('Location name already exists');
+      return;
+    }
+
+    const updated = [...gantry_locations, { ...newLocation, name }];
+
+    setLocations(updated);            // ✅ update UI
+    await editLocations(updated);     // ✅ save backend
+
     setNewLocation({ name: '', x: 0, y: 0, z: 0, a: 0 });
   };
 
-  const handleDelete = (name) => {
-    if (!locations) return;
-    const updated = locations.filter(loc => loc.name !== name);
-    onUpdateLocations(updated);
+  // -------------------
+  // DELETE
+  // -------------------
+  const handleDelete = async (name) => {
+    const updated = gantry_locations.filter(loc => loc.name !== name);
+    setLocations(updated);            // ✅ update UI
+    await editLocations(updated);     // ✅ save backend
   };
 
-  // Wait until locations and position are defined
-  if (!locations || !position) {
-    return (
-      <Box p={2}>
-        <Typography>Loading locations...</Typography>
-      </Box>
-    );
+  // -------------------
+  // SET CURRENT
+  // -------------------
+  const handleSetCurrent = () => {
+    setNewLocation(prev => ({
+      ...prev,
+      x: position.x,
+      y: position.y,
+      z: position.z,
+      a: position.a,
+    }));
+  };
+
+  if (!position) {
+    return <Typography>Loading...</Typography>;
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={4}>
+
       {/* Current Position */}
-      <Box mb={2}>
-        <Typography variant="subtitle1">
-          Current Position: {position.x ?? 0}, {position.y ?? 0}, {position.z ?? 0}, {position.a ?? 0}
+      <Box>
+        <Typography fontWeight="bold">Current Position</Typography>
+        <Typography>
+          X:{position.x} Y:{position.y} Z:{position.z} A:{position.a}
         </Typography>
+        <Button variant="outlined" onClick={handleSetCurrent}>
+          Set Current
+        </Button>
       </Box>
 
-      {/* Add New Location */}
-      <Stack direction="row" spacing={1} alignItems="center" mb={2} flexWrap="wrap">
-        <TextField
-          label="Name"
-          size="small"
-          value={newLocation.name}
-          onChange={(e) => setNewLocation({ ...newLocation, name: e.target.value })}
-        />
-        <TextField
-          label="X"
-          width="20px"
-          size="small"
-          type="number"
-          value={newLocation.x}
-          onChange={(e) => setNewLocation({ ...newLocation, x: parseFloat(e.target.value) || 0 })}
-        />
-        <TextField
-          label="Y"
-          size="small"
-          type="number"
-          value={newLocation.y}
-          onChange={(e) => setNewLocation({ ...newLocation, y: parseFloat(e.target.value) || 0 })}
-        />
-        <TextField
-          label="Z"
-          size="small"
-          type="number"
-          value={newLocation.z}
-          onChange={(e) => setNewLocation({ ...newLocation, z: parseFloat(e.target.value) || 0 })}
-        />
-        <TextField
-          label="A"
-          size="small"
-          type="number"
-          value={newLocation.a}
-          onChange={(e) => setNewLocation({ ...newLocation, a: parseFloat(e.target.value) || 0 })}
-        />
-        <Button variant="contained" color="primary" onClick={handleAdd}>
-          Add Location
-        </Button>
-      </Stack>
+      {/* Add */}
+      <Paper sx={{ p: 2 }}>
+        <Typography fontWeight="bold">Add Location</Typography>
 
-      {/* Locations Table */}
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Position</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {locations.map((location) => (
-            <TableRow key={location.name}>
-              <TableCell>{location.name}</TableCell>
-              <TableCell>
-                {location.x ?? 0}, {location.y ?? 0}, {location.z ?? 0}, {location.a ?? 0}
-              </TableCell>
-              <TableCell>
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    variant="contained"
-                    onClick={() => goto({ ...location, speed: 1000 })}
-                  >
-                    GoTo
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    onClick={() => handleDelete(location.name)}
-                  >
-                    Delete
-                  </Button>
-                </Stack>
-              </TableCell>
-            </TableRow>
+        <Stack direction="row" spacing={2} flexWrap="wrap">
+
+          <TextField
+            label="Name"
+            size="small"
+            value={newLocation.name}
+            placeholder={defaultName}
+            onChange={(e) =>
+              setNewLocation({ ...newLocation, name: e.target.value })
+            }
+          />
+
+          {['x','y','z','a'].map(axis => (
+            <TextField
+              key={axis}
+              label={axis.toUpperCase()}
+              size="small"
+              type="number"
+              value={newLocation[axis]}
+              onChange={(e) =>
+                setNewLocation({
+                  ...newLocation,
+                  [axis]: parseFloat(e.target.value) || 0
+                })
+              }
+              sx={{ width: 90 }}
+            />
           ))}
-          {locations.length === 0 && (
+
+          <Button variant="contained" onClick={handleAdd}>
+            Add
+          </Button>
+
+        </Stack>
+      </Paper>
+
+      {/* Table */}
+      <Paper>
+        <Table size="small">
+          <TableHead>
             <TableRow>
-              <TableCell colSpan={3} align="center">
-                No locations defined
-              </TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Position</TableCell>
+              <TableCell />
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHead>
+
+          <TableBody>
+            {gantry_locations.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} align="center">
+                  No locations
+                </TableCell>
+              </TableRow>
+            ) : (
+              gantry_locations.map((loc) => (
+                <TableRow key={loc.name}>
+                  <TableCell>{loc.name}</TableCell>
+                  <TableCell>
+                    {loc.x}, {loc.y}, {loc.z}, {loc.a}
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() => goto({ ...loc, speed: 1000 })}
+                      >
+                        GoTo
+                      </Button>
+
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleDelete(loc.name)}
+                      >
+                        Delete
+                      </Button>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
+
     </Stack>
   );
 };

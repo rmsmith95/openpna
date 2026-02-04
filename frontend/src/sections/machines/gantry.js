@@ -12,15 +12,13 @@ import {
   TableHead,
   Tabs,
   Tab,
-  TextField,
   Typography
 } from '@mui/material';
 import GantryControls from './tabs/gantry-controls';
 import GantryLocations from './tabs/gantry-locations';
-import GantryTools from './tabs/gantry-tools'
-import { getInfo, goto, stepMove } from './tabs/gantry-actions';
+import GantryTools from './tabs/gantry-tools';
+import { getInfo } from './tabs/gantry-actions';
 import { useFactory } from 'src/utils/factory-context';
-
 
 export const Gantry = () => {
   const [tab, setTab] = useState(0);
@@ -30,10 +28,12 @@ export const Gantry = () => {
 
   const { machines } = useFactory();
   const gantry = machines?.gantry;
+  const [locations, setLocations] = useState(() => gantry?.locations ?? []);
 
+  // Toolend info
   const toolend = useMemo(() => gantry?.toolend ?? null, [gantry]);
-  const locations = useMemo(() => gantry?.locations ?? [], [gantry]);
 
+  // Fetch current gantry position every second
   const fetchPosition = async () => {
     const result = await getInfo();
     if (result && result.x != null && result.y != null && result.z != null && result.a != null) {
@@ -42,16 +42,13 @@ export const Gantry = () => {
         x: result.x,
         y: result.y,
         z: result.z,
-        a: result.a,
+        a: result.a
       });
     }
   };
 
   useEffect(() => {
-    const id = setInterval(async () => {
-      fetchPosition()
-    }, 1000);
-
+    const id = setInterval(fetchPosition, 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -71,11 +68,12 @@ export const Gantry = () => {
         </Tabs>
 
         {/* Tab Panels */}
-        <Box>
+        <Box mt={2}>
+          {/* Gantry Info Tab */}
           {tab === 0 && (
             <Stack spacing={2}>
               {toolend && (
-                <Box display="flex" alignItems="center" gap={1} sx={{ pl: 2, pt: 3 }}>
+                <Box display="flex" alignItems="center" gap={1} sx={{ pl: 2 }}>
                   <Typography variant="subtitle2" color="textSecondary">
                     Tool End:
                   </Typography>
@@ -90,7 +88,7 @@ export const Gantry = () => {
                     <TableCell>Dimensions (mm)</TableCell>
                     <TableCell>Workspace</TableCell>
                     <TableCell>Max Load</TableCell>
-                    <TableCell>Cad File</TableCell>
+                    <TableCell>CAD File</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -105,6 +103,7 @@ export const Gantry = () => {
             </Stack>
           )}
 
+          {/* Control Tab */}
           {tab === 1 && (
             <GantryControls
               position={position}
@@ -114,14 +113,23 @@ export const Gantry = () => {
             />
           )}
 
+          {/* Locations Tab */}
           {tab === 2 && (
-            <GantryLocations locations={locations} position={position} />
+            <GantryLocations
+              gantry_locations={locations}
+              setLocations={setLocations}
+              position={position}
+            />
           )}
+
+          {/* Tools Tab */}
           {tab === 3 && (
             <GantryTools toolend={toolend} />
           )}
         </Box>
       </CardContent>
-    </Card >
+    </Card>
   );
 };
+
+export default Gantry;

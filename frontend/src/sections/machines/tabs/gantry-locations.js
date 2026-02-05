@@ -1,16 +1,16 @@
 import { useState, useMemo } from 'react';
 import {
-  Stack,
   Box,
+  Button,
+  Paper,
+  Stack,
   Typography,
   Table,
   TableHead,
   TableBody,
   TableRow,
   TableCell,
-  Button,
   TextField,
-  Paper
 } from '@mui/material';
 import { goto, editLocations } from './gantry-actions';
 
@@ -27,7 +27,13 @@ const GantryLocations = ({
     a: 0
   });
 
-  // auto default name from coords
+  // rename editing state
+  const [editingName, setEditingName] = useState(null);
+  const [editingValue, setEditingValue] = useState('');
+
+  // -------------------
+  // default auto name
+  // -------------------
   const defaultName = useMemo(
     () => `X${newLocation.x}_Y${newLocation.y}_Z${newLocation.z}_A${newLocation.a}`,
     [newLocation]
@@ -45,9 +51,8 @@ const GantryLocations = ({
     }
 
     const updated = [...gantry_locations, { ...newLocation, name }];
-
-    setLocations(updated);            // ✅ update UI
-    await editLocations(updated);     // ✅ save backend
+    setLocations(updated);
+    await editLocations(updated);
 
     setNewLocation({ name: '', x: 0, y: 0, z: 0, a: 0 });
   };
@@ -57,8 +62,33 @@ const GantryLocations = ({
   // -------------------
   const handleDelete = async (name) => {
     const updated = gantry_locations.filter(loc => loc.name !== name);
-    setLocations(updated);            // ✅ update UI
-    await editLocations(updated);     // ✅ save backend
+    setLocations(updated);
+    await editLocations(updated);
+  };
+
+  // -------------------
+  // RENAME
+  // -------------------
+  const handleRename = async (oldName) => {
+    const name = editingValue.trim();
+
+    if (!name || name === oldName) {
+      setEditingName(null);
+      return;
+    }
+
+    if (gantry_locations.find(l => l.name === name)) {
+      alert('Location name already exists');
+      return;
+    }
+
+    const updated = gantry_locations.map(loc =>
+      loc.name === oldName ? { ...loc, name } : loc
+    );
+
+    setLocations(updated);
+    await editLocations(updated);
+    setEditingName(null);
   };
 
   // -------------------
@@ -78,37 +108,79 @@ const GantryLocations = ({
     return <Typography>Loading...</Typography>;
   }
 
+  const axisFieldSx = {
+    width: 80,
+    flexShrink: 0
+  };
+
   return (
-    <Stack spacing={4}>
+    <Stack spacing={1}>
 
       {/* Current Position */}
-      <Box>
-        <Typography fontWeight="bold">Current Position</Typography>
-        <Typography>
-          X:{position.x} Y:{position.y} Z:{position.z} A:{position.a}
-        </Typography>
-        <Button variant="outlined" onClick={handleSetCurrent}>
-          Set Current
-        </Button>
-      </Box>
-
-      {/* Add */}
       <Paper sx={{ p: 2 }}>
-        <Typography fontWeight="bold">Add Location</Typography>
+        <Typography fontWeight="bold">
+          Current Position
+        </Typography>
 
-        <Stack direction="row" spacing={2} flexWrap="wrap">
+        <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+          {['x', 'y', 'z', 'a'].map(axis => (
+            <TextField
+              key={axis}
+              label={axis.toUpperCase()}
+              size="small"
+              value={position[axis]}
+              InputProps={{ readOnly: true }}
+              sx={axisFieldSx}
+            />
+          ))}
+
+          <Button
+            variant="outlined"
+            onClick={handleSetCurrent}
+            sx={{ height: 40 }}
+          >
+            Select
+          </Button>
+        </Stack>
+      </Paper>
+
+      {/* Add Location */}
+      <Paper sx={{ pl: 2 }}>
+
+        {/* Header row: title + name */}
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+        >
+          <Typography fontWeight="bold" sx={{ minWidth: 120 }}>
+            Add Location
+          </Typography>
 
           <TextField
             label="Name"
             size="small"
             value={newLocation.name}
             placeholder={defaultName}
+            InputLabelProps={{ shrink: true }}
+            sx={{ width: 300 }}
             onChange={(e) =>
-              setNewLocation({ ...newLocation, name: e.target.value })
+              setNewLocation(prev => ({
+                ...prev,
+                name: e.target.value
+              }))
             }
           />
+        </Stack>
 
-          {['x','y','z','a'].map(axis => (
+        {/* Axis row */}
+        <Stack
+          direction="row"
+          spacing={1}
+          flexWrap="wrap"
+          alignItems="center"
+        >
+          {['x', 'y', 'z', 'a'].map(axis => (
             <TextField
               key={axis}
               label={axis.toUpperCase()}
@@ -116,30 +188,31 @@ const GantryLocations = ({
               type="number"
               value={newLocation[axis]}
               onChange={(e) =>
-                setNewLocation({
-                  ...newLocation,
+                setNewLocation(prev => ({
+                  ...prev,
                   [axis]: parseFloat(e.target.value) || 0
-                })
+                }))
               }
-              sx={{ width: 90 }}
+              sx={axisFieldSx}
             />
           ))}
 
           <Button variant="contained" onClick={handleAdd}>
             Add
           </Button>
-
         </Stack>
+
       </Paper>
 
-      {/* Table */}
-      <Paper>
-        <Table size="small">
+
+      {/* Locations Table */}
+      <Paper sx={{pt:2}}>
+        <Table size="small" sx={{ tableLayout: 'fixed' }}>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
+              <TableCell sx={{ width: 220 }}>Name</TableCell>
               <TableCell>Position</TableCell>
-              <TableCell />
+              <TableCell sx={{ width: 160 }} />
             </TableRow>
           </TableHead>
 
@@ -152,11 +225,45 @@ const GantryLocations = ({
               </TableRow>
             ) : (
               gantry_locations.map((loc) => (
-                <TableRow key={loc.name}>
-                  <TableCell>{loc.name}</TableCell>
+                <TableRow key={loc.name} hover>
+
+                  {/* Editable Name */}
+                  <TableCell>
+                    {editingName === loc.name ? (
+                      <TextField
+                        size="small"
+                        value={editingValue}
+                        autoFocus
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={() => handleRename(loc.name)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleRename(loc.name);
+                          if (e.key === 'Escape') setEditingName(null);
+                        }}
+                        sx={{ width: '100%' }}
+                      />
+                    ) : (
+                      <Typography
+                        sx={{
+                          cursor: 'pointer',
+                          '&:hover': { textDecoration: 'underline' }
+                        }}
+                        onClick={() => {
+                          setEditingName(loc.name);
+                          setEditingValue(loc.name);
+                        }}
+                      >
+                        {loc.name}
+                      </Typography>
+                    )}
+                  </TableCell>
+
+                  {/* Position */}
                   <TableCell>
                     {loc.x}, {loc.y}, {loc.z}, {loc.a}
                   </TableCell>
+
+                  {/* Actions */}
                   <TableCell>
                     <Stack direction="row" spacing={1}>
                       <Button
@@ -177,6 +284,7 @@ const GantryLocations = ({
                       </Button>
                     </Stack>
                   </TableCell>
+
                 </TableRow>
               ))
             )}

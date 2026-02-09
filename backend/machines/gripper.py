@@ -66,30 +66,23 @@ class ST3020Gripper:
         self.status = {}
         self.servo_id = None
 
-    def connect(self, method, ip, port, com, baud, timeout=10 ):
+    def connect(self, method, ip, port, com, baud, timeout=10):
         self.connection = Connection(method, ip, port, com, baud, timeout)
-        logging.warning(f'{self.connection}')
-        if self.connection.serial is not None and self.connection.serial.is_open:
-            self.connection.serial.close()
-        
+
         try:
             self.select_id(1)
-            time.sleep(0.1)
-            self.set_mode("motor")
-            time.sleep(0.1)
+            time.sleep(0.2)
 
-            for _ in range(5):
-                if self.get_status():
-                    self.connected = True
-                    break
-                time.sleep(0.2)
-            return self.connected
+            self.set_mode("motor")
+            time.sleep(0.2)
+
+            self.connection.connected = True
+            return True
 
         except Exception as e:
             logging.error(f"Connect failed: {e}")
-            self.connected = False
-            return False
-        
+            self.connection.connected = False
+            return False        
 
     def is_connected(self) -> bool:
         if self.connection:
@@ -99,20 +92,48 @@ class ST3020Gripper:
         return False
     
     def send_command(self, arg0, arg1, arg2=0, arg3=0):
-        r = requests.get(
-            f"http://{self.connection.ip}/cmd",
-            params={"arg0": arg0, "arg1": arg1, "arg2": arg2, "arg3": arg3},
-            timeout=2
+        logging.info(
+            f'sending command to {self.connection.ip} '
+            f'{arg0}, {arg1}, {arg2}, {arg3}'
         )
-        r.raise_for_status()
-        return r.text
+
+        try:
+            r = requests.get(
+                f"http://{self.connection.ip}/cmd",
+                params={
+                    "arg0": arg0,
+                    "arg1": arg1,
+                    "arg2": arg2,
+                    "arg3": arg3
+                },
+                timeout=3
+            )
+
+            r.raise_for_status()
+            return r.text
+
+        except requests.RequestException as e:
+            logging.error(f"Gripper HTTP failed: {e}")
+            self.connection.connected = False
+            return None
 
     def get_status(self):
-        if not self.connection or self.connection.ip == '':
-            return {'status': False}
-        r = requests.get(f"http://{self.connection.ip}/readSTS", timeout=2)
-        self.status = parse_status(r.text)
-        return self.status
+        if not self.connection or not self.connection.ip:
+            return {"connected": False}
+
+        try:
+            r = requests.get(
+                f"http://{self.connection.ip}/readSTS",
+                timeout=3
+            )
+            self.status = parse_status(r.text)
+            self.connection.connected = True
+            return self.status
+
+        except requests.RequestException as e:
+            logging.error(f"Status read failed: {e}")
+            self.connection.connected = False
+            return {"connected": False}
 
     def select_id(self, servo_id: int):
         self.servo_id = servo_id
@@ -122,7 +143,10 @@ class ST3020Gripper:
         cmd = 12 if mode == "servo" else 13
         self.send_command(1, cmd)
 
-    def _run_motor_for(self, duration_s: float, command: int):
+    def _run_motor_for(self, duration_s: float, command: int, speed: int=None):
+        if speed is not None:
+            self.set_speed(speed)
+            time.sleep(0.05)  # small settle delay
         try:
             self.send_command(1, command)
             time.sleep(duration_s)
@@ -130,17 +154,17 @@ class ST3020Gripper:
         except Exception as e:
             logging.error(f"Motor run failed: {e}")
 
-    def open(self, time_s: float):
+    def open(self, time_s: float, speed: int):
         threading.Thread(
             target=self._run_motor_for,
-            args=(time_s, 1),
+            args=(time_s, 1, speed),
             daemon=True
         ).start()
 
-    def close(self, time_s: float):
+    def close(self, time_s: float, speed: int):
         threading.Thread(
             target=self._run_motor_for,
-            args=(time_s, 6),
+            args=(time_s, 6, speed),
             daemon=True
         ).start()
 
@@ -149,11 +173,14 @@ class ST3020Gripper:
     # -------------------------
     def speed_up(self):
         self.send_command(1, 7)
-
+        return {"ok": True}
+    
     def speed_down(self):
         self.send_command(1, 8)
+        return {"ok": True}
 
     def set_speed(self, speed: int):
-        self.send_command(1, 4)
+        self.send_command(1, 4, speed)
+        return {"ok": True}
 
 

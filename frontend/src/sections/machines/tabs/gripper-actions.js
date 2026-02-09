@@ -25,16 +25,12 @@ export async function stepCloseGripper(time_s = 1, speed=1000) {
 export async function speedGripperUp () {
     await fetch("/api/gripper/speed_up", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
     });
 }
 
 export async function speedGripperDown () {
     await fetch("/api/gripper/speed_down", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+      method: "POST"
     });
 }
 

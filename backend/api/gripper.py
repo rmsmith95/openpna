@@ -34,29 +34,25 @@ def connect(req: ConnectRequest, request: Request):
 @router.post("/gripper_open")
 def gripper_open(cmd: GripperCommand, request: Request):
     gripper = request.app.state.factory.machines['gripper']
-    gripper.open(cmd.time_s)
-    return {"ok": True}
+    return gripper.open(cmd.time_s, cmd.speed)
 
 
 @router.post("/gripper_close")
 def gripper_close(cmd: GripperCommand, request: Request):
     gripper = request.app.state.factory.machines['gripper']
-    gripper.close(cmd.time_s)
-    return {"ok": True}
+    return gripper.close(cmd.time_s, cmd.speed)
 
 
 @router.post("/speed_up")
 def speed_up(request: Request):
     gripper = request.app.state.factory.machines['gripper']
-    gripper.speed_up()
-    return {"ok": True}
+    return gripper.speed_up()
 
 
 @router.post("/speed_down")
 def speed_down(request: Request):
     gripper = request.app.state.factory.machines['gripper']
-    gripper.speed_down()
-    return {"ok": True}
+    return gripper.speed_down()
 
 
 @router.post("/set_speed")

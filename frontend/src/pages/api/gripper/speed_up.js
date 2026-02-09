@@ -1,26 +1,32 @@
 // pages/api/gripper/speed_up.js
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ status: "method not allowed" });
+    return res.status(405).json({ error: "method not allowed" });
   }
 
   try {
-    // Forward the command to FastAPI
-    const response = await fetch(
-      "http://127.0.0.1:8000/gripper/speed_up",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ }),
-      }
-    );
+    const r = await fetch("http://127.0.0.1:8000/gripper/speed_up", {
+      method: "POST"
+    });
 
-    const data = await response.json();
-    console.log("FastAPI response:", data);
+    const text = await r.text();   // ← never assume JSON
 
-    res.status(200).json(data);
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text };
+    }
+
+    return res.status(200).json(data);
+
   } catch (err) {
-    console.error("Error forwarding to FastAPI:", err);
-    res.status(500).json({ status: "error", message: err.message });
+    console.error("Forward failed:", err);
+
+    // ✅ do NOT return 500 for device faults
+    return res.status(200).json({
+      ok: false,
+      error: "device_no_response"
+    });
   }
 }

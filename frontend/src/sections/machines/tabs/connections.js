@@ -7,9 +7,9 @@ import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 
 export const Connections = ({ serverStatus }) => {
-  // Editable machine confi`g` state
+  // Editable machine config state
   const [machines, setMachines] = useState([
-    { key: 'server', name: 'Server', method: 'network', ip: '127.0.0.1', port: 8000 },
+    { key: 'server', name: 'Server', method: 'network', ip: '127.0.0.1', port: 8000, com: 'COM1', baud: 115200 },
     { key: 'gantry', name: 'Gantry', method: 'serial', ip: '192.168.1.1', port: 8000, com: 'COM10', baud: 115200 },
     { key: 'arduino', name: 'Arduino', method: 'serial', ip: '192.168.1.1', port: 8000, com: 'COM3', baud: 115200 },
     { key: 'cobot280', name: 'Cobot280', method: 'network', ip: '10.163.187.60', port: 9000, com: 'COM4', baud: 115200 },
@@ -66,7 +66,11 @@ export const Connections = ({ serverStatus }) => {
 
       <TableBody>
         {machines.map((m) => {
-          const connected = serverStatus?.machines?.[m.key] ?? false;
+          const connected =
+            m.key === "server"
+              ? serverStatus != null
+              : serverStatus?.machines?.[m.key] ?? false;
+
           const isConnecting = connecting[m.key] || false;
 
           return (

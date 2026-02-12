@@ -52,9 +52,8 @@ const Page = () => {
                 height: '50vh',
                 minHeight: 200,
                 backgroundColor: 'grey.900',
-
                 display: 'flex',
-                overflow: 'hidden',     // ⬅️ critical
+                overflow: 'auto', // ⬅️ allow scrollbars
               }}
             >
               <Box
@@ -68,7 +67,6 @@ const Page = () => {
                 <CameraDashboard />
               </Box>
             </Paper>
-
           </Grid>
 
           {/* Bottom: Jobs panel */}

@@ -83,14 +83,13 @@ export async function screwdriverOut(threadPitch, depth, rotPs) {
   ])
 }
 
-export async function screwdriverStop(threadPitch, depth, rotPs) {
+export async function screwStop(threadPitch, depth, rotPs) {
   const rotations = depth / threadPitch // rotations needed to reach target depth
   const duration = rotations / rotPs // total time needed at given rotation speed
 
   // Run rotation and linear motion together. NOTE: assumes both start at the same time
   await Promise.all([
     screwdriverStop(),
-    // stepMove(0, 0, 0, 0, 1)
   ])
 }
 

@@ -13,7 +13,7 @@ import {
   gripperGoTo,
   speedGripperUp,
   speedGripperDown,
-} from "./gripper-actions";
+} from 'src/components/actions-wrapper';
 
 import ExpandIcon from "@mui/icons-material/Expand";
 import CompressIcon from "@mui/icons-material/Compress";

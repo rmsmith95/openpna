@@ -1,21 +1,21 @@
-// pages/api/get-jobs.js
+// pages/api/jobs/run_script.js
 export default async function handler(req, res) {
-  console.log("Received request to /api/get-jobs", req.body);
+  console.log("Received request to /api/jobs/run-script", req.body);
 
-  if (req.method !== "GET") {
+  if (req.method !== "POST") {
     return res.status(405).json({ status: "method not allowed" });
   }
 
+  const { target } = req.body;
   try {
-    const response = await fetch("http://127.0.0.1:8000/jobs/get_jobs", {
-      method: "GET",
+    const response = await fetch("http://127.0.0.1:8000/jobs/run_script", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target }),
     });
 
-    console.log("FastAPI response status:", response.status);
-
     const data = await response.json();
-    // console.log("FastAPI response body:", data);
+    console.log("FastAPI response:", data);
 
     res.status(200).json(data);
   } catch (err) {

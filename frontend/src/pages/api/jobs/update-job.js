@@ -1,4 +1,4 @@
-// pages/api/update-job.js
+// pages/api/jobs/update-job.js
 export default async function handler(req, res) {
   console.log("Received request to /api/update-job", req.body);
 
@@ -6,13 +6,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ status: "method not allowed" });
   }
 
-  const { job_id, job } = req.body;
+  const { job } = req.body;
+  console.log('update-job')
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/update_job", {
+    const response = await fetch("http://127.0.0.1:8000/jobs/update_job", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ job_id, job }),
+      body: JSON.stringify({ job }),
     });
 
     console.log("FastAPI response status:", response.status);

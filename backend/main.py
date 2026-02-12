@@ -7,6 +7,7 @@ from api.gantry import router as gantry_router
 from api.cobot280 import router as cobot280_router
 from api.gripper import router as gripper_router
 from api.arduino import router as arduino_router
+from api.jobs import router as jobs_router
 from sections.factory import Factory
 
 logging.basicConfig(level=logging.INFO)
@@ -27,6 +28,7 @@ app.include_router(gantry_router, prefix="/gantry")
 app.include_router(cobot280_router, prefix="/cobot280")
 app.include_router(gripper_router, prefix="/gripper")
 app.include_router(arduino_router, prefix="/arduino")
+app.include_router(jobs_router, prefix="/jobs")
 
 
 @app.get("/")
@@ -76,34 +78,6 @@ def get_parts():
     return app.state.factory.parts
 
 
-# --- Jobs ---
-class UpdateJobRequest(BaseModel):
-    job_id: str
-    job: dict
-
-
-@app.post("/update_job")
-async def update_job(req: UpdateJobRequest):
-    job_id = await asyncio.to_thread(app.state.factory.update_job, req.job_id, req.job)
-    return {"status": "ok", "job_id": job_id}
-
-
-class DeleteJobRequest(BaseModel):
-    job_id: str
-
-
-@app.post("/delete_job")
-async def delete_job(req: DeleteJobRequest):
-    deleted = await asyncio.to_thread(app.state.factory.delete_job, req.job_id)
-    return {"status": "ok", "deleted": deleted}
-
-
-@app.get("/get_jobs")
-def get_jobs():
-    """Return all jobs as a dict: jobId -> job"""
-    return app.state.factory.jobs
-
-
 @app.get("/get_machines")
 def get_machines():
     """Return all machines as a dict: machineId -> machine"""
@@ -120,11 +94,3 @@ def get_machines():
 def get_tools():
     """Return all tools as a dict: toolId -> tool"""
     return app.state.factory.tools
-
-
-# --- Run Job ---
-@app.get("/run_job")
-async def run_job(job_id: str):
-    # Run job in thread to avoid blocking FastAPI
-    await asyncio.to_thread(app.state.factory.run_job, job_id)
-    return {"status": "ok"}

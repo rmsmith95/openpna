@@ -1,0 +1,90 @@
+"p11": {
+  "id": "p11",
+  "name": "Body",
+  "class": "part",
+  "mass": 0.3,
+  "description": "3d printed",
+  "cad": "/home/body.stl",
+  "assembly_id": false,
+  "bbox": [
+	10,
+	5,
+	120,
+	120
+  ]
+},
+"p12": {
+  "id": "p12",
+  "name": "Body Jig",
+  "class": "jig",
+  "mass": 0.3,
+  "description": "3d printed",
+  "cad": "/home/body_jig.stl",
+  "assembly_id": false,
+  "bbox": [
+	140,
+	5,
+	140,
+	140
+  ]
+},
+"p13": {
+  "id": "p13",
+  "name": "Arm1",
+  "class": "part",
+  "mass": 0.2,
+  "description": "3d printed",
+  "cad": "/home/arm.stl",
+  "assembly_id": false,
+  "bbox": [
+	10,
+	155,
+	120,
+	60
+  ]
+},
+"p14": {
+  "id": "p14",
+  "name": "Arm2",
+  "class": "part",
+  "mass": 0.2,
+  "description": "3d printed",
+  "cad": "/home/arm.stl",
+  "assembly_id": false,
+  "bbox": [
+	10,
+	225,
+	120,
+	60
+  ]
+},
+"p15": {
+  "id": "p15",
+  "name": "Arm3",
+  "class": "part",
+  "mass": 0.2,
+  "description": "3d printed",
+  "cad": "/home/arm.stl",
+  "assembly_id": false,
+  "bbox": [
+	140,
+	155,
+	120,
+	60
+  ]
+},
+"p16": {
+  "id": "p16",
+  "name": "Arm4",
+  "class": "part",
+  "mass": 0.2,
+  "description": "3d printed",
+  "cad": "/home/arm.stl",
+  "assembly_id": false,
+  "bbox": [
+	140,
+	225,
+	120,
+	60
+  ]
+}

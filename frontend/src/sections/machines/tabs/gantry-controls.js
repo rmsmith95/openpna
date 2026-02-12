@@ -14,8 +14,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { goto, getInfo, handleUnlockToolChanger, stepMove } from './gantry-actions';
 import LockOpenIcon from '@heroicons/react/24/solid/LockOpenIcon';
+import { goto, getInfo, handleUnlockToolChanger, stepMove } from 'src/components/actions-wrapper';
 
 
 const GantryControls = ({ position, data, gotoPosition, setGotoPosition }) => {
